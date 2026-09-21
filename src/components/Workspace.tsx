@@ -14,6 +14,7 @@ import {
   loadSeedTelemetry,
 } from '@/domain/fixtures/loader';
 import { RecommendationEngine } from '@/domain/services/recommendation-engine';
+import { OfflineSyncService } from '@/domain/services/offline-sync';
 import { DEMO_PERSONA } from '@/domain/constants';
 import { Header } from './Header';
 import { AssetSelector } from './AssetSelector';
@@ -22,6 +23,7 @@ import { FaultList } from './FaultList';
 import { RecommendationCard } from './RecommendationCard';
 import { ConfirmationModal } from './ConfirmationModal';
 import { AuditLogView } from './AuditLogView';
+import { OfflineSyncBanner } from './OfflineSyncBanner';
 
 export const Workspace: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>(() => loadSeedAssets());
@@ -44,8 +46,11 @@ export const Workspace: React.FC = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>('ast_336_001');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isResetting, setIsResetting] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
   const engine = useMemo(() => new RecommendationEngine(), []);
+  const syncService = useMemo(() => new OfflineSyncService(), []);
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
 
   // Active Asset
   const selectedAsset = useMemo(
@@ -85,6 +90,24 @@ export const Workspace: React.FC = () => {
   const handleConfirmWorkOrder = (data: { technician: string; notes: string }) => {
     if (!currentRecommendation || !selectedAsset) return;
 
+    if (!isOnline) {
+      // Offline mode: Enqueue action locally
+      syncService.enqueue({
+        asset_id: selectedAsset.id,
+        recommendation_id: currentRecommendation.id,
+        title: currentRecommendation.suggested_work_order.title,
+        description: currentRecommendation.diagnostic_summary,
+        priority: currentRecommendation.suggested_work_order.priority,
+        status: 'DISPATCHED',
+        assigned_technician: data.technician,
+        approved_by: `${DEMO_PERSONA.name} (${DEMO_PERSONA.role})`,
+        notes: `[OFFLINE DRAFT] ${data.notes}`,
+      });
+      setPendingSyncCount(syncService.getQueueLength());
+      setIsModalOpen(false);
+      return;
+    }
+
     const newOrder: WorkOrder = {
       id: `wo_${Date.now()}`,
       asset_id: selectedAsset.id,
@@ -120,9 +143,45 @@ export const Workspace: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  // Reconcile Offline Queue
+  const handleSyncQueue = () => {
+    const pending = syncService.getPendingQueue();
+    const newOrders: WorkOrder[] = [];
+    const newAudits: AuditEvent[] = [];
+
+    for (const item of pending) {
+      const order: WorkOrder = {
+        ...item.payload,
+        id: `wo_synced_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        approved_at: new Date().toISOString(),
+      };
+      newOrders.push(order);
+
+      newAudits.push({
+        id: `aud_sync_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actor_name: item.payload.approved_by,
+        actor_role: 'Field Supervisor (Synced Replay)',
+        action: 'WORK_ORDER_DISPATCHED',
+        target_id: order.id,
+        details: `Reconciled offline work order: ${order.title} [Idempotency: ${item.idempotency_key}]`,
+        payload_snapshot: { idempotency_key: item.idempotency_key },
+      });
+    }
+
+    syncService.clear();
+    setPendingSyncCount(0);
+    setWorkOrders((prev) => [...newOrders, ...prev]);
+    setAuditEvents((prev) => [...newAudits, ...prev]);
+  };
+
   // Reset State Handler (Deterministic Replay)
   const handleResetDemo = () => {
     setIsResetting(true);
+    syncService.clear();
+    setPendingSyncCount(0);
+    setIsOnline(true);
+
     setTimeout(() => {
       setAssets(loadSeedAssets());
       setTelemetry(loadSeedTelemetry());
@@ -150,6 +209,14 @@ export const Workspace: React.FC = () => {
       <Header onReset={handleResetDemo} isResetting={isResetting} />
 
       <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 1.5rem' }}>
+        {/* Offline Connectivity Banner */}
+        <OfflineSyncBanner
+          isOnline={isOnline}
+          onToggleOnline={() => setIsOnline((prev) => !prev)}
+          pendingCount={pendingSyncCount}
+          onSync={handleSyncQueue}
+        />
+
         {/* Fleet Equipment Cards */}
         <AssetSelector
           assets={assets}

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "tel_336_01",
+    "asset_id": "ast_336_001",
+    "parameter": "engine_coolant_temp_c",
+    "value": 92.4,
+    "unit": "°C",
+    "observed_at": "2026-09-22T00:00:00.000Z",
+    "ingested_at": "2026-09-22T00:00:02.000Z",
+    "quality": "GOOD"
+  },
+  {
+    "id": "tel_336_02",
+    "asset_id": "ast_336_001",
+    "parameter": "engine_coolant_temp_c",
+    "value": 97.8,
+    "unit": "°C",
+    "observed_at": "2026-09-22T00:10:00.000Z",
+    "ingested_at": "2026-09-22T00:10:01.500Z",
+    "quality": "GOOD"
+  },
+  {
+    "id": "tel_336_03",
+    "asset_id": "ast_336_001",
+    "parameter": "engine_coolant_temp_c",
+    "value": 103.5,
+    "unit": "°C",
+    "observed_at": "2026-09-22T00:20:00.000Z",
+    "ingested_at": "2026-09-22T00:20:02.100Z",
+    "quality": "GOOD"
+  },
+  {
+    "id": "tel_336_04",
+    "asset_id": "ast_336_001",
+    "parameter": "engine_coolant_temp_c",
+    "value": 108.5,
+    "unit": "°C",
+    "observed_at": "2026-09-22T00:25:00.000Z",
+    "ingested_at": "2026-09-22T00:25:01.800Z",
+    "quality": "GOOD"
+  },
+  {
+    "id": "tel_336_05",
+    "asset_id": "ast_336_001",
+    "parameter": "engine_oil_pressure_kpa",
+    "value": 310.0,
+    "unit": "kPa",
+    "observed_at": "2026-09-22T00:25:00.000Z",
+    "ingested_at": "2026-09-22T00:25:01.800Z",
+    "quality": "GOOD"
+  },
+  {
+    "id": "tel_745_01",
+    "asset_id": "ast_745_002",
+    "parameter": "engine_coolant_temp_c",
+    "value": 88.0,
+    "unit": "°C",
+    "observed_at": "2026-09-21T11:00:00.000Z",
+    "ingested_at": "2026-09-21T11:00:03.000Z",
+    "quality": "STALE"
+  },
+  {
+    "id": "tel_980_01",
+    "asset_id": "ast_980_003",
+    "parameter": "engine_coolant_temp_c",
+    "value": 86.5,
+    "unit": "°C",
+    "observed_at": "2026-09-22T00:30:00.000Z",
+    "ingested_at": "2026-09-22T00:30:01.200Z",
+    "quality": "GOOD"
+  },
+  {
+    "id": "tel_963_01",
+    "asset_id": "ast_963_004",
+    "parameter": "engine_coolant_temp_c",
+    "value": 89.1,
+    "unit": "°C",
+    "observed_at": "2026-09-22T00:30:00.000Z",
+    "ingested_at": "2026-09-22T00:30:01.500Z",
+    "quality": "GOOD"
+  }
+]

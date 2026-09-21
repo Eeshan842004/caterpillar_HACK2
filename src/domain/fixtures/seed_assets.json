@@ -1,0 +1,54 @@
+[
+  {
+    "id": "ast_336_001",
+    "serial_number": "CAT-336-HEX-8821",
+    "model": "336 Hydraulic Excavator",
+    "category": "EXCAVATOR",
+    "site_id": "site_north_quarry",
+    "site_name": "North Quarry Operations",
+    "engine_hours": 3412.5,
+    "fuel_level_pct": 68.0,
+    "status": "CRITICAL",
+    "last_contact_at": "2026-09-22T00:30:00.000Z",
+    "is_synthetic": true
+  },
+  {
+    "id": "ast_745_002",
+    "serial_number": "CAT-745-ADT-4419",
+    "model": "745 Articulated Truck",
+    "category": "ARTICULATED_TRUCK",
+    "site_id": "site_north_quarry",
+    "site_name": "North Quarry Operations",
+    "engine_hours": 5120.2,
+    "fuel_level_pct": 42.0,
+    "status": "WARNING",
+    "last_contact_at": "2026-09-21T11:00:00.000Z",
+    "is_synthetic": true
+  },
+  {
+    "id": "ast_980_003",
+    "serial_number": "CAT-980-WLD-1205",
+    "model": "980 Wheel Loader",
+    "category": "WHEEL_LOADER",
+    "site_id": "site_south_ridge",
+    "site_name": "South Ridge Processing",
+    "engine_hours": 1850.0,
+    "fuel_level_pct": 85.0,
+    "status": "NOMINAL",
+    "last_contact_at": "2026-09-22T00:32:00.000Z",
+    "is_synthetic": true
+  },
+  {
+    "id": "ast_963_004",
+    "serial_number": "CAT-963-TKD-7702",
+    "model": "963 Track Loader",
+    "category": "TRACK_LOADER",
+    "site_id": "site_south_ridge",
+    "site_name": "South Ridge Processing",
+    "engine_hours": 1995.8,
+    "fuel_level_pct": 55.0,
+    "status": "NOMINAL",
+    "last_contact_at": "2026-09-22T00:31:00.000Z",
+    "is_synthetic": true
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "flt_336_110_0",
+    "asset_id": "ast_336_001",
+    "spn": 110,
+    "fmi": 0,
+    "raw_code": "SPN 110 FMI 0",
+    "standard_description": "Engine Coolant Temperature - Data Valid But Above Normal Operational Range (Most Severe)",
+    "source_interpretation": "Engine cooling circuit overheating. Thermostat, coolant leak, or radiator blockage likely.",
+    "severity": "CRITICAL",
+    "is_active": true,
+    "occurred_at": "2026-09-22T00:25:00.000Z"
+  },
+  {
+    "id": "flt_745_100_1",
+    "asset_id": "ast_745_002",
+    "spn": 100,
+    "fmi": 1,
+    "raw_code": "SPN 100 FMI 1",
+    "standard_description": "Engine Oil Pressure - Data Valid But Below Normal Operational Range (Least Severe)",
+    "source_interpretation": "Oil pressure slightly below nominal threshold. May indicate thinning oil or sensor degradation.",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "occurred_at": "2026-09-21T10:45:00.000Z"
+  }
+]

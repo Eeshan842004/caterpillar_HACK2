@@ -1,7 +1,7 @@
 # Lock / Trigger / Evidence / Merge / Delete Register
 
 > **Status:** Live active register (Epic E-00 baseline).  
-> **Source:** [`PLANNING_A_TO_Z.md`](file:///c:/Users/kriss/github/caterpillar-hack/caterpillar-hack/PLANNING_A_TO_Z.md#L1305-L1358) Section 22, governed by Council Decision `c00bdca0`.
+> **Source:** `PLANNING_A_TO_Z.md` Section 22, governed by Council Decision `c00bdca0`.
 
 ---
 
@@ -18,6 +18,7 @@ Stable, low-cost foundations locked for implementation across all likely challen
 - **Offline & degraded modes:** First-class offline draft state, visible sync status, and graceful degradation on stale or missing sensor feeds.
 - **Brand protection:** Neutral industrial UI theme; no Caterpillar logos, trade dress, or unverified official color codes without express permission.
 - **Branch & version control:** Protected `main`, short-lived branches named `gemini/{epic-id}-{short-name}`, and deterministic mock fallbacks for all external integrations.
+- **Core/cartridge boundary:** `src/core` contains only patterns proven challenge-neutral; domain entities, rules, fixtures, UI and adapters remain under a selected cartridge. Mock challenge artifacts belong under `examples`, never in live planning truth.
 
 ---
 
@@ -54,10 +55,10 @@ Active open questions requiring external verification or organizer ruling:
 
 ## 4. Merge
 
-- Detailed presentation instructions belong in [`PRESENTATION_SYSTEM_PLAN.md`](file:///c:/Users/kriss/github/caterpillar-hack/caterpillar-hack/PRESENTATION_SYSTEM_PLAN.md).
-- Durable governance policy belongs in [`PLANNING_A_TO_Z.md`](file:///c:/Users/kriss/github/caterpillar-hack/caterpillar-hack/PLANNING_A_TO_Z.md).
-- Live active status and handoffs belong in [`CONTEXT.md`](file:///c:/Users/kriss/github/caterpillar-hack/caterpillar-hack/CONTEXT.md).
-- Capability ideas remain in [`HACKATHON_STARTER_PACK_PLAN.md`](file:///c:/Users/kriss/github/caterpillar-hack/caterpillar-hack/HACKATHON_STARTER_PACK_PLAN.md), but are non-binding.
+- Detailed presentation instructions belong in `PRESENTATION_SYSTEM_PLAN.md`.
+- Durable governance policy belongs in `PLANNING_A_TO_Z.md`.
+- Live active status and handoffs belong in `CONTEXT.md`.
+- Capability ideas remain in `HACKATHON_STARTER_PACK_PLAN.md`, but are non-binding.
 
 ---
 

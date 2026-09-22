@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { globalStorage } from '@/adapters/in-memory-storage';
-import { RecommendationEngine } from '@/domain/services/recommendation-engine';
+import { globalStorage } from '@/cartridges/asset-maintenance/adapters/in-memory-storage';
+import { RecommendationEngine } from '@/cartridges/asset-maintenance/domain/services/recommendation-engine';
 
 const engine = new RecommendationEngine();
 

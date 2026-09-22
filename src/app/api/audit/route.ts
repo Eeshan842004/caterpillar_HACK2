@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { globalStorage } from '@/adapters/in-memory-storage';
+import { globalStorage } from '@/cartridges/asset-maintenance/adapters/in-memory-storage';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {

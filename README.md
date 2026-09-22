@@ -1,138 +1,136 @@
-# Industrial Asset Operations Workspace
+# Caterpillar Hackathon Starter Pack
 
-> **A trustworthy, advisory decision-support workspace for heavy equipment fleet managers to triage telematics faults, inspect thermal anomalies, and authorize verified maintenance dispatches.**
+> **Status:** Pre-event starter foundation with an isolated asset-maintenance reference cartridge.
+>
+> **Important:** No official problem statement, judging rubric, or reusable-code ruling is
+> recorded yet. The reference application is a mock drill, not a submission.
 
----
+## Purpose
 
-## 1. Executive Summary
+This repository reduces hackathon setup and decision time without assuming that the real
+challenge will be fleet maintenance. It provides:
 
-- **Current Status:** **DEMO-READY / SUBMITTED** (Council Review Verdict SHA `c00bdca0` | Release Tag `v1.0.0-hackathon-final`)
-- **Primary User:** **Alex Vance**, Field Service Supervisor managing distributed heavy machinery across remote quarry and construction sites.
-- **The Core Problem:** Heavy equipment fleets generate thousands of raw telematics alerts daily. Alert fatigue obscures critical early warnings—leading either to catastrophic engine failure ($50,000+ per machine) or expensive false technician dispatches.
-- **The Solution:** A modular industrial decision spine that turns raw ISO 15143-3 sensor streams and J1939 fault codes into evidence-backed, human-verified maintenance work orders in under 2 minutes.
+- live reveal templates and implementation gates;
+- a challenge-neutral evidence, determinism, safety, and offline core;
+- tested TypeScript/Next.js engineering tooling;
+- an asset-maintenance example showing how a cartridge can use the core;
+- QA, review, demo, diagram, and presentation patterns;
+- a Gemini multi-agent implementation contract.
 
----
+Read `STARTER_PACK_GUIDE.md` first. It explains exactly what is reusable and what to do
+when the problem statement arrives.
 
-## 2. Key Features
-
-- **Fleet Health Workspace:** Live fleet overview displaying operating status (`CRITICAL`, `WARNING`, `NOMINAL`), engine hours, and fuel levels across connected equipment units.
-- **Thermal Trajectory Visualizer:** Recharts timeline charting engine coolant temperature spikes against calibrated warning (102°C) and critical (106°C) thresholds.
-- **Deterministic Diagnostic Engine:** Rule-based diagnostic evaluator correlating active Diagnostic Trouble Codes (`SPN 110 FMI 0`) with sensor trends to generate confidence-scored advisory recommendations.
-- **Safety Compliance Gate (ADR-0003):** Strictly advisory decision support. Zero direct or autonomous machinery actuation. All consequential work orders require explicit human authorization.
-- **Offline Field Resilience:** Client-side draft queue with unique idempotency keys that prevents duplicate work orders when synchronizing after connectivity loss.
-- **Tamper-Evident Audit Trail:** Every consequential authorization event is sealed with a SHA-256 cryptographic hash for compliance verification.
-- **Sub-150ms Instant Reset:** One-click demo state reset to pristine ground truth seed fixtures for 100% deterministic presentation replays.
-
----
-
-## 3. Architecture Snapshot
+## Repository boundary
 
 ```text
-[ Connected Equipment Fleet ]
-  │ (ISO 15143-3 Telematics & J1939 Faults)
-  ▼
-[ 1. Ingestion & Quality Validation ] ──► (Detects STALE, OUT_OF_RANGE, GOOD)
-  │
-  ▼
-[ 2. Recommendation Engine ] ──────────► (Evaluates rules, calculates confidence, bundles citations)
-  │
-  ▼
-[ 3. Safety Compliance Gate ] ─────────► (Enforces ADR-0003: Mandatory Human Approver Signature)
-  │
-  ▼
-[ 4. Operational Workspace UI ] ───────► (Next.js 14 App Router, Recharts, Dark Industrial Theme)
-  │
-  ▼
-[ 5. Persistence & Audit Ports ] ──────► (Storage-neutral in-memory baseline + SHA-256 Audit Trail)
+planning/                         live challenge/rules/manifest templates
+src/core/                         challenge-neutral reusable contracts
+src/cartridges/asset-maintenance/ replaceable reference cartridge
+examples/asset-maintenance/       archived mock plans, evidence and presentation
+tests/core/                       reusable-core verification
+tests/cartridges/asset-maintenance/ reference-cartridge verification
 ```
 
----
+The live files under `planning/` intentionally contain unresolved hard blocks. The filled
+asset-maintenance planning documents are examples under `examples/` and must not be copied
+into the live challenge without evidence.
 
-## 4. Setup & Local Run Instructions
+## Reusable technical core
 
-### Prerequisites
-- Node.js `>= 20.10.0 LTS`
-- npm `>= 10.2.0`
+- Evidence citations, data-quality states and audit-record contracts.
+- Injectable clock and ID providers for repeatable tests and fixtures.
+- Generic human-confirmation policy for consequential actions.
+- Generic in-memory offline action queue.
+- Modular-monolith and provider-adapter conventions.
+- Vitest, TypeScript, ESLint, Prettier and Next.js build foundation.
 
-### Quick Start
+## Asset-maintenance reference
+
+The reference cartridge demonstrates:
+
+- fleet and asset fixtures;
+- telemetry/fault quality handling;
+- rule-based coolant and oil-pressure recommendations;
+- human-confirmed maintenance work orders;
+- local offline queue and audit-hash utilities;
+- a resettable UI and route-handler API examples.
+
+It is intentionally domain-specific. Its challenge statement, rubric, user, claims and
+presentation artifacts are synthetic examples.
+
+## Local verification
+
+Prerequisites:
+
+- Node.js 20 or a compatible version permitted by the event.
+- npm 10 or a compatible version permitted by the event.
+
+From the repository root:
+
 ```powershell
-# 1. Clone & Enter Directory
-cd c:\Users\kriss\github\caterpillar-hack\caterpillar-hack
-
-# 2. Install Dependencies
 npm install
-
-# 3. Start Development Server
+npm test
+npm run type-check
+npm run lint
+npm run build
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the operational workspace.
+Open `http://localhost:3000` to view the asset-maintenance reference cartridge.
 
-### Automated Verification Commands
-```powershell
-# Run all 36 automated unit, contract, and E2E integration tests
-npm run test
+## Problem-reveal workflow
 
-# Run strict TypeScript type check
-npm run type-check
+1. Verify official rules and prework eligibility in `planning/rules-and-provenance.md`.
+2. Complete `planning/challenge-compiler.md`.
+3. Select the reference cartridge only if it actually fits; otherwise create a new cartridge.
+4. Complete `planning/implementation-manifest.md` with exact stack/data/capability decisions.
+5. Freeze domain, API/event, fixture, safety and evidence contracts.
+6. Build one source-to-outcome vertical slice.
+7. Activate authentication, hosted storage, AI, ElevenLabs or other providers only when
+   challenge evidence justifies them.
+8. Capture tests, claims, screenshots, diagrams and fallback evidence continuously.
 
-# Run Next.js ESLint check
-npm run lint
+## Optional capabilities
 
-# Build production bundle
-npm run build
-```
+Disabled until activated in the live manifest:
 
----
+- real authentication;
+- Supabase/Postgres or MongoDB;
+- FastAPI/Python analytics;
+- product LLM/RAG/vector search;
+- ElevenLabs voice;
+- maps, notifications, PDF generation and object storage;
+- realtime subscriptions and hosted deployment.
 
-## 5. Live Judging Demo (Golden Path)
+Every activation needs an owner, timebox, measurable value, fallback and cut condition.
 
-1. **Fleet Overview:** Open `http://localhost:3000`. Observe 4 connected machines and the amber "SYNTHETIC DEMO DATA" compliance header.
-2. **Select Hero Asset:** Click on **CAT-336-HEX-8821** (marked `CRITICAL`).
-3. **Inspect Anomaly:** Observe the coolant temperature curve spiking from 92°C to 108.5°C, breaching the 102°C threshold, accompanied by active fault `SPN 110 FMI 0`.
-4. **Review Recommendation:** Examine the 94% confidence emergency advisory with cited sensor evidence.
-5. **Human Safety Gate:** Click **"Review & Confirm Work Order →"**. In the modal, verify technician assignment, enter authorization notes, and click **"Authorize & Dispatch Work Order"**.
-6. **Audit Verification:** Observe the dispatched work order and the new entry in the immutable Audit Trail.
-7. **Offline Mode:** Click **"Simulate: Go Offline"** in the banner to demonstrate resilient local queueing.
-8. **Instant Reset:** Click **"↺ Reset Demo State"** to restore pristine ground truth in 150ms.
+## Known reference limitations
 
----
+- The default UI consumes the API-backed state path, but automated coverage is split between
+  component/client tests and route-handler integration tests; there is no running-browser E2E
+  suite yet.
+- Offline queue state does not survive a page refresh.
+- Hashing is a tamper-detection utility, not an immutable external ledger.
+- Running-server HTTP performance has not been load tested.
+- No external provider, real user identity or production data is active.
+- Operational and financial values are synthetic.
 
-## 6. Engineering Rigor & QA Scoreboard
+## Key documents
 
-| Metric | Measured Value |
-|---|:---:|
-| **Automated Tests** | **36 / 36 Passing (100%)** |
-| **QA Scenario Scoreboard** | **34 / 34 Passed (0 Failed, 0 Blocked)** |
-| **Type Check Diagnostics** | **0 Errors (`strict: true`)** |
-| **ESLint Warnings/Errors** | **0 Warnings, 0 Errors** |
-| **Average API Response Time** | **< 20 ms (In-Memory Baseline)** |
-| **Deterministic Reset Time** | **< 150 ms** |
+- `STARTER_PACK_GUIDE.md` — reusable boundary and reveal-day runbook.
+- `PLANNING_A_TO_Z.md` — durable planning and readiness policy.
+- `PRESENTATION_SYSTEM_PLAN.md` — evidence-to-deck and rehearsal system.
+- `GEMINI_MULTI_AGENT_IMPLEMENTATION_SPEC.md` — implementation contract.
+- `GEMINI_COORDINATOR_PROMPT.md` — copy-ready coordinator prompt.
+- `planning/lock-trigger-register.md` — capability activation policy.
+- `planning/decisions.md` — current durable ADRs.
+- `planning/drills/non-fleet-safety-observation.md` — non-fleet adaptation proof.
 
----
+## Safety and claims
 
-## 7. Repository Directory Map
+This starter is advisory software only. It must not control physical machinery. Any
+consequential action requires an identified human approver and an audit record.
 
-```text
-├── docs/
-│   ├── diagrams/system-architecture.svg   # Vector architecture diagram
-│   └── 10-presentation/                   # Presentation deck, script, fallback matrix
-├── planning/
-│   ├── challenge-compiler.md              # 1-page reveal-to-scope sheet
-│   ├── implementation-manifest.md         # Pinned stack and product contract
-│   ├── lock-trigger-register.md           # Lock/Trigger/Evidence register
-│   ├── rules-and-provenance.md            # Competition governance & provenance
-│   ├── decisions.md                       # Accepted ADRs (ADR-0001 to ADR-0005)
-│   ├── briefs/                            # Multi-agent worker briefs (E-01 to E-10)
-│   ├── qa/                                # QA scenario catalogs
-│   ├── reviews/                           # High-reasoning adversarial reviews
-│   └── evidence/                          # QA execution logs and final scoreboard
-├── src/
-│   ├── domain/                            # Storage-neutral entities, constants, services
-│   ├── adapters/                          # In-memory repository container & fixtures
-│   ├── components/                        # React UI workspace & Recharts visualizer
-│   └── app/                               # Next.js App Router & API Route Handlers
-├── tests/                                 # Vitest unit, contract, and E2E suites
-├── CONTEXT.md                             # Live project truth and team roles
-└── README.md                              # Entry point for judges and reviewers
-```
+Do not claim Caterpillar endorsement, official branding, production readiness, customer
+savings, predictive accuracy, immutable storage, or event submission status without current
+evidence and permission.

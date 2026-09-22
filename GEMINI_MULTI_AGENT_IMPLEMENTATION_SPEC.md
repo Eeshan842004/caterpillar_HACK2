@@ -4,7 +4,7 @@
 >
 > **Repository:** the current repository root (the directory containing this document).
 >
-> **Current repository state:** greenfield, planning-only.
+> **Current repository state:** pre-event starter foundation with a tested asset-maintenance reference cartridge; no official challenge implementation exists.
 >
 > **Last reviewed:** 2026-09-21, Asia/Calcutta.
 
@@ -778,7 +778,7 @@ Implement every active epic in `planning/implementation-manifest.md` for the cha
 
 the current repository root—the directory containing this specification and the other source documents.
 
-This is a greenfield, planning-only repository. Do not assume an existing application.
+This repository contains `src/core` and an isolated asset-maintenance reference cartridge. Treat the official challenge implementation as greenfield: reuse the core or cartridge only when competition rules and the approved manifest authorize it, and never assume the reference application satisfies the revealed problem.
 
 Source-of-truth documents, in precedence order:
 

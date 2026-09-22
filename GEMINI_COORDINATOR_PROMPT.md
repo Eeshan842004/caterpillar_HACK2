@@ -14,7 +14,7 @@ Implement inside:
 
 the current repository root—the directory containing this prompt and the source documents.
 
-This is a **greenfield, planning-only repository**. Do not assume that application scaffolding, dependencies, services, schemas, or environments already exist.
+This is a **pre-event starter repository with a tested asset-maintenance reference cartridge**. The official challenge implementation does not yet exist. Inspect `src/core`, `src/cartridges/asset-maintenance`, and `examples/asset-maintenance`, but reuse them only when competition rules and the approved manifest authorize it. Never assume the reference application's domain, data, UI, services, schemas, or evidence satisfy the revealed problem.
 
 Before writing code, read the following sources in this precedence order:
 

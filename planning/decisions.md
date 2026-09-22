@@ -12,6 +12,7 @@
 - [ADR-0003: Strict Advisory Decision Support and Human Confirmation Boundary](#adr-0003-strict-advisory-decision-support-and-human-confirmation-boundary)
 - [ADR-0004: Neutral Industrial Design System and Absence of Caterpillar Trade Dress](#adr-0004-neutral-industrial-design-system-and-absence-of-caterpillar-trade-dress)
 - [ADR-0005: Pinned Core Technology Stack](#adr-0005-pinned-core-technology-stack)
+- [ADR-0006: Separate Reusable Core from Challenge Cartridges](#adr-0006-separate-reusable-core-from-challenge-cartridges)
 
 ---
 
@@ -69,3 +70,15 @@
   - **Testing:** Vitest
   - **Code Quality:** ESLint, Prettier, TypeScript `tsc`
 - **Consequences:** Unified full-stack TypeScript environment; single dev server; zero microservice sprawl; fast CI/local test feedback.
+
+---
+
+## ADR-0006: Separate Reusable Core from Challenge Cartridges
+
+- **Status:** Accepted
+- **Date:** 2026-09-22
+- **Context:** The reference implementation placed fleet, asset, telemetry, coolant, J1939, work-order, safety, offline, and evidence concepts under one generic `src/domain` namespace. That made a single mock cartridge appear universal and increased the risk of forcing an unrelated revealed problem into fleet terminology.
+- **Decision:** Keep challenge-neutral evidence, deterministic runtime, consequential-action safety, and offline queue contracts in `src/core`. Keep the asset-maintenance implementation in `src/cartridges/asset-maintenance`. Preserve its mock planning, QA, review, diagram, and presentation artifacts under `examples/asset-maintenance`. Live unresolved reveal documents remain under `planning`.
+- **Consequences:** A new challenge can reuse the core without importing fleet concepts; the maintenance demo remains executable; historical evidence is clearly separated from current truth. Imports and documentation must respect the boundary, and any new cartridge owns its domain types, fixtures, rules, UI, adapters, and cartridge-specific tests.
+- **Validation:** `tests/core/reusable-core.test.ts` exercises the core with a non-fleet hazard example, while all fleet tests import through the asset-maintenance cartridge.
+- **Revisit trigger:** A repeated pattern proven across at least two distinct cartridges may be promoted into `src/core`; speculative abstractions must remain cartridge-local.

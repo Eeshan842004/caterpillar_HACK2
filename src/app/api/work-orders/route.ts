@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { globalStorage } from '@/adapters/in-memory-storage';
-import { SafetyPolicyVerifier } from '@/domain/services/safety-policy';
+import { globalStorage } from '@/cartridges/asset-maintenance/adapters/in-memory-storage';
+import { SafetyPolicyVerifier } from '@/cartridges/asset-maintenance/domain/services/safety-policy';
 
 const safetyVerifier = new SafetyPolicyVerifier();
 
@@ -23,6 +23,19 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    if (body.idempotency_key) {
+      const existing = await globalStorage.workOrders.findByIdempotencyKey(
+        body.idempotency_key
+      );
+      if (existing) {
+        return NextResponse.json({
+          success: true,
+          data: existing,
+          replayed: true,
+        });
+      }
+    }
+
     const orderPayload = {
       ...body,
       approved_at: body.approved_at || (body.approved_by ? new Date().toISOString() : undefined),
@@ -42,17 +55,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Work Order
-    const createdOrder = await globalStorage.workOrders.create({
-      asset_id: body.asset_id,
-      recommendation_id: body.recommendation_id || 'rec_direct',
-      title: body.title,
-      description: body.description || '',
-      priority: body.priority || 'MEDIUM',
-      status: 'DISPATCHED',
-      assigned_technician: body.assigned_technician || 'Unassigned Field Tech',
-      approved_by: body.approved_by,
-      notes: body.notes,
-    });
+    const createdOrder = await globalStorage.workOrders.create(
+      {
+        asset_id: body.asset_id,
+        recommendation_id: body.recommendation_id || 'rec_direct',
+        title: body.title,
+        description: body.description || '',
+        priority: body.priority || 'MEDIUM',
+        status: 'DISPATCHED',
+        assigned_technician: body.assigned_technician || 'Unassigned Field Tech',
+        approved_by: body.approved_by,
+        notes: body.notes,
+      },
+      body.idempotency_key
+    );
 
     // Record Immutable Audit Event with Hash
     const auditPayload = {

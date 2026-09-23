@@ -4,11 +4,11 @@
 |---|---|
 | Derived from | `ShiftMate — Product Plan` v1.0 (23 Sep 2026) — the product source of truth |
 | Spec date | 23 September 2026 |
-| Repository | https://github.com/Eeshan842004/caterpillar_HACK2.git, cloned at `E:\antigravity\caterpillar_2`, **verified empty (no commits, no files)**, so there are no existing conventions to respect |
+| Repository | https://github.com/Eeshan842004/caterpillar_HACK2.git. At the time of writing it contains only planning documents: `docs/` (`PRODUCT_PLAN.md`, `TECHNICAL_SPEC.md`, `DATASET_SCHEMA.md`, `FUTURE_IDEAS.md`), a root copy of the product plan and an ML-architecture council report/transcript. There is no `README.md` (T01 creates it), no application code and no existing code conventions to respect |
 | Audience | A coding model (with a human team) that implements this spec exactly |
 | **On approval of this plan** | (1) Save this document verbatim as `docs/TECHNICAL_SPEC.md` in the repository. (2) Save the product plan verbatim as `docs/PRODUCT_PLAN.md`. (3) Do not start implementation until the user asks. |
 
-**Rule of precedence:** product behaviour → `docs/PRODUCT_PLAN.md`; everything technical (architecture, contracts, paths, algorithms, task order) → this spec. If the two disagree, stop and report (see §14).
+**Rule of precedence:** product behaviour → `docs/PRODUCT_PLAN.md`; everything technical (architecture, contracts, paths, algorithms, task order) → this spec; the structure and column meaning of the generated synthetic dataset (§8.22) → `docs/DATASET_SCHEMA.md`, which must stay consistent with this spec's contracts. If they disagree, stop and report (see §14).
 
 **Continuation index:** Part 1 = §0–§4 · Part 2 = §5–§6 · Part 3 = §7–§8 · Part 4 = §9–§14 + Final consistency audit. All parts are in this one file.
 
@@ -138,10 +138,10 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F4-R6 | "Why did my estimate change?" explains the stored change log (§8.6.8) | Answer names the cause, e.g. "+12 min: truck wait reported" | No changes → "No change since start" | voice `WHY_ESTIMATE`, A4 key `4` | M4 |
 | F4-R7 | Planner estimate shown next to ShiftMate's | "Planner 30 min" | Absent → hidden | A3, A4 | M4 |
 | F4-R8 | Runs fully on device from the bundled model artifact | Works offline | Artifact missing/invalid → basis `fallback` for every task + diagnostics error | `core/estimate` | M4 |
-| F4-R9 | Basis indicator rules: `comparable_history` / `fallback` / `insufficient_data` (§8.6.4) | New task type → "fallback · baseline only" | — | `estimateService.ts` | M4 |
-| F4-R10 | Accepted delay/block reason → recompute current ETA and next planned assignment impact; show both deltas | "Current +18 min; Task 2 may miss start window" | No next window → current delta only + "downstream impact unavailable" | A3/A5 · `tasks/impactPreview.ts` | M4 |
-| F4-R11 | "Request reassignment" / "Notify supervisor" creates a request/follow-up only | Pending badge + console item | Offline → outbox; duplicate request deduped | A3/A4, C2 | M3/M4 |
-| F4-R12 | Impact preview never reorders tasks or changes assignment | Board order and assignee unchanged until supervisor decision | — | `dayPlan.ts`, task projector | M3/M4 |
+| F4-R9 | Accepted delay/block reason → immediately recompute current ETA and the next planned assignment's start-window risk against `[planned_start_at, planned_start_at + planned_start_window_min)` (§8.6.9); show both messages | "Current task ETA updated by +18 minutes" and "Task 2 may miss its planned start window" | See F4-R11 | A3/A4/A5 · `tasks/impactPreview.ts` | M4 |
+| F4-R10 | Impact card offers "Request reassignment" (`report/reassignment_request`) and "Notify supervisor" (`report/supervisor_notification`); both create a request/follow-up only. The preview and these actions never reorder tasks or change the assignee | Pending badge + C2 item; board order and assignee unchanged until a supervisor decision | Offline → outbox; a second identical request for the same task while one is pending is deduped | A3/A4, C2 · `dayPlan.ts`, task projector | M3/M4 |
+| F4-R11 | No next `PLANNED` task, next task without `planned_start_at`, or current estimate unavailable → show only the current-task change and "Downstream impact unavailable"; never an invented risk | Seeded task 3 (no start window) → "unavailable" | — | `impactPreview.ts` | M4 |
+| F4-R12 | Basis indicator rules: `comparable_history` / `fallback` / `insufficient_data` (§8.6.4) | New task type → "fallback · baseline only" | — | `estimateService.ts` | M4 (D) |
 
 ### 1.5 F5 Working view and Drive Mode — actor: operator
 
@@ -166,7 +166,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F6-R5 | Organiser rows with belt unfastened + idle > threshold → "Extended idle with belt unfastened — context needed" | Replay flags rows 2 and 4 only | Mapping mismatch → T38 reports conflict | `sim/organiserRules.ts` | M6 · E-01 |
 | F6-R6 | Evaluate fresh belt, seat-occupancy, cab-door, motion, implement-neutral and lockout/parking-brake signals every tick | Diagnostics list each input and age | Missing signal → unavailable, never secured | `safeExitGuard.ts` | M6 |
 | F6-R7 | Belt-off alone never opens Safe Exit Guard; exit intent requires belt transition plus seat-vacant or door-open within 10 s | Belt off while digging → belt warning only | Stale seat/door → no exit-intent assertion | same | M6 |
-| F6-R8 | Exit intent while not SECURED/OFF → full-screen `A7E` advisory checklist; advisory clears on SECURED/OFF or "Not exiting" | No menus visible behind it; spoken once | Cannot dispatch machine-control commands | A7E · `safeExitGuard.ts` | M6 |
+| F6-R8 | Exit intent while not SECURED/OFF → full-screen `A7E` advisory checklist (alert `A-EXIT-UNSEC`, level `ADVISORY`), visual and spoken; clears when the machine becomes SECURED/OFF, when fresh signals show the seat occupied **and** the cab door closed again, or when the operator acknowledges "Not exiting" | No menus visible behind it; spoken once ("Secure the machine before exiting.") | Cannot lower an implement, apply a brake, engage lockout or dispatch any machine-control command | A7E · `safeExitGuard.ts` | M6 |
 | F6-R9 | Missing/stale guard inputs are named unavailable; guard never claims secured unless motion stopped + secure signal engaged | Security checklist shows unknown field | — | A7E | M6 |
 | F6-R10 | `TRAVELLING` + unfastened → CRITICAL `A-BELT-MOVE`, voice repeats every 5 s until fastened or acknowledged; > 30 s → auto incident | Alert ≤ 1 s after rule fires | — | seatbelt + incident | M6 |
 | F6-R11 | `WORKING` or `READY` + unfastened → WARNING `A-BELT-OPER`, voice every 20 s | "Seatbelt. Machine operating." | — | seatbelt | M6 |
@@ -215,7 +215,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F9-R1 | Non-required idle ≥ threshold (300 s) → ask once "Why the wait?" with top 4 reasons on keys 1–4 or voice | Prompt at exactly threshold | In WORKING (can't happen: idle ⇒ SECURED/READY) | A8 · `idle/*` | M10 |
 | F9-R2 | Unanswered 60 s → closes, not repeated; marked unexplained; answerable later from A3 "Unexplained waits" | Later answer updates views retroactively | — | A3 | M10 |
 | F9-R3 | Expected wait > 10 min → engine-off suggestion with fuel (L) and cost (₹) labelled "estimate" | Spoken + shown once per idle | — | `engineOff.ts` | M10 |
-| F9-R4 | Each finding shows observed, possible explanations, owner, reason, evidence status | A12 "My review" list; console item | — | `usage/*` | M10 |
+| F9-R4 | Each finding shows observed, possible explanations, owner, reason, evidence status | A3 "My review" sheet (OFF/SECURED/READY) and the end-of-shift copy in A12; console item | — | `usage/*` | M10 |
 | F9-R5 | Comparable context only; too little history → `insufficient_evidence` | — | — | `usage/*` | M10 |
 | F9-R6 | Correction updates all downstream views; original kept in history | Propagation report lists 5 consumers | — | propagation | M10 |
 | F9-R7 | Operator sees own findings first; only site/machine/needs_review findings sync to console | Operator-owned findings never create console items | — | outbox audience filter | M10 |
@@ -231,7 +231,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | ID | Trigger → expected behaviour | Observable success | Failure / edge | Surfaces | Tier |
 |---|---|---|---|---|---|
 | F10-R1 | Library by machine class, task type, topic; offline search (voice "search rain" or hardware keyboard) | Filter results instantly offline | No match → empty state | A10 | M11 |
-| F10-R2 | Recommendations only from task prep, operator request, or corroborated operator-owned finding with trainable cause; one alert never triggers one | Eval: 0 recommendations from single alerts | — | `recommender.ts` | M11 |
+| F10-R2 | Recommendations only from task prep, condition prep (F10-R12), operator request (incl. refreshers, F10-R13), or corroborated operator-owned finding with trainable cause; one alert never triggers one | Eval: 0 recommendations from single alerts | — | `recommender.ts` | M11 |
 | F10-R3 | Every recommendation shows reason + "Not relevant" (key 4); feedback suppresses same pattern/content for 14 days | — | — | A10 | M11 |
 | F10-R4 | Offered only in SECURED/OFF and only on opt-in; defer/resume; player auto-saves and exits if state leaves SECURED/OFF | Leaving SECURED pauses player → `deferred` | — | A10/A11, ModeGuard | M11 |
 | F10-R5 | Wrong answer → explanation + retry; two wrong → "Ask a trainer" (help request) | Help request in console | Offline → queued | A11 | M11 |
@@ -241,7 +241,9 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F10-R9 | Reviewed near-miss → template draft (LLM when online, S1) → trainer edit/approve → published to machine class via next pull | Scenario appears on device after approval + sync | Rejected → not published | C4, server, pull | M12 |
 | F10-R10 | Launch pack: excavator 6 lessons + 6 scenarios; truck 3 + 3; en + hi | `pnpm content:check` passes | — | `packages/content/packs` | M11 |
 | F10-R11 | Secured-state replay may recommend a focused scenario tied to the incident; published copy is anonymised | A17 → A10/C4 link | Replay unavailable while active | A17, C4 | S9 |
-| F10-R12 | Newly published near-miss scenarios appear under Recommended with reason "From a real near-miss [on this site]" | J4 visible | — | A10 | M12 |
+| F10-R12 | Condition prep: rain/darkness/dust active or forecast within 10 h during remaining work, operator < 12 months' experience with < 3 prior tasks in that condition on this machine class → one prep lesson/scenario from `profile.training.condition_prep` per shift, with reason (§8.12 source 4) | J1: "Rain after 14:00 — you have trenched in rain 0 times so far" → Later → stays in A10 Recommended | Experienced operator or ≥ 3 exposures → no offer; no mapped content → no offer | `conditionPrep.ts`, A10 | M11 |
+| F10-R13 | Refreshers: opt-in at completion; one question due after 2/7/30 days (from the previous answer); wrong → explanation + back to 2 days; done after the 30-day question is correct; ≤ 1 per shift; parked only; no scores or streaks (§8.12 source 5) | Completed lesson with opt-in is offered as one question on the first shift ≥ 2 days later | "Later" keeps it due; "Not relevant" stops it | `refreshers.ts`, A10/A11 | M11 |
+| F10-R14 | Newly published near-miss scenarios appear under Recommended with reason "From a real near-miss [on this site]" | J4 visible | — | A10 | M12 |
 
 ### 1.11 F11 Voice and controls — actor: operator
 
@@ -251,7 +253,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F11-R2 | Every intent has a button path (§7.3 table) | E2E without voice passes | — | all screens | M13 |
 | F11-R3 | Unrecognised utterances stored (text only) only with operator permission (asked once; default no) | `voice_unrecognised` rows only with consent | — | SQLite | M13 |
 | F11-R4 | Alert audio: pre-recorded clips (en, hi); dynamic text via device TTS | Clip playback | Missing clip → TTS + diagnostics | Speaker | M13 · E-05 |
-| F11-R5 | Quantized multilingual DistilBERT ONNX model + tokenizer/config ship in app; inference records model version, logits/probabilities, selected intent and rule/model source | Airplane-mode inference on Android | Model load/inference failure → rules/buttons | app `IntentModel`, core result type | M13 |
+| F11-R5 | Quantized multilingual DistilBERT ONNX model + tokenizer/config ship in app; every decision records model version, top intent, confidence and whether rules or the model decided (`IntentInferenceResult` + diagnostics event `intent_decision`, §8.13.4) | Airplane-mode inference on Android; A14 shows the last decisions | Model load/inference failure → rules/buttons | app `IntentModel`, core result type, diagnostics | M13 |
 | F11-R6 | Low confidence/margin, forbidden-state intent or model failure → top-three/button clarification; no consequential action silently executes | High-confidence wrong-action and abstention metrics reported | — | `interpreter.ts`, A8-style prompt | M13 |
 | F11-R7 | State gating: in WORKING/TRAVELLING/UNKNOWN only allowed intents execute; others → "I'll show that when you stop." | Eval gating cases | — | `interpreter.ts` | M13 |
 | F11-R8 | No always-on mic: recognizer runs only while PTT held (max 10 s) | — | — | PushToTalkController | M13 |
@@ -267,7 +269,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F12-R2 | Each item shows audience; `operator_only` entries never included | Test: learning answers absent | — | same | M14 |
 | F12-R3 | Add (voice/keys), remove (reason), edit (re-dictate); 20 s voice note | Note plays back | Mic denied → note disabled with message | A13 · recorder | M14 |
 | F12-R4 | Saved locally (next operator on same tablet sees it offline); synced when online | — | — | SQLite, outbox `handover` | M14 |
-| F12-R5 | Incoming ack; items stay open until resolved by supervisor (console) or task completion | Ack ≠ resolve | — | A2, C5 | M14 |
+| F12-R5 | Incoming ack; items stay open until resolved by an authorised console role (supervisor or mechanic, C5) or by task completion | Ack ≠ resolve | — | A2, C5 | M14 |
 | F12-R6 | Offline templates; online polish (S1) without fact changes | Fact-check failure → template | — | `/ai/handover-wording` | M14 (polish S) |
 
 ### 1.13 F13 Offline and sync — actor: system
@@ -284,7 +286,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 
 ### 1.14 F14 SOS (Should) — F14-R1…R5 as in the product. Implementation: §8.19 (packet codec), `/api/v1/lora/sim-uplink`, C7. Success: SOS from "pit" appears on C7 within 5 s, operator sees `delivered`. Edge: sim-uplink unreachable → retries at 0/8/20 s then `not confirmed`; screen always shows "Also call on radio". Tier S · built in T41 (depends on T17, T21, T23).
 
-### 1.15 F15 Console — actor: supervisor, trainer, safety coordinator
+### 1.15 F15 Console — actor: supervisor, trainer, safety coordinator, mechanic
 
 | ID | Behaviour | Success | Edge | Surfaces | Tier |
 |---|---|---|---|---|---|
@@ -328,10 +330,10 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | NFR-11 | No record lost on crash (WAL SQLite, one transaction for ledger + outbox) | F13-R6 test |
 | NFR-12 | Idempotent sync; conflicts surfaced | pytest |
 | NFR-13 | Privacy: pseudonymous IDs, audience on every record, private learning, no always-on mic, no stored raw audio except explicit voice notes | tests + review |
-| NFR-17 | Alert budget: report alerts/hour, repeats suppressed, duplicates prevented, non-critical prompts deferred until READY/SECURED, critical delivery latency, and acknowledgement/resolution | TC-06, TC-18, TC-71, MC-02, `pnpm eval` |
 | NFR-14 | Security: role-based console, HMAC-signed device requests, hash-chained incidents | pytest |
 | NFR-15 | Auditability: every alert/inference stores rule/model/profile version | schema requires `rule_or_model_version` for kinds alert/inference |
 | NFR-16 | Honesty: illustrative thresholds labelled in profiles and UI; simulated data labelled | A4 footnote, results banner |
+| NFR-17 | Alert budget: report alerts/hour, repeats suppressed, duplicates prevented, non-critical prompts deferred until READY/SECURED, critical delivery latency, and acknowledgement/resolution | TC-06, TC-18, TC-71, MC-02, `pnpm eval` |
 
 ### 1.21 Derived supporting requirements
 
@@ -568,7 +570,7 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 ├── .env.example · docker-compose.yml · README.md
 ├── docker/ api.Dockerfile · postgres-init/01-create-test-db.sql
 ├── .github/workflows/ci.yml
-├── docs/ PRODUCT_PLAN.md · TECHNICAL_SPEC.md · DEMO_RUNBOOK.md · GENERATOR_ASSUMPTIONS.md (generated by T35)
+├── docs/ PRODUCT_PLAN.md · TECHNICAL_SPEC.md · DATASET_SCHEMA.md · DEMO_RUNBOOK.md · GENERATOR_ASSUMPTIONS.md (generated by T35)
 ├── apps/
 │   ├── operator/                      # Expo SDK 57 app (Android primary, web secondary)
 │   │   ├── package.json · app.config.ts · metro.config.js · tsconfig.json · babel.config.js · .env.example
@@ -607,7 +609,7 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 │       ├── profiles/ excavator_20t.v1.json · haul_truck_90t.v1.json · wheel_loader_950.v1.json
 │       ├── packs/ excavator.en.json · excavator.hi.json · haul_truck.en.json · haul_truck.hi.json
 │       ├── i18n/ en.json · hi.json · ta.json
-│       ├── voice/ lexicon.en.json · lexicon.hi.json · intent_examples.en.jsonl · intent_examples.hi.jsonl · grammar.en.json · grammar.hi.json
+│       ├── voice/ lexicon.en.json · lexicon.hi.json · intent_examples.{en,hi,mixed}.jsonl (built from data/voice_train) · grammar.en.json · grammar.hi.json
 │       ├── models/ estimator.excavator.v1.json · estimator.haul_truck.v1.json · intent.multilingual-distilbert.v1.onnx · intent.tokenizer.v1.json · intent.config.v1.json · parity/*.json
 │       ├── audio/ alert_clips.json
 │       ├── seed/ demo_seed.json · demo_history.json (generated by T35)
@@ -624,7 +626,8 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 │   ├── generator/ config.yaml
 │   ├── scenarios/ *.yaml (demo + challenge + pair scenarios)
 │   ├── voice_test/ utterances.jsonl · audio/*.wav (E-07) · audio/manifest.jsonl
-│   └── generated/ (gitignored)
+│   ├── voice_train/ intent_examples.jsonl (reviewed training source; DATASET_SCHEMA §4.6)
+│   └── generated/ (gitignored; bundle defined in docs/DATASET_SCHEMA.md)
 ├── tools/
 │   ├── eval/ package.json · tsconfig.json · src/{run.ts, expect.ts, report.ts, suites/*.ts}
 │   └── scripts/ fetch_vosk_models.py · build_content.ts · check_content.ts · validate_profiles.ts · export_intent_tokens.ts · build_organiser.py
@@ -685,7 +688,7 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 | `tasks/taskModel.ts` | Transition table (§7.4) → `applyTaskEvent` | F3 |
 | `tasks/timeAccounting.ts` | Active/waiting/break/paused/blocked minutes (§8.6.7) | F3-R5, F4-R3 |
 | `tasks/dayPlan.ts` | Board order, next task, day finish | F3-R6 |
-| `tasks/impactPreview.ts` | Current ETA delta + next-assignment window risk; creates requests but never mutates order/assignment | F4-R10–R12 |
+| `tasks/impactPreview.ts` | Current ETA delta + next-assignment window risk (§8.6.9); never mutates order/assignment | F4-R9–R11 |
 | `estimate/baseline.ts` | §8.6.1 | F4 |
 | `estimate/ridge.ts` | Feature encoding + prediction (§8.6.2) | F4 |
 | `estimate/conformal.ts` | P10/P50/P90 from residual quantiles | F4 |
@@ -706,7 +709,9 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 | `incident/extractRules.ts` | Offline extraction from canonical tokens (§8.11) | F8-R8 |
 | `incident/readBack.ts` | Read-back text keys | F8-R4 |
 | `training/contentIndex.ts` | Pack loading, overrides merge, search | F10-R1 |
-| `training/recommender.ts` | §8.12 | F10 |
+| `training/recommender.ts` | §8.12 source order, limits, suppression | F10 |
+| `training/conditionPrep.ts` | Exposure count from original estimates' `context` + upcoming-condition check (§8.12 source 4) | F10-R12 |
+| `training/refreshers.ts` | Refresher opt-in, 2/7/30-day schedule, question pick (§8.12 source 5) | F10-R13 |
 | `training/player.ts` | Lesson/scenario attempt state machine (§7.4) | F10-R4/R5 |
 | `handover/draftBuilder.ts` | §8.14 | F12 |
 | `handover/handoverService.ts` | Save, ack, resolve-by-task-completion | F12 |
@@ -722,7 +727,8 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 | `sim/scenarioPlayer.ts` · `sim/liveSimulator.ts` · `sim/organiserRules.ts` | §8.20 | M18 |
 | `summary/shiftSummary.ts` | A12 data incl. private belt compliance | F6-R3 |
 | `i18n/t.ts` | `createTranslator(dicts, lang)` with en fallback | F1-R3 |
-| `engine/ShiftEngine.ts` · `engine/commands.ts` · `engine/snapshot.ts` · `engine/ports.ts` | Orchestrator (§8.16); ports = `LedgerStore`, `Speaker`, `Diagnostics` interfaces | all |
+| `engine/ShiftEngine.ts` · `engine/commands.ts` · `engine/snapshot.ts` · `engine/ports.ts` | Orchestrator (§8.16); ports = `LedgerStore`, `IntentInferencePort`, `Speaker`, `Diagnostics` interfaces | all |
+| `engine/promptQueue.ts` | `PromptQueue`: prompt priority, operating-state deferral and the deferral counter (§8.16.4, §8.3 alert budget) | F5-R3, NFR-17 |
 
 ### 4.4 File responsibilities — `apps/operator`, `apps/console`, `server`, tools
 
@@ -801,8 +807,8 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 |---|---|
 | `MachineState` | `OFF, SECURED, READY, WORKING, TRAVELLING, UNKNOWN` |
 | `TaskState` | `PLANNED, ACTIVE, PAUSED, BLOCKED, COMPLETED, CANCELLED` |
-| `AlertLevel` | `INFO, CAUTION, WARNING, CRITICAL` (ordered) |
-| `AlertType` | `A-BELT-MOVE, A-BELT-OPER, A-BELT-UNAV, A-PROX-CAUT, A-PROX-WARN, A-PROX-CRIT, A-PROX-UNAV, A-SPEED, A-HEAT, A-WIND, A-IDLE-ASK, A-SOS` |
+| `AlertLevel` | `INFO, CAUTION, WARNING, CRITICAL` (ordered) plus `ADVISORY` (outside the ordering; used only by `A-EXIT-UNSEC`; never escalates; speech priority equal to WARNING) |
+| `AlertType` | `A-BELT-MOVE, A-BELT-OPER, A-BELT-UNAV, A-PROX-CAUT, A-PROX-WARN, A-PROX-CRIT, A-PROX-UNAV, A-SPEED, A-HEAT, A-WIND, A-IDLE-ASK, A-EXIT-UNSEC, A-SOS` (product §12) |
 | `AlertStatus` | `RAISED, ACKNOWLEDGED, CLEARED, REVIEWED` |
 | `Source` | `observed, reported, inferred, reviewed` |
 | `Audience` | `operator_only, next_operator, site, trainer, safety` |
@@ -822,8 +828,10 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 | `PatternCode` | `required_idle, idle_reported_wait, unexplained_idle_repeat, overspeed_repeat, overspeed_zone_multi_operator, fuel_per_cycle_high, belt_repeat_operating, belt_switch_flapping, sensor_unavailable_persistent, near_miss_cluster` |
 | `Owner` | `nobody, operator, site, machine, needs_review` |
 | `EvidenceStatus` | `reported, corroborated, unresolved, insufficient_evidence` |
-| `FollowUpCategory` | `site_delay, machine_check, safety_incident, help_request, assignment_request, sync_conflict, near_miss_cluster, overspeed_zone, alert_review, usage_review, sos, chain_integrity` |
-| `Role` | `supervisor, trainer, safety` |
+| `FollowUpCategory` | `site_delay, machine_check, safety_incident, help_request, assignment_request, supervisor_notification, sync_conflict, near_miss_cluster, overspeed_zone, alert_review, usage_review, sos, chain_integrity` |
+| `Role` | `supervisor, trainer, safety, mechanic` |
+| `ImpactRisk` | `none, at_risk, likely_miss, unavailable` |
+| `CongestionLevel` | `low, medium, high` |
 | `Unit` | `m, m2, m3, t, loads, lifts` |
 | `Language` | `en, hi, ta` |
 
@@ -841,6 +849,8 @@ CREATE TABLE sites (
   utc_offset_minutes integer NOT NULL DEFAULT 330,
   diesel_price_inr_per_l numeric(8,2) NOT NULL DEFAULT 92.00,
   dark_start_local time NOT NULL DEFAULT '19:00', dark_end_local time NOT NULL DEFAULT '06:00',
+  job_efficiency_override numeric(4,3) NULL CHECK (job_efficiency_override > 0 AND job_efficiency_override <= 1),
+  congestion_level text NOT NULL DEFAULT 'medium' CHECK (congestion_level IN ('low','medium','high')),
   data_origin text NOT NULL DEFAULT 'demo_seed', created_at timestamptz NOT NULL DEFAULT now());
 
 CREATE TABLE zones (
@@ -884,7 +894,7 @@ CREATE TABLE pairing_codes (
 
 CREATE TABLE console_users (
   user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), username text NOT NULL UNIQUE,
-  display_name text NOT NULL, role text NOT NULL CHECK (role IN ('supervisor','trainer','safety')),
+  display_name text NOT NULL, role text NOT NULL CHECK (role IN ('supervisor','trainer','safety','mechanic')),
   site_ids text[] NOT NULL, password_hash text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(), disabled_at timestamptz NULL);
 
@@ -925,7 +935,9 @@ CREATE TABLE task_assignments (
   quantity numeric(12,2) NOT NULL CHECK (quantity > 0),
   unit text NOT NULL CHECK (unit IN ('m','m2','m3','t','loads','lifts')), material text NOT NULL,
   priority smallint NOT NULL CHECK (priority BETWEEN 1 AND 3), completion_criterion text NOT NULL,
-  planner_minutes numeric(8,1) NULL, planned_date date NOT NULL, sequence integer NOT NULL,
+  planner_minutes numeric(8,1) NULL, planned_date date NOT NULL, planned_start_at timestamptz NULL,
+  planned_start_window_min integer NOT NULL DEFAULT 15 CHECK (planned_start_window_min BETWEEN 0 AND 240),
+  sequence integer NOT NULL,
   source text NOT NULL CHECK (source IN ('dispatcher','seed','reassignment')),
   revision integer NOT NULL DEFAULT 1, status text NOT NULL DEFAULT 'assigned' CHECK (status IN ('assigned','cancelled')),
   exec_state text NOT NULL DEFAULT 'PLANNED'
@@ -946,7 +958,8 @@ CREATE TABLE reassignment_requests (
 CREATE TABLE follow_ups (
   follow_up_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), site_id text NOT NULL REFERENCES sites(site_id),
   category text NOT NULL CHECK (category IN ('site_delay','machine_check','safety_incident','help_request',
-    'assignment_request','sync_conflict','near_miss_cluster','overspeed_zone','alert_review','usage_review','sos','chain_integrity')),
+    'assignment_request','supervisor_notification','sync_conflict','near_miss_cluster','overspeed_zone','alert_review',
+    'usage_review','sos','chain_integrity')),
   group_key text NOT NULL, title text NOT NULL, summary text NOT NULL,
   priority smallint NOT NULL CHECK (priority BETWEEN 0 AND 3),
   status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','assigned','resolved')),
@@ -1048,9 +1061,12 @@ CREATE TABLE model_artifacts (
 
 CREATE TABLE forecasts (
   site_id text NOT NULL REFERENCES sites(site_id), valid_from timestamptz NOT NULL, valid_to timestamptz NOT NULL,
-  weather text NOT NULL, visibility text NOT NULL, temp_c double precision NOT NULL, heat_index_c double precision NOT NULL,
-  wind_kmh double precision NOT NULL, precipitation_mm double precision NOT NULL, fetched_at timestamptz NOT NULL,
+  weather text NOT NULL, visibility text NOT NULL, visibility_m double precision NULL CHECK (visibility_m >= 0),
+  temp_c double precision NOT NULL, heat_index_c double precision NULL,
+  wind_kmh double precision NOT NULL, precipitation_mm double precision NOT NULL,
+  issued_at timestamptz NOT NULL,             -- when this forecast became available to ShiftMate (Open-Meteo: fetch time)
   source text NOT NULL CHECK (source IN ('open_meteo','seed')), PRIMARY KEY (site_id, valid_from));
+  -- one row per site and valid hour: a newer issuance replaces the older one (the dataset keeps one issuance per hour too)
 
 CREATE TABLE fleet_status (
   machine_id text PRIMARY KEY REFERENCES machines(machine_id), state text NOT NULL, open_alerts integer NOT NULL DEFAULT 0,
@@ -1069,7 +1085,7 @@ CREATE TABLE audit_log (
 
 **Deletion/cascade:** nothing is deleted in normal operation. Only `reset-demo` truncates dynamic tables (`TRUNCATE … RESTART IDENTITY CASCADE` in this order: `audit_log, sms_outbox, sos_events, uploads, change_log, handover_items, handovers, help_requests, scenarios, follow_up_comments, follow_up_contributions, follow_ups, reassignment_requests, machine_summaries, incidents, ledger_entries, shifts, console_sessions, devices, task_assignments, forecasts, fleet_status, model_artifacts, pairing_codes, console_users, operators, machines, machine_profiles, zones, sites`), then re-seeds. Uploaded files under `UPLOAD_DIR` are deleted by `reset-demo`.
 
-**Role visibility of follow-up categories:** supervisor → `site_delay, machine_check, assignment_request, sync_conflict, near_miss_cluster, overspeed_zone, usage_review, sos, chain_integrity, alert_review`; safety → `safety_incident, near_miss_cluster, alert_review, sos, chain_integrity`; trainer → `help_request, safety_incident` (read-only for the latter). A user sees only rows whose `site_id ∈ user.site_ids`.
+**Role visibility of follow-up categories:** supervisor → `site_delay, machine_check, assignment_request, supervisor_notification, sync_conflict, near_miss_cluster, overspeed_zone, usage_review, sos, chain_integrity, alert_review`; safety → `safety_incident, near_miss_cluster, alert_review, sos, chain_integrity`; trainer → `help_request, safety_incident` (read-only for the latter); mechanic → `machine_check`. A user sees only rows whose `site_id ∈ user.site_ids`.
 
 ### 5.3 Device schema (SQLite via expo-sqlite) — `apps/operator/src/db/migrations.ts`, migration 1
 
@@ -1122,10 +1138,12 @@ CREATE TABLE learning_progress (
   status TEXT NOT NULL CHECK (status IN ('not_started','in_progress','deferred','completed')),
   attempts INTEGER NOT NULL DEFAULT 0, wrong_count INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL DEFAULT 0,
   last_answers_json TEXT NULL, completed_at INTEGER NULL, updated_at INTEGER NOT NULL,
+  review_opt_in INTEGER NOT NULL DEFAULT 0, review_step INTEGER NOT NULL DEFAULT 0 CHECK (review_step BETWEEN 0 AND 3),
+  next_review_at INTEGER NULL,                -- refreshers (§8.12 source 5); null = none due / done
   PRIMARY KEY (operator_id, content_id));
 CREATE TABLE recommendations (
   rec_id TEXT PRIMARY KEY, operator_id TEXT NOT NULL, content_id TEXT NOT NULL,
-  source TEXT NOT NULL CHECK (source IN ('task_prep','pattern','published_near_miss')), pattern_code TEXT NULL,
+  source TEXT NOT NULL CHECK (source IN ('task_prep','condition_prep','pattern','published_near_miss','replay','refresher')), pattern_code TEXT NULL,
   reason_key TEXT NOT NULL, reason_params_json TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('offered','deferred','started','completed','dismissed')),
   created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
@@ -1173,29 +1191,32 @@ type LedgerEntry = {
 |---|---|---|---|
 | `shift_event/start` | reported | site | `{auth_method: 'pin'\|'fob_sim', language, guidance: 'guided'\|'concise', profile_id, profile_version}` |
 | `shift_event/end` | reported | site | `{handover_id: string\|null}` |
-| `observation/signal_summary_5m` | observed | site | `{window_start, window_end (ms), engine_on_s, secured_s, ready_s, working_s, travelling_s, unknown_s, idle_s, fuel_used_l, load_cycles, max_speed_kmh, avg_load_factor_pct, belt_unfastened_moving_s, samples, missing_samples}` |
-| `observation/condition_forecast` | observed | site | `{site_id, valid_from, valid_to, weather, visibility, temp_c, heat_index_c, wind_kmh, precipitation_mm, fetched_at, source}` |
+| `observation/signal_summary_5m` | observed | site | `{window_start, window_end (ms), engine_on_s, secured_s, ready_s, working_s, travelling_s, unknown_s, idle_s, fuel_used_l\|null, load_cycles\|null, max_speed_kmh\|null, avg_load_factor_pct\|null, belt_unfastened_moving_s\|null, samples, missing_samples, missing_signal_names: string[]}` (a metric is null when its signal had no fresh sample in the window; `missing_signal_names` lists profile signals absent for ≥ 1 s of the window) |
+| `observation/condition_forecast` | observed | site | `{site_id, valid_from, valid_to, weather, visibility, visibility_m\|null, temp_c, heat_index_c\|null, wind_kmh, precipitation_mm, issued_at, source: 'seed'\|'open_meteo'\|'sim_weather'}` (`sim_weather` only for scenario-player observations, §8.20; never synced as a forecast) |
 | `report/idle_reason` | reported | site | `{idle_event_id, reason_code: IdleReason, free_text: string\|null, via: 'button'\|'voice'}` |
 | `report/condition_report` | reported | site | `{condition: 'rain'\|'dust'\|'darkness'\|'heat'\|'wind', active: boolean}` |
 | `report/incident_report` | reported | safety | `{incident_id, type, object, place, contact: 'yes'\|'no'\|'unknown', severity, via: 'button'\|'voice'}` |
 | `report/progress_report` | reported | site | `{task_id, progress_qty, unit}` |
 | `report/handover_note` | reported | next_operator | `{handover_id, item_id, text, via}` |
 | `report/help_request` | reported | trainer | `{content_id, question_text: string\|null}` |
-| `report/reassignment_request` | reported | site | `{task_id, reason_code: ReassignReason}` |
+| `report/reassignment_request` | reported | site | `{task_id, reason_code: ReassignReason, impact: ImpactSummary\|null}` |
+| `report/supervisor_notification` | reported | site | `{task_id, reason_code: BlockReason\|IdleReason, source_entry_id, impact: ImpactSummary}` |
 | `report/alert_feedback` | reported | safety | `{alert_id, alert_type, feedback: 'wrong'\|'annoying'}` |
 | `report/recommendation_feedback` | reported | operator_only | `{rec_id, content_id, pattern_code, feedback: 'not_relevant'}` |
 | `report/site_tip` (S) | reported | next_operator | `{tip_id, task_type\|null, zone_id\|null, upload_entry_id, duration_s}` |
 | `inference/machine_state_change` | inferred | site | `{from, to, reason: string}` |
 | `inference/idle_classification` | inferred | site | `{idle_event_id, idle_class, required_s, non_required_s, category: IdleCategory\|null}` |
 | `inference/finding` | inferred | operator_only if owner ∈ {operator, nobody} else site | `Finding` (§8.8) |
-| `inference/estimate` | inferred | site | `{task_id, basis, baseline_min, p10_min, p50_min, p90_min, expected_wait_min, factors: [{factor, pct}], artifact_id, personal_offset: number\|null}` |
+| `inference/estimate` | inferred | site | `{task_id, basis, baseline_min, p10_min, p50_min, p90_min, expected_wait_min, factors: [{factor, pct}], artifact_id, personal_offset: number\|null, context: {weather, visibility, temperature_band, time_of_day, site_congestion, darkness: boolean}}` (`context` = the §8.6.2 inputs at the planned start; used by "why" and by condition-prep exposure, §8.12) |
 | `inference/incident_extraction` | inferred | safety | `{incident_id, method: 'rules'\|'llm', fields: {type?, object?, place?, contact?}, no_incident: boolean}` |
-| `inference/recommendation` | inferred | operator_only | `{rec_id, content_id, source, pattern_code\|null, reason_key, reason_params}` |
-| `alert/raised\|escalated\|acknowledged\|cleared` | observed (raised/escalated/cleared), reported (acknowledged) | site | `{alert_id, alert_type, level, group_key, object_id\|null, object_type\|null, place\|null, distance_m\|null, ttc_s\|null, multiplier\|null, occurrences}` |
+| `inference/recommendation` | inferred | operator_only | `{rec_id, content_id, source: 'task_prep'\|'condition_prep'\|'pattern'\|'published_near_miss'\|'replay'\|'refresher', pattern_code\|null, condition: 'rain'\|'dust'\|'darkness'\|null, reason_key, reason_params}` |
+| `alert/raised\|escalated\|acknowledged\|cleared` | observed (raised/escalated/cleared), reported (acknowledged) | site | `{alert_id, alert_type, level, group_key, zone_id\|null, object_id\|null, object_type\|null, place\|null, distance_m\|null, ttc_s\|null, multiplier\|null, occurrences, clear_reason\|null, safe_exit: SafeExitDetail\|null}` (`safe_exit` only for `A-EXIT-UNSEC`) |
+| `alert/reviewed` | reviewed | site | `{alert_id, alert_type, follow_up_id, note\|null}` — **server-authored only** (`device_id` null, `author_user_id` = console user) when an `alert_review` follow-up is resolved; never created on a device |
 | `incident/created` | observed | safety | `{incident_id, origin: 'auto'\|'operator', trigger_alert_id\|null, occurred_at, zone_id\|null, observed: {machine_state, speed_kmh, belt_fastened\|null, secure_engaged\|null, lat, lon, detected: [{object_id, type, place, min_distance_m}], conditions: {...}, active_task_id\|null}, snapshot: Snapshot, snapshot_complete: false, severity_default}` |
 | `incident/snapshot_completed` | observed | safety | `{incident_id, post_samples: Snapshot['samples'], truncated: boolean}` |
 | `incident/status_changed` | reported | safety | `{incident_id, status: 'awaiting_report'\|'reported'}` |
-| `task_event/start\|pause\|resume\|block\|complete\|cancel` | reported | site | `{task_id, assignment_revision, reason_code: BlockReason\|null, output_qty: number\|null, actual_start\|null, actual_end\|null, active_min\|null, waiting_min\|null, break_min\|null}` (the last six only on `complete`) |
+| `incident/reviewed` | reviewed | safety | `{incident_id, field_corrections: {type?, severity?, object?, place?, contact?}, note\|null}` — server-authored by the safety review (§6.3); mirrored to the device on pull of `incident.reviewed` |
+| `task_event/start\|pause\|resume\|block\|complete\|cancel` | reported | site | `{task_id, assignment_revision, reason_code: BlockReason\|null, output_qty: number\|null, actual_start\|null, actual_end\|null, active_min\|null, waiting_min\|null, break_min\|null, paused_min\|null}` (the last seven only on `complete`; §8.6.7) |
 | `idle_event/started` | observed | site | `{idle_event_id, candidate_started_at, task_id\|null, zone_id\|null}` |
 | `idle_event/ended` | observed | site | `{idle_event_id, ended_at, duration_s, required_s}` |
 | `handover_item/added` | reported | next_operator | `{handover_id, item_id, item_type, text_key\|null, text_params\|null, text, audiences: Audience[], source_entry_ids, task_id\|null, incident_id\|null, carried_from_item_id\|null}` |
@@ -1203,10 +1224,14 @@ type LedgerEntry = {
 | `handover_item/edited` | reported | next_operator | `{item_id, text}` |
 | `handover_item/acknowledged` | reported | next_operator | `{item_id}` |
 | `handover_item/resolved` | reported | next_operator | `{item_id, by: 'task_completed'}` |
-| `learning_event/started\|answered\|completed\|deferred` | reported | **operator_only** | `{content_id, question_index\|null, choice_index\|null, correct\|null}` |
+| `learning_event/started\|answered\|completed\|deferred` | reported | **operator_only** | `{content_id, mode: 'full'\|'refresher', question_index\|null, choice_index\|null, correct\|null, refresher_opt_in: boolean\|null, review_step\|null}` (`refresher_opt_in` only on `completed`; `review_step` only in refresher mode) |
 | `correction/<target subtype>` | reported | same as target | `{target_kind, target_subtype, replacement: <target payload> \| null}` |
 
 `Snapshot = {pre_s: 60, post_s: 30, samples: [{ts, state, speed_kmh, belt, secure, lat, lon, heading_deg, load_factor_pct}], proximity: [{ts, object_id, type, bearing_deg, distance_m, closing_mps}], alerts: [{ts, alert_type, level}]}`.
+
+`ImpactSummary = {current_task_id, current_delta_min, current_p50_finish_at, next_task_id|null, next_planned_start_at|null, next_window_end_at|null, risk: ImpactRisk}` (§8.6.9).
+
+`SafeExitDetail = {belt_transition_at, exit_cue: 'seat_vacant'|'door_open'|'both', inputs: {<signal name>: {value: boolean|number|null, fresh: boolean}}, unavailable_signals: string[]}`; the inputs are `seatbelt_fastened, seat_occupied, cab_door_open, implement_neutral, ground_speed_kmh` and the profile's `secure_signal`. On `alert/cleared` for `A-EXIT-UNSEC`, `clear_reason ∈ {secured, seat_and_door_restored, not_exiting}` (§8.2).
 
 #### 5.3.3 Incident current fields (derived on device, projected on server)
 
@@ -1275,30 +1300,33 @@ type LedgerEntry = {
   "unusual": {"fuel_z_threshold": 3.0, "fuel_min_history": 10, "unexplained_idle_repeat": 3,
               "unexplained_lookback_shifts": 5, "overspeed_repeat": 3, "belt_repeat": 3,
               "sensor_unavailable_min": 10},
-  "content_pack": "excavator"
+  "content_pack": "excavator",
+  "training": {"condition_prep": {"rain": ["ex-s-rain-trench", "ex-l-rain-visibility"],
+                                   "darkness": ["ex-l-rain-visibility"], "dust": ["ex-l-rain-visibility"]},
+               "prep_exposure_threshold": 3, "prep_max_experience_months": 12, "prep_lookahead_h": 10}
 }
 ```
 
-Haul truck profile `haul_truck_90t.v1.json` differs: `machine_class: "haul_truck"`, `sector: "mining"`, `secure_signal: "park_brake"` (signal `park_brake` replaces `hydraulic_lockout`; no `swing_active`); `rate_constants: {"payload_t": 90, "cycle_min_default": 12}`; task types `haul_overburden` and `haul_ore` (`unit: "t"`, `rate_model: "haul"`, `default_expected_wait_min: 8`, guided card `gc-haul`); idle reasons `["shovel_queue","crusher_queue","access_blocked","instructed_hold","break","other"]`, `fuel_idle_lph: 12`, `default_expected_wait_min: {"shovel_queue": 15, "crusher_queue": 12, "access_blocked": 20, "instructed_hold": 15}`; `proximity: {"mode": "path", "reverse": {"sector_deg": [135, 225], "inner_m": 6, "outer_m": 15}, "forward": {"sector_deg": [315, 45], "inner_m": 12, "outer_m": 30}, "stationary_inner_m": 6, …same TTC/staleness keys…}`; `speed: {"default_limit_kmh": 40, "overspeed_hold_s": 5, "repeat_s": 10}`; `content_pack: "haul_truck"`. Wheel loader `wheel_loader_950.v1.json`: `machine_class: "wheel_loader"`, bucket model (`bucket_capacity_m3: 3.1`, `cycles_per_hour: 90`), task types `stockpile_loading`, `truck_loading`; `content_pack: null`; radial proximity 5/10 m. `profiles:validate` checks all keys used by core exist (the zod schema is the list).
+Haul truck profile `haul_truck_90t.v1.json` differs: `machine_class: "haul_truck"`, `sector: "mining"`, `secure_signal: "park_brake"` (signal `park_brake` replaces `hydraulic_lockout`; no `swing_active`); `rate_constants: {"payload_t": 90, "cycle_min_default": 12}`; task types `haul_overburden` and `haul_ore` (`unit: "t"`, `rate_model: "haul"`, `default_expected_wait_min: 8`, guided card `gc-haul`); idle reasons `["shovel_queue","crusher_queue","access_blocked","instructed_hold","break","other"]`, `fuel_idle_lph: 12`, `default_expected_wait_min: {"shovel_queue": 15, "crusher_queue": 12, "access_blocked": 20, "instructed_hold": 15}`; `proximity: {"mode": "path", "reverse": {"sector_deg": [135, 225], "inner_m": 6, "outer_m": 15}, "forward": {"sector_deg": [315, 45], "inner_m": 12, "outer_m": 30}, "stationary_inner_m": 6, …same TTC/staleness keys…}`; `speed: {"default_limit_kmh": 40, "overspeed_hold_s": 5, "repeat_s": 10}`; `content_pack: "haul_truck"`; `training.condition_prep: {"dust": ["ht-s-pickup-dust", "ht-l-light-vehicles"], "rain": ["ht-l-haul-speed"], "darkness": ["ht-l-light-vehicles"]}` with the same thresholds. Wheel loader `wheel_loader_950.v1.json`: `machine_class: "wheel_loader"`, bucket model (`bucket_capacity_m3: 3.1`, `cycles_per_hour: 90`), task types `stockpile_loading`, `truck_loading`; `content_pack: null`, `training.condition_prep: {}`; radial proximity 5/10 m. `profiles:validate` checks all keys used by core exist (the zod schema is the list).
 
 #### 5.4.2 Demo seed (`packages/content/seed/demo_seed.json`) — hand-authored, consumed by the server `seed` command and the app's first-launch import
 
-Top-level keys: `seed_version`, `sites[]`, `zones[]`, `machines[]` (24 detailed + 76 status-only, i.e. 100), `operators[]` (48, PIN hashes precomputed with PBKDF2-SHA256 20 000 iterations; plaintext demo PINs only in `docs/DEMO_RUNBOOK.md`), `console_users[]` (argon2 hashes), `pairing_codes[]`, `assignments[]` (with `planned_day_offset` instead of dates), `handovers[]` (previous-shift handover for EX-07, with `created_offset_min`), `forecast[]` (hourly, `hour_offset`, includes rain from 14:00 local at `SITE-CHN-01` and dust at `SITE-MIN-03`). Required demo records:
+Top-level keys: `seed_version`, `sites[]`, `zones[]`, `machines[]` (24 detailed + 76 status-only, i.e. 100), `operators[]` (48, PIN hashes precomputed with PBKDF2-SHA256 20 000 iterations; plaintext demo PINs only in `docs/DEMO_RUNBOOK.md`), `console_users[]` (argon2 hashes), `pairing_codes[]`, `assignments[]` (with `planned_day_offset` instead of dates `planned_start_local` `"HH:MM"` or `null`, mapped to `planned_start_at` in site-local time on import, and optional `planned_start_window_min`, default 15), `handovers[]` (previous-shift handover for EX-07, with `created_offset_min`), `forecast[]` (hourly, `hour_offset`, includes rain from 14:00 local at `SITE-CHN-01` and dust at `SITE-MIN-03`). Required demo records:
 
 | Record | Values |
 |---|---|
-| Sites | `SITE-CHN-01` "Chennai Construction Site A" (12.83, 79.95, construction); `SITE-BLR-02` "Bengaluru Construction Site B"; `SITE-MIN-03` "Jharkhand Open Pit C" (23.75, 86.42, mining); `SITE-MIN-04` "Singrauli Open Pit D" |
+| Sites | `SITE-CHN-01` "Chennai Construction Site A" (12.83, 79.95, construction, congestion `medium`); `SITE-BLR-02` "Bengaluru Construction Site B" (`low`); `SITE-MIN-03` "Jharkhand Open Pit C" (23.75, 86.42, mining, `high`); `SITE-MIN-04` "Singrauli Open Pit D" (`medium`). `job_efficiency_override` is `null` for all four (profile default applies) |
 | Zones (CHN-01) | `Z-CHN-TR1` Trench Area T1 (r 60 m), `Z-CHN-TR2` Trench Area T2 (r 60), `Z-CHN-LB2` Loading Bay 2 (r 40), `Z-CHN-YARD` Yard (r 80) |
 | Zones (MIN-03) | `Z-MIN-SH1` Shovel 1 (r 80), `Z-MIN-CR` Crusher (r 80), `Z-MIN-R3` Road 3 (r 300, limit 35 km/h), `Z-MIN-R1` Ramp 1 (r 200, limit 25 km/h), `Z-MIN-YARD` Yard (r 100) |
 | Machines | `EX-01..EX-10` (excavator_20t@1, short_id 101–110; **EX-07** at CHN-01), `WL-01..WL-06` (wheel_loader_950@1, 201–206), `HT-01..HT-08` (haul_truck_90t@1, 301–308; **HT-03** at MIN-03), `FL-001..FL-076` status-only (401–476) |
 | Operators | **OP-0007** "Ravi" (en, beginner, 0 months, hired today − 21 days, CHN-01, PIN 1234); **OP-0011** "Kumar" (en, expert, 96 months, CHN-01, PIN 2468); **OP-0021** "Senthil" (hi, expert, 132 months, MIN-03, PIN 7777); 45 others (generated names, varied) |
-| Console users | `sup.priya` (supervisor), `trn.arjun` (trainer), `saf.meena` (safety); all sites; passwords in runbook |
+| Console users | `sup.priya` (supervisor), `trn.arjun` (trainer), `saf.meena` (safety), `mec.dinesh` (mechanic); all sites; passwords in runbook |
 | Pairing codes | `100007` → EX-07, `300003` → HT-03, `200002` → WL-02; `reusable: true` (valid only when `DEMO_MODE=true`) |
-| EX-07 tasks (day 0) | 1: trenching 40 m clay, Z-CHN-TR1, priority 1, criterion "40 m trench, 1.2 m deep, spoil on east side", planner 30 min · 2: truck_loading 60 m³ clay, Z-CHN-LB2, priority 2, planner 25 min · 3: trenching 25 m clay, Z-CHN-TR2, priority 2, planner 20 min (blocked by utility mark in the previous shift) |
-| HT-03 tasks (day 0) | 1: haul_overburden 1 600 t (18 hauls), Shovel 1 → dump, priority 1, planner 240 min |
+| EX-07 tasks (day 0) | 1: trenching 40 m clay, Z-CHN-TR1, priority 1, criterion "40 m trench, 1.2 m deep, spoil on east side", planner 30 min, planned start 13:10 · 2: truck_loading 60 m³ clay, Z-CHN-LB2, priority 2, planner 25 min, planned start 14:10, window 15 min (window ends 14:25; task 1 started 13:10 finishes ~14:13 P50 / ~14:18 P90 including waiting → risk `none`; after the J1 +18 min truck wait P50 ~14:31 → `likely_miss`, "may miss its planned start window") · 3: trenching 25 m clay, Z-CHN-TR2, priority 2, planner 20 min, planned start `null` (blocked by utility mark in the previous shift; demonstrates F4-R11 "downstream impact unavailable") |
+| HT-03 tasks (day 0) | 1: haul_overburden 1 600 t (18 hauls), Shovel 1 → dump, priority 1, planner 240 min, planned start 22:00 |
 | EX-07 previous handover (from OP-0011, night shift) | `blocked_task` "Trench T2 blocked by utility mark — wait for supervisor clearance" (task 3); `defect` "Hydraulic oil temperature high at 02:10 — watch the gauge" (linked to a seeded `machine_fault` incident, status reported) |
 
-`demo_history.json` (generated by T35 from the synthetic generator) holds the last 14 days of completed tasks, idle events + reasons and a few alerts for EX-07/HT-03 and their operators, as ledger entries with `data_origin = synthetic:gen-1.0:20260923` and day offsets. It makes the basis, expected waiting and pattern rules meaningful on first launch. OP-0007 has 1 completed trenching task (so trenching is "unfamiliar", < 3).
+`demo_history.json` (generated by T35 from the synthetic generator) holds the last 14 days of completed tasks, idle events + reasons and a few alerts for EX-07/HT-03 and their operators, as ledger entries with `data_origin = synthetic:gen-1.0:20260923` and day offsets. It makes the basis, expected waiting and pattern rules meaningful on first launch. OP-0007 has 1 completed trenching task (so trenching is "unfamiliar", < 3) and no task started in rain, dust or darkness (so the day-0 rain forecast triggers condition prep, F10-R12); OP-0021 has ≥ 132 months' experience, so condition prep never fires for Senthil.
 
 #### 5.4.3 Content pack (`packages/content/packs/<pack>.<lang>.json`)
 
@@ -1349,8 +1377,7 @@ Constraints: lessons have 4–6 cards and exactly 2 questions; scenarios have ex
   ],
   "numeric": [
     {"name": "experience", "group": "experience", "source": "experience_months", "transform": "log1p", "clip": [0, 240], "mean": 3.1, "std": 1.2},
-    {"name": "machine_age", "group": "machine_age", "source": "machine_age_years", "transform": "identity", "clip": [0, 25], "mean": 5.2, "std": 3.4},
-    {"name": "task_size", "group": "task_size", "source": "baseline_min", "transform": "ln", "clip": [1, 2000], "mean": 3.8, "std": 0.7}
+    {"name": "machine_age", "group": "machine_age", "source": "machine_age_years", "transform": "identity", "clip": [0, 25], "mean": 5.2, "std": 3.4}
   ],
   "coefficients": {"skill_level=beginner": 0.281, "skill_level=expert": -0.052, "weather=rain": 0.113, "experience": -0.071},
   "intercept": 0.034,
@@ -1378,6 +1405,7 @@ Constraints: lessons have 4–6 cards and exactly 2 questions; scenarios have ex
 ```yaml
 id: pair1_idle_truck_queue          # unique
 title: "Long idle explained as truck queue"
+author_role: rule_author            # or independent_challenge_author (E-07; reported by the eval, §12.6)
 profile: excavator_20t
 machine_id: EX-07
 operator_id: OP-0007
@@ -1410,15 +1438,15 @@ expect:                             # evaluated by tests/eval only
   - {end: true, recommendations_count: 0}
 ```
 
-Compiled JSON is the same structure with times resolved to seconds and `start_local` kept (the player maps it to a real epoch at load time). Step verbs: `set, increment(+every_s, until), drop, restore, heartbeat(on|off), proximity, condition, utter, command, beat, fast_forward`. Expectation verbs: `alert_raised {type, by}`, `alert_absent`, `prompt`, `no_prompt`, `follow_up_owner`, `recommendations_count`, `incident_created`, `record_count {kind, subtype, n}`, `unavailable_within_s`, `estimate_active_unchanged`, `views_updated {consumers}`. Full list and semantics are implemented in `sim/scenarioPlayer.ts` + `tools/eval/src/expect.ts`.
+Compiled JSON is the same structure with times resolved to seconds and `start_local` kept (the player maps it to a real epoch at load time). Step verbs: `set, increment(+every_s, until), drop, restore, heartbeat(on|off), proximity, condition, utter, command, beat, fast_forward`. Expectation verbs: `alert_raised {type, by}`, `alert_absent`, `prompt`, `no_prompt`, `follow_up_owner`, `recommendations_count`, `recommendation {source, content_id}`, `incident_created`, `record_count {kind, subtype, n}`, `unavailable_within_s`, `estimate_active_unchanged`, `views_updated {consumers}`. Full list and semantics are implemented in `sim/scenarioPlayer.ts` + `tools/eval/src/expect.ts`.
 
 #### 5.4.7 Other content files
 
 - `i18n/<lang>.json`: flat key → string with `{param}` placeholders; `en` is complete, `hi` must have the same key set (checked), `ta` may be partial (Should).
 - `voice/lexicon.<lang>.json`: `{fillers: [...], phrases: {"near miss": "near_miss", "नियर मिस": "near_miss", …}, tokens: {"lorry": "truck", "ट्रक": "truck", …}, numbers: {"forty": 40, "चालीस": 40, "chalis": 40, …}, units: {"metres": "unit_m", "मीटर": "unit_m", …}, negations: [...], correction_markers: [...], confirm_words: [...]}`.
 - `voice/grammar.<lang>.json`: list of every surface word the recognizer may output for that language (all lexicon keys split into words + common function words) plus `"[unk]"`; passed as the Vosk `grammar`.
-- `voice/intent_examples.<lang>.jsonl`: `{"text": "...", "intent": "REPORT_DELAY"}`, ≥ 40 per intent per language, **disjoint** from the test set (checked by `content:check`).
-- `audio/alert_clips.json`: `{"segments": {"belt_move": {"en": "Seatbelt. Machine moving.", "hi": "सीट बेल्ट। मशीन चल रही है।"}, "obj_person": {...}, "dir_rear_left": {...}, "close": {...}, "stop_person_swing": {...}, "prox_unavailable": {...}, "belt_unavailable": {...}, "belt_oper": {...}, "speed_over": {...}, "heat": {...}, "wind": {...}, "idle_ask": {...}, "sos_sent": {...}}, "files": "assets/audio/alerts/{lang}/{segment}.m4a"}`.
+- `voice/intent_examples.<lang>.jsonl` for `lang ∈ {en, hi, mixed}`: `{"text": "...", "intent": "REPORT_DELAY"}`, deterministic projections of the reviewed, trainable rows (`split ∈ {train, validation}`) of `data/voice_train/intent_examples.jsonl` (DATASET_SCHEMA §4.6) produced by `content:build`; `en` and `hi` need ≥ 40 per intent (Romanised Hindi counts as `hi`), `mixed` (code-switched) has no minimum. All are **disjoint** from `data/voice_test/utterances.jsonl` by text and paraphrase family (checked by `content:check`).
+- `audio/alert_clips.json`: `{"segments": {"belt_move": {"en": "Seatbelt. Machine moving.", "hi": "सीट बेल्ट। मशीन चल रही है।"}, "obj_person": {...}, "dir_rear_left": {...}, "close": {...}, "stop_person_swing": {...}, "prox_unavailable": {...}, "belt_unavailable": {...}, "belt_oper": {...}, "speed_over": {...}, "heat": {...}, "wind": {...}, "idle_ask": {...}, "exit_unsecured": {"en": "Secure the machine before exiting.", ...}, "sos_sent": {...}}, "files": "assets/audio/alerts/{lang}/{segment}.m4a"}`.
 
 ### 5.5 Transactions, idempotency, concurrency, ordering, pagination, uploads, migrations, seed
 
@@ -1490,7 +1518,7 @@ Request `{"pairing_code":"100007","machine_id":"EX-07","device_label":"Cab table
  "scenarios": [...approved scenarios for machine_class...], "model_artifacts": [...latest estimator for class + intent...],
  "forecast": {"site_id":"SITE-CHN-01","hours":[{...ForecastHour}]}}
 ```
-`TaskAssignment` wire shape: `{task_id, site_id, machine_id, task_type, zone_id, location_text, quantity, unit, material, priority, completion_criterion, planner_minutes, planned_date, sequence, source, revision, status}`. The device replaces its caches with this data in one transaction and sets `pull_cursor = cursor`.
+`TaskAssignment` wire shape: `{task_id, site_id, machine_id, task_type, zone_id, location_text, quantity, unit, material, priority, completion_criterion, planner_minutes, planned_date, planned_start_at, planned_start_window_min, sequence, source, revision, status}`. The **planned start window** is `[planned_start_at, planned_start_at + planned_start_window_min)`, set by the dispatcher (default 15 min); `planned_start_at = null` means the task has no planned start window. `Site` in bootstrap includes `utc_offset_minutes, diesel_price_inr_per_l, dark_start_local, dark_end_local, job_efficiency_override, congestion_level`. The device replaces its caches with this data in one transaction and sets `pull_cursor = cursor`.
 
 **POST `/sync/push`** (signed; ≤ 100 envelopes; ≤ 1 MB)
 ```json
@@ -1523,7 +1551,7 @@ Per-entry validation: wire entry schema + payload schema for (kind, subtype); `r
 | `reassignment.decided` | machine | `{request_id, task_id, decision: 'accepted'\|'rejected', new_machine_id\|null, note\|null}` |
 | `handover.published` | machine | `{handover, items}` (origin device ignores its own by `handover_id`) |
 | `handover_item.acknowledged` | machine | `{item_id, operator_id, acknowledged_at}` |
-| `handover_item.resolved` | machine | `{item_id, resolved_by_role: 'supervisor'\|'task_completed', resolved_at, note\|null}` |
+| `handover_item.resolved` | machine | `{item_id, resolved_by_role: 'supervisor'\|'mechanic'\|'task_completed', resolved_at, note\|null}` |
 | `incident.reviewed` | machine | `{incident_id, reviewed_at, field_corrections: {...}}` |
 | `followup.resolved` | machine | `{follow_up_id, category, related_entry_ids: [..], note\|null}` |
 | `conflict.resolved` | machine | `{entry_id, resolution: 'accepted'\|'discarded', note\|null}` |
@@ -1554,7 +1582,7 @@ Per-entry validation: wire entry schema + payload schema for (kind, subtype); `r
 | GET `/console/follow-ups?status=open\|resolved\|all&category=&site_id=&cursor=&limit=` | — | `{items:[FollowUpSummary], next_cursor}` | `FollowUpSummary = {follow_up_id, site_id, category, title, summary, priority, status, assigned_to, machine_id, zone_id, reason_code, metrics, first_seen_at, last_seen_at}`; filtered by role (§5.2) |
 | GET `/console/follow-ups/{id}` | — | `FollowUpDetail = Summary + {contributions:[{entry_id, minutes, active, machine_id, operator_display, observed_at, original_text\|null}], comments:[…], related:{incident?, request?, conflict_entry?, sos?}}` | Operator shown by display name only for site-visible records |
 | POST `/console/follow-ups/{id}/assign` | `{user_id \| null}` | Detail | status `assigned`/`open` |
-| POST `/console/follow-ups/{id}/resolve` | `{note}` (≤ 500) | Detail | status `resolved`; `followup.resolved` change for each distinct `machine_id` of contributions; category `sync_conflict` also emits `conflict.resolved` |
+| POST `/console/follow-ups/{id}/resolve` | `{note}` (≤ 500) | Detail | status `resolved`; `followup.resolved` change for each distinct `machine_id` of contributions; category `sync_conflict` also emits `conflict.resolved`; category `alert_review` also appends one server-authored `alert/reviewed` ledger entry per related `alert_id` |
 | POST `/console/follow-ups/{id}/comments` | `{text}` | `Comment` | — |
 | POST `/console/reassignment-requests/{id}/decide` | `{decision:'accept'\|'reject', new_machine_id: string\|null, note: string\|null}` | `{request, task}` | supervisor. Accept + machine → task `machine_id` changed, `revision+1`, `source='reassignment'`, changes `task_assignment.removed` (old machine) + `task_assignment.upsert` (new machine); accept + null → task `status='cancelled'`, `revision+1`, `task_assignment.removed(cancelled)`; both → `reassignment.decided`; follow-up resolved. 409 `invalid_state` if not pending |
 | GET `/console/tasks?machine_id=&date=` | — | `{items:[TaskAssignment + exec fields]}` | — |
@@ -1562,7 +1590,7 @@ Per-entry validation: wire entry schema + payload schema for (kind, subtype); `r
 | GET `/console/machines?site_id=` | — | `{items:[{machine_id, short_id, site_id, profile_id, model_name, detail_level}]}` | — |
 | GET `/console/incidents?status=&type=&cursor=&limit=` | — | `{items:[IncidentSummary], next_cursor}` | `IncidentSummary = {incident_id, machine_id, site_id, zone_name, occurred_at, type, severity, status, origin, chain_ok, sent_to_trainer, scenario_id}` |
 | GET `/console/incidents/{id}` | — | `IncidentDetail = Summary + {fields: IncidentFields, snapshot, history:[{entry_id, kind, subtype, source, recorded_at, original_text}]}` | `operator_id` shown as display name to safety/supervisor; hidden (null) for trainer |
-| POST `/console/incidents/{id}/review` | `{field_corrections:{type?, severity?, object?, place?, contact?}, note}` | `{incident: IncidentDetail, scenario_id: string\|null}` | safety. Writes a `reviewed` ledger entry (device_id null, author = user); status `reviewed`; `incident.reviewed` change; if final type = `near_miss` and no scenario → draft (§8.23) |
+| POST `/console/incidents/{id}/review` | `{field_corrections:{type?, severity?, object?, place?, contact?}, note}` | `{incident: IncidentDetail, scenario_id: string\|null}` | safety. Writes an `incident/reviewed` ledger entry (source `reviewed`, device_id null, author = user); status `reviewed`; `incident.reviewed` change; if final type = `near_miss` and no scenario → draft (§8.23) |
 | POST `/console/incidents/{id}/send-to-trainer` | — | IncidentDetail | safety/supervisor; `sent_to_trainer=true`; creates a draft if missing |
 | GET `/console/scenarios?status=draft\|approved\|rejected` | — | `{items:[{scenario_id, machine_class, status, draft_method, title, created_at, source_incident_id}]}` | trainer |
 | GET `/console/scenarios/{id}` | — | `{scenario_id, …, body, source_summary:{type, object, place, time_of_day, zone_kind, conditions}}` | anonymised source |
@@ -1571,7 +1599,7 @@ Per-entry validation: wire entry schema + payload schema for (kind, subtype); `r
 | POST `/console/scenarios/{id}/reject` | `{reason}` | detail | trainer |
 | POST `/console/scenarios/{id}/redraft` | `{method:'template'\|'llm'}` | detail | trainer; `llm` needs AI enabled else 409 `invalid_state` ("AI unavailable") |
 | GET `/console/handovers?machine_id=&status=open\|all` | — | `{items:[{handover, items:[HandoverItem + ack/resolve fields]}]}` | all roles read |
-| POST `/console/handover-items/{item_id}/resolve` | `{note}` | HandoverItem | supervisor; `handover_item.resolved` change |
+| POST `/console/handover-items/{item_id}/resolve` | `{note}` | HandoverItem | supervisor, mechanic; `handover_item.resolved` change with `resolved_by_role` = the user's role |
 | POST `/console/help-requests/{id}/answer` | `{answer_text}` (≤ 1000) | `{request}` | trainer; `help_request.answered`; resolves follow-up |
 | GET `/console/uploads/{upload_id}` | — | audio bytes with stored content type | any role |
 | GET `/console/fleet?site_id=` (S6) | — | `{items:[{machine_id, site_id, state, open_alerts, last_sync_at, detail_level, data_origin}]}` | — |
@@ -1650,21 +1678,21 @@ Common to every screen: `AppStatusBar` on top (Online/Offline icon + word; "N wa
 | **A0 Device setup** `/setup` | No pairing, or "Switch machine" from the presenter panel (which first ends any open shift without a handover — demo only) | Installer screen (SD-07). Step 1: machine list grouped by site (seed `machines`). Step 2: "Local only" or "Pair with server" (server URL `TextInput`, default `EXPO_PUBLIC_DEFAULT_SERVER_URL`; 6-digit code `TextInput`) | Pair → `POST /devices/pair` → `GET /devices/bootstrap` → `/sign-in`. Local only → `device_id = randomUUID()`, `pairing_mode=local` → `/sign-in`. Switch machine while server-paired → `POST /devices/rebind` → engine reload with the new profile | "Pairing…" (buttons disabled); errors inline: `pairing_code_invalid` → "Code not valid for EX-07"; network → "Server not reachable at <url>. Check Wi-Fi or choose Local only"; shift open → "End the shift first" |
 | **A1 Sign-in** `/sign-in` | OFF, SECURED (other states: sign-in allowed but warns "Machine is running") | Header "EX-07 · Excavator 20 t · Chennai Construction Site A". Left: operator list (operators with a shift on this machine in the last 14 days first, then A–Z). Right: `NumberPad` + PIN dots + row "Key fob (simulated)" | Up/Down pick; Right/OK → PIN pad; digits type; Back deletes a digit (empty → back to list); OK submits 4–6 digits; key 4 cycles screen language en/hi | Wrong PIN → critical pill "PIN not recognised" + attempts left; 5 → "Locked for 60 s" countdown; empty roster → ErrorState "No operators on this device" + "Open device setup" |
 | **A2 Briefing** `/briefing` | OFF, SECURED, READY | Sections (§8.15): Handover items (each: type icon, text, audience chips, ack state), Today (task count, next task, day finish), Conditions (weather now/next, age, "old" tag > 6 h), Machine notes (open defects, alerts in last 24 h), Risk notes (≤ 3) | Up/Down; OK = acknowledge focused item; 1 = read aloud (auto in Guided); 2 = acknowledge all; 3 = report condition (prompt: 1 rain, 2 dust, 3 dark, 4 heat; toggles active/inactive); "Continue to tasks" row (disabled until all acknowledged) → `/tasks` | No handover → "No open items from last shift"; no conditions → "Conditions unknown — press 3 to report" |
-| **A3 Task board** `/tasks` | OFF, SECURED, READY | Top summary includes next task/day finish. Accepted delay/block adds an impact card: current ETA delta and next task's planned-window risk, never a changed order. Rows retain pending supervisor/conflict badges. | Existing task keys; impact card actions: 1 Request reassignment, 2 Notify supervisor | Missing next window → "Downstream impact unavailable"; no silent reorder/reassignment |
+| **A3 Task board** `/tasks` | OFF, SECURED, READY | Task rows show every F3-R1 field (type, zone/location, quantity + unit, priority, completion criterion, planner time, planned start, estimate range, status, blocker, assignment source + revision), next task highlighted, "Day finish ~HH:MM (late case HH:MM)" at the top. Accepted delay/block adds an impact card (§8.6.9): "Current task ETA updated by +N minutes" and, when calculable, "Task {n} may miss its planned start window"; the order never changes. Rows keep pending supervisor/conflict badges. Below the tasks: "Unexplained waits" and "Recent reports — change" (F9-R2, CORRECT_LAST), "My review (N)" (the operator's own findings, F9-R4/R7; private) and "Add handover note" (ADD_TO_HANDOVER button path while A13 is OFF-only) | Up/Down; OK → A4 or opens the focused row; 1 start/resume · 2 pause · 3 block (reason prompt) · 4 complete (output prompt); impact card: 1 Request reassignment (reason prompt), 2 Notify supervisor; "My review" sheet: OK on a finding → detail, 1 correct the reason (prompt); "Add handover note": quick notes 1–4 as in §7.3 | No next task / no planned start → "Downstream impact unavailable"; no tasks → "All tasks done"; no silent reorder/reassignment |
 | **A4 Task detail** `/tasks/[taskId]` | OFF, SECURED, READY | Estimate block includes range, basis, factors, planner, personal evidence count when `n >= 3`, and the same downstream impact card. Footnote labels simulated training data. | Existing task actions; "Why changed?"; impact request actions | `n < 3` uses shared estimate only; insufficient basis stated |
 | **A5 Focus Mode** `/focus` | WORKING (UNKNOWN keeps it if it was showing) | One `Tile`, three groups: (1) task label + `ProgressBar` "8 / 40 m" + progress source tag; (2) finish time `display` "14:18" + range "14:10–14:25"; (3) safety: belt pill, proximity pill (e.g. "Person · rear left · 6 m"), idle timer if any | Only ACK, PTT, SOS, hold-ACK (2 s) = Mark event; others show "Menus locked while operating" (throttled 10 s) | No active task → "No active task. Stop to choose one."; UNKNOWN → banner "Machine state unknown — some signals missing" |
 | **A6 Drive Mode** `/drive` | TRAVELLING | `display` speed "42" km/h vs "Limit 35" (critical colour + "OVER" word when over), next stop (zone of active/next task), proximity pill | Same as A5 | No limit → "Limit —" |
 | **A7 Alert overlay** (global) | Any | CRITICAL/WARNING: top banner 120 dp full width (level colour, icon, level word "STOP"/"WARNING", text, "ACK: Space / RB", after ack "Acknowledged — hazard still active"). CAUTION/INFO: compact pill row under the status bar while active; INFO toasts disappear after 6 s | ACK acknowledges the highest unacknowledged alert; ACK with nothing unacknowledged = repeat last alert (REPEAT_ALERT); in OFF/SECURED/READY, key 4 on a focused alert = "Wrong or annoying?" prompt | Multiple alerts: highest level shown + "+n more" |
-| **A7E Safe Exit Guard** (global advisory) | READY/WORKING/TRAVELLING/UNKNOWN when exit intent present and not secured | Full screen: "Secure the machine before exiting" + checklist for implement neutral/lowered, lockout or brake, motion stopped; each signal shows confirmed/unavailable. Banner: "Advisory only — ShiftMate does not control the machine." | ACK = "Not exiting"; otherwise remains until SECURED/OFF | Belt-off alone never opens it; stale inputs never display secured |
+| **A7E Safe Exit Guard** (global advisory) | READY/WORKING/TRAVELLING/UNKNOWN when exit intent present and not secured | Full screen: "Secure the machine before exiting" + checklist: lower or neutralise the implement; engage hydraulic lockout or parking brake; confirm motion has stopped; exit only after the machine is secured. Each input shows confirmed / not yet / unavailable. Banner: "Advisory only — ShiftMate does not control the machine." Spoken once (clip `exit_unsecured`) | ACK = "Not exiting" (`SAFE_EXIT_CANCEL`) | Clears on SECURED/OFF, on fresh seat-occupied + door-closed, or "Not exiting"; belt-off alone never opens it; stale inputs are named unavailable and never displayed as secured |
 | **A8 Prompt sheet** (global) | Per prompt type (§8.16.4) | Bottom sheet: title, up to 4 numbered options, focused option, "Hold V to speak", countdown bar for timed prompts | 1–4 choose; OK chooses focused; Back dismisses (if dismissible) | Timed prompt expiry follows §7.4 |
 | **A9 Incident** `/incident/[incidentId]` (`new` creates one) | SECURED, OFF; READY only for explicit report-now | Existing snapshot/report fields; reviewed incidents show "Replay timeline" when S9 is built | Existing report actions; Replay → A17 | Machine starts operating → draft/replay closes and ModeGuard takes over |
-| **A10 Training hub** `/training` | SECURED, OFF (READY → EmptyState "Park and engage lockout to use training") | Left/Right switch tabs: Recommended (title, kind, duration, reason, "Not relevant"), Library (filters: task type, topic; search string typed with hardware keys or spoken "search rain"), History ("Only you can see this"), Help (requests + trainer answers) | OK start/resume; 2 later (defer); 4 not relevant (suppression) | No recommendations → "Nothing suggested right now"; search no match → EmptyState |
-| **A11 Player** `/training/[contentId]` | SECURED, OFF | Lesson: illustration + card text; Left/Right cards; 1 replay narration; then 2 questions (1–3 answer). Scenario: situation + illustration; choices 1–3; explanation; retry; after 2 wrong, 4 = "Ask a trainer" | Back = defer (saves position) | State leaves SECURED/OFF → auto-defer, route back to ModeGuard target |
-| **A12 Shift summary** `/summary` | OFF, SECURED, READY | Table per task: planner, ShiftMate P50, actual active, waiting; totals active / waiting / break; alerts by type; "My review" findings (observed, possible explanations, owner, evidence); private belt compliance % ("Only you see this") | Up/Down; OK on a finding → detail sheet; correct a reason (prompt) | Before any task → "Nothing to summarise yet" |
-| **A13 Handover** `/handover` | SECURED, OFF | Draft items (type icon, text, audience chips, source); rows: "Add note (hold V or press 1 for quick notes)", "Voice note (OK record 20 s, 1 play)", "Polish wording" (online + S1), "Save handover and end shift" | OK edit focused item (re-dictate → read-back → confirm); 3 remove (reason prompt); 4 save (explicit confirm) → shift end → A1 | Mic permission denied → voice rows disabled "Microphone not allowed"; save failure → ErrorState with retry (data kept) |
+| **A10 Training hub** `/training` | SECURED, OFF (READY → EmptyState "Park and engage lockout to use training") | Left/Right switch tabs: Recommended (title, kind, duration, reason, "Not relevant"; includes condition prep and refreshers due, the latter as "Quick question · 30 s"), Library (filters: task type, topic; search string typed with hardware keys or spoken "search rain"), History ("Only you can see this"), Help (requests + trainer answers) | OK start/resume; 2 later (defer); 4 not relevant (suppression) | No recommendations → "Nothing suggested right now"; search no match → EmptyState |
+| **A11 Player** `/training/[contentId]` | SECURED, OFF | Lesson: illustration + card text; Left/Right cards; 1 replay narration; then 2 questions (1–3 answer). Scenario: situation + illustration; choices 1–3; explanation; retry; after 2 wrong, 4 = "Ask a trainer". On completion: "Remind me with a quick question in a few days? 1 Yes · 2 No". **Refresher mode** (`?mode=refresher`): one question only (lesson question or scenario situation + choices), then the explanation; ≈ 20–30 s | Back = defer (saves position) | State leaves SECURED/OFF → auto-defer, route back to ModeGuard target |
+| **A12 Shift summary** `/summary` | OFF (product §10) | Table per task: planner, ShiftMate P50, actual active, waiting; totals active / waiting / break; alerts by type; end-of-shift copy of the "My review" findings (the same sheet as A3); private belt compliance % ("Only you see this") | Up/Down; OK on a finding → detail sheet; correct a reason (prompt) | Before any task → "Nothing to summarise yet" |
+| **A13 Handover** `/handover` | OFF (product §10) | Draft items (type icon, text, audience chips, source); rows: "Add note (hold V or press 1 for quick notes)", "Voice note (OK record 20 s, 1 play)", "Polish wording" (online + S1), "Save handover and end shift" | OK edit focused item (re-dictate → read-back → confirm); 3 remove (reason prompt); 4 save (explicit confirm) → shift end → A1 | Mic permission denied → voice rows disabled "Microphone not allowed"; save failure → ErrorState with retry (data kept) |
 | **A14 Status & sync** `/status` | OFF, SECURED, READY | Connectivity, last push/pull, outbox counts by status, needs-review list (reason), rejected list (reason), signal health table (signal, age, status), alert history (last 50), diagnostics (app/profile/model/content versions, last & p90 alert latency, voice latency, missing clips, i18n misses, recent errors), device (short id, pairing mode, server URL) | 1 Sync now; 2 register with server (local mode → A0 pairing step) | — |
 | **A15 SOS overlay** (global) | Any | While holding: countdown ring "Hold 3 s for SOS". After: full-screen critical overlay "SOS sending… Also call on radio" with status sending / delivered / not confirmed | 1 = cancel SOS (within 60 s, sends cancel packet); Back hides the overlay (SOS continues) | — |
-| **A16 Settings** `/settings` | OFF, SECURED | Language (en/hi/ta if pack present), guidance (Guided/Concise), theme (auto/day/night), "Save unrecognised phrases (text only)" yes/no, "Share personal summaries" (S, default off), "Reset my personal data", About (illustrative notice, data origin, versions) | Up/Down; OK toggles/cycles; reset needs confirm | — |
+| **A16 Settings** `/settings` | OFF (product §10) | Language (en/hi/ta if pack present), guidance (Guided/Concise), theme (auto/day/night), "Save unrecognised phrases (text only)" yes/no, "Share personal summaries" (S, default off), "Reset my personal data", About (illustrative notice, data origin, versions) | Up/Down; OK toggles/cycles; reset needs confirm | — |
 | **A17 Incident replay** `/incident/[incidentId]/replay` | SECURED, OFF only; S9 | Immutable before/after timeline; original trace and one `speed_scale` or `stop_earlier_s` comparison; educational disclaimer; focused training recommendation | 1 Original, 2 Counterfactual, 3 Recommend scenario, Back exits | State change immediately closes replay; incomplete snapshot disables comparison |
 | **Menu overlay** (global) | Non-operating states | Destinations: Tasks, Briefing, Training, Shift summary, Handover & end shift, Log incident, Status & sync, Settings | Up/Down, OK navigate; Back closes | Disabled entries show their reason |
 | **Presenter panel** (demo builds) | Any; `F2` or 3 s long-press on the status-bar clock | Scenario list (compiled scenarios), Play/Pause, Next beat, speed 1×/10×/60×, Fast-forward 6 min; live toggles (engine, lockout/park brake, belt, dig, stop, travel 0/12/42 km/h, reverse, person/pickup approach with bearing + approaching/departing, rain/dust/dark, drop proximity feed, drop belt signal); "Simulate no signal"; Organiser replay view; Switch machine (ends the open shift without a handover, labelled "demo only", then opens A0); Reset device; DB self-test (T16); **Text utterance injector** (TextInput + language; labelled "TEST INPUT") | Touch/mouse; key capture is paused while open (`stopListening`) and resumed on close | Hidden entirely when `EXPO_PUBLIC_PRESENTER != 1` |
@@ -1704,7 +1732,7 @@ Common to every screen: `AppStatusBar` on top (Online/Offline icon + word; "N wa
 | LOG_INCIDENT | Hold ACK 2 s (MARK_EVENT, any state) or Menu → Log incident → A9 |
 | CANCEL | Back |
 | CORRECT_LAST | A3 "Recent reports — change" → reason prompt; A9 change field |
-| ADD_TO_HANDOVER | A13 "Add note" → key 1 quick notes: 1 "Soft ground at {zone}", 2 "Area not ready", 3 "Machine issue — see defects", 4 "Other (speak)" |
+| ADD_TO_HANDOVER | A3 "Add handover note" (OFF/SECURED/READY) or A13 "Add note" (OFF) → key 1 quick notes: 1 "Soft ground at {zone}", 2 "Area not ready", 3 "Machine issue — see defects", 4 "Other (speak)" |
 | REPEAT_ALERT | ACK with no unacknowledged alert |
 | EMERGENCY | Hold SOS 3 s |
 | CONFIRM | OK |
@@ -1715,9 +1743,9 @@ Common to every screen: `AppStatusBar` on top (Online/Offline icon + word; "N wa
 
 | Machine state | Route | Menus | Notes |
 |---|---|---|---|
-| OFF | Last menu route (default `/tasks`) | All | Training, handover allowed |
-| SECURED | Last menu route | All | Lesson offers may appear after 120 s |
-| READY | Last menu route | Tasks, Briefing, Summary, Status, Incident (if chosen) | Training/Handover disabled with reason |
+| OFF | Last menu route (default `/tasks`) | All | Training, shift summary, handover and settings allowed |
+| SECURED | Last menu route | All except Shift summary, Handover & end shift and Settings (shown disabled: "Turn the engine off to open this") | Training allowed; lesson offers may appear after 120 s |
+| READY | Last menu route | Tasks, Briefing, Status, Incident (if chosen) | Training, Summary, Handover and Settings disabled with reason |
 | WORKING | `/focus` (entered within 300 ms of the state change) | Locked | Remembers the previous menu route |
 | TRAVELLING | `/drive` | Locked | — |
 | UNKNOWN | Stays; if coming from WORKING stays on `/focus` | Locked | Banner |
@@ -1782,7 +1810,7 @@ A standalone negated utterance ("there was no near miss") never creates an incid
 | Entity | Transitions |
 |---|---|
 | Alert | RAISED → ACKNOWLEDGED (ack) → CLEARED (condition gone); RAISED → CLEARED; ACKNOWLEDGED → RAISED on escalation to a higher level; CLEARED → RAISED (reopen within 60 s, same group key); CLEARED → REVIEWED (console, server-side only) |
-| Handover | DRAFT (built when A13 opens) → SAVED (handover row + entries + outbox bundle) → PUBLISHED (server confirmed). Items: open → acknowledged (flag) → resolved or removed |
+| Handover | The shift's `handover_id` is generated at `SIGN_IN`; notes added before A13 (voice ADD_TO_HANDOVER or A3 "Add handover note") are saved immediately as `report/handover_note` with that id. DRAFT (items built when A13 opens, including those notes) → SAVED (handover row + entries + outbox bundle) → PUBLISHED (server confirmed). Items: open → acknowledged (flag) → resolved or removed |
 | Learning attempt | not_started → in_progress → completed; in_progress → deferred (Back or state change) → in_progress (resume at `position`); scenario `wrong_count ≥ 2` → offer help |
 | Recommendation | offered → started → completed; offered → deferred → started; offered → dismissed (suppression 14 days) |
 | Outbox entry | pending → sent → confirmed \| needs_review \| rejected; sent → pending on network/5xx/429 (backoff); needs_review → confirmed on `conflict.resolved` |
@@ -1796,12 +1824,12 @@ A standalone negated utterance ("there was no near miss") never creates an incid
 
 | Page · route | Roles | Layout and data | Actions | States |
 |---|---|---|---|---|
-| **C1 Login** `/login` | public | Centered form: username, password, submit | Submit → `POST /auth/login` → supervisor/safety → `/follow-ups`, trainer → `/scenarios` | Button spinner; `invalid_credentials` banner; `rate_limited` banner with retry time |
+| **C1 Login** `/login` | public | Centered form: username, password, submit | Submit → `POST /auth/login` → supervisor/safety/mechanic → `/follow-ups`, trainer → `/scenarios` | Button spinner; `invalid_credentials` banner; `rate_limited` banner with retry time |
 | **Shell** | all | Left nav (Follow-ups, Incidents, Scenarios, Handovers, Fleet [S6], SOS [S]) filtered by role; header: user, role, logout; sticky red SOS banner when active SOS exist | — | WS disconnected → small "Live updates paused — retrying" indicator |
-| **C2 Follow-ups** `/follow-ups` (+ `/follow-ups/:id` detail panel) | supervisor, safety, trainer (filtered categories) | Filters in URL (`status`, `category`); table: priority badge, category badge, title, summary, machine, zone, metrics (count, minutes), first seen (age), status, assignee | Row → detail: contributions (time, machine, operator display name, original words when present, minutes), comments, related record; buttons Assign to me / Unassign, Resolve (note modal), Comment; category actions: assignment request → Accept (machine select incl. "Cancel task") / Reject; sync conflict → view entry + current task, Resolve; help request → answer box; usage review → finding details | Skeleton rows; EmptyState "No open follow-ups"; ErrorBanner with request id |
+| **C2 Follow-ups** `/follow-ups` (+ `/follow-ups/:id` detail panel) | supervisor, safety, trainer, mechanic (filtered categories, §5.2) | Filters in URL (`status`, `category`); table: priority badge, category badge, title, summary, machine, zone, metrics (count, minutes), first seen (age), status, assignee | Row → detail: contributions (time, machine, operator display name, original words when present, minutes), comments, related record; buttons Assign to me / Unassign, Resolve (note modal), Comment; category actions: assignment request → Accept (machine select incl. "Cancel task") / Reject; sync conflict → view entry + current task, Resolve; supervisor notification → task, reason and impact summary (current ETA delta, next-task risk), Resolve; help request → answer box; usage review → finding details | Skeleton rows; EmptyState "No open follow-ups"; ErrorBanner with request id |
 | **C3 Incidents** `/incidents`, `/incidents/:id` | safety (write), supervisor, trainer (read; trainer sees no operator identity) | List (time, machine, zone, type, severity, status, integrity). Detail: fields table with `SourceTag`; snapshot timeline (Recharts `LineChart`: speed and nearest-object distance over −60…+30 s, trigger reference line, belt/lockout markers); history; integrity badge "Integrity verified" / "Integrity issue" | Mark reviewed (form: type, severity, object, place, contact selects + note) → shows "Scenario draft created" link when near miss; Send to trainer | Not found → EmptyState |
 | **C4 Scenarios** `/scenarios`, `/scenarios/:id` | trainer (supervisor read) | List (drafts first). Editor: title, situation textarea, 3 choice rows (text + explanation), correct-answer radio, language tabs en/hi, operator-view preview, source summary (anonymised) | Save (PUT), Approve (confirm dialog), Reject (reason), Redraft (template / LLM) | Inline validation (lengths, 3 choices); approve disabled while dirty |
-| **C5 Handovers** `/handovers` | all (resolve: supervisor) | Machine filter; latest handovers with items (type, text, audiences, "Acknowledged by Kumar 06:05", status), voice-note audio player | Resolve item (note) | EmptyState |
+| **C5 Handovers** `/handovers` | all (resolve: supervisor, mechanic) | Machine filter; latest handovers with items (type, text, audiences, "Acknowledged by Kumar 06:05", status), voice-note audio player | Resolve item (note) | EmptyState |
 | **C6 Fleet** (S6) `/fleet` | all | Counts by state (Recharts `BarChart`); table of 100 machines (site, state, open alerts, last sync age, data origin tag "simulated") | Filter by site/state; row → follow-ups filtered by machine | — |
 | **C7 SOS** (S) `/sos` | supervisor, safety | Active SOS cards: machine, time, lat/lon + zone, via, SMS (simulated) list | Acknowledge (response note) | — |
 
@@ -1858,7 +1886,7 @@ clear(A-BELT-UNAV)
 cond = none
 if belt == false and state == TRAVELLING:                     cond = MOVE
 elif belt == false and state in {WORKING, READY}:             cond = OPER
-elif belt == false and state == UNKNOWN and engine_on fresh true: cond = OPER   # F6-R10
+elif belt == false and state == UNKNOWN and engine_on fresh true: cond = OPER   # F6-R14
 consecutive[cond] += 1 (others reset)
 if cond == MOVE and consecutive ≥ 2: raise/escalate(group "belt", A-BELT-MOVE, CRITICAL)
 if cond == OPER and consecutive ≥ 2: raise(group "belt", A-BELT-OPER, WARNING)  # a MOVE alert downgrades by clear + raise
@@ -1868,7 +1896,21 @@ flap tracking: while state == SECURED, record belt value changes; > flap_changes
 ```
 Repeat voice: CRITICAL every 5 s, WARNING every 20 s, until acknowledged or cleared. *Example:* WORKING, belt goes false at t = 10 → t = 10 (count 1), t = 11 (count 2) → A-BELT-OPER raised and spoken "Seatbelt. Machine operating." (≤ 1 s); repeats at t = 31, 51 unless acknowledged. The operator engages the lockout at t = 15 → SECURED at t = 16 → belt alert CLEARED; no further alerts while secured.
 
-**Safe Exit Guard (`safeExitGuard.ts`).** Track a fresh true→false belt transition at `t_belt`. `exit_intent = now - t_belt <= 10 s && ((fresh(seat_occupied) && !seat_occupied) || (fresh(cab_door_open) && cab_door_open))`. Belt-off without this conjunction does nothing beyond belt rules. `secured_for_exit = state in {SECURED,OFF} && fresh(speed) && speed < 0.5 && fresh(implement_neutral) && implement_neutral && (state == OFF || (fresh(S) && S))`. If exit intent and not secured, set `safe_exit_advisory.active = true`, speak once, and render A7E. The advisory owns no `MachineControl` interface and dispatches no control command. Clear on secured state or explicit `SAFE_EXIT_CANCEL`; stale inputs remain unknown.
+**Safe Exit Guard (`safeExitGuard.ts`, product F6 "Safe Exit Guard").** Evaluated every tick after the state update, using `profile.safe_exit.exit_intent_window_s` (10) and `motion_stop_kmh` (0.5).
+```
+on a fresh belt true→false transition: t_belt = now
+seat_vacant = fresh(seat_occupied) && seat_occupied == false
+door_open   = fresh(cab_door_open) && cab_door_open == true
+exit_intent = t_belt set && now − t_belt ≤ 10 s && (seat_vacant || door_open)      # belt-off alone never qualifies
+if !advisory.active and exit_intent and state ∉ {SECURED, OFF}:
+    raise(A-EXIT-UNSEC, ADVISORY, group "safe_exit", safe_exit = SafeExitDetail)    # alert/raised, spoken once, A7E
+if advisory.active:
+    if state ∈ {SECURED, OFF}                                                      → clear(reason "secured")
+    elif fresh(seat_occupied) && seat_occupied && fresh(cab_door_open) && !cab_door_open → clear(reason "seat_and_door_restored")
+    elif SAFE_EXIT_CANCEL ("Not exiting")  → alert/acknowledged, then clear(reason "not_exiting")
+    on any clear: t_belt = unset (a new belt transition is needed to raise again)
+```
+Checklist items (A7E) are shown per input: implement neutral (`implement_neutral`), secure signal (`S`), motion stopped (`ground_speed_kmh < 0.5`), each as confirmed / not yet / unavailable. A stale or missing input is listed in `unavailable_signals` and named "Unavailable"; the guard never states that the machine is secured unless state is SECURED/OFF with fresh speed < 0.5 and a fresh engaged `S` (F6-R9). `A-EXIT-UNSEC` has no snapshot, no follow-up and no repeat. The guard owns no `MachineControl` interface and dispatches no control command (there is no such port, §8.16.1).
 
 **Belt compliance (A12, private):** `fastened_s / (fastened_s + unfastened_s)` counted over ticks in WORKING, READY or TRAVELLING where the belt signal is fresh; shown as a whole percentage with "n/a" when the denominator is 0.
 
@@ -1888,11 +1930,11 @@ Repeat voice: CRITICAL every 5 s, WARNING every 20 s, until acknowledged or clea
 | A-PROX-CRIT | 3 s |
 | A-PROX-WARN | 8 s |
 | A-SPEED | 10 s |
-| A-PROX-CAUT, A-PROX-UNAV, A-BELT-UNAV, A-HEAT, A-WIND, A-IDLE-ASK | once |
+| A-PROX-CAUT, A-PROX-UNAV, A-BELT-UNAV, A-HEAT, A-WIND, A-IDLE-ASK, A-EXIT-UNSEC | once |
 
-- **Speech queue:** priority CRITICAL 0 > WARNING 1 > CAUTION 2 > INFO 3 > answers 4 > narration 5. A higher-priority item interrupts a lower one; equal priorities queue FIFO; queue max 5 (drop lowest).
+- **Speech queue:** priority CRITICAL 0 > WARNING and ADVISORY 1 > CAUTION 2 > INFO 3 > answers 4 > narration 5. A higher-priority item interrupts a lower one; equal priorities queue FIFO; queue max 5 (drop lowest).
 - **Latency measurement (NFR-02):** `alert/raised` stores `raised_at` (engine time); the app records wall-clock time at rule fire and at audio start into diagnostics.
-- **Alert budget telemetry (P5):** per operating hour record `alerts_raised`, `critical_time_ms`, `repeats_spoken`, `repeats_suppressed_after_ack`, `duplicate_raises_prevented`, `noncritical_prompts_deferred`, `critical_delivery_ms[]`, `acknowledged`, and `resolved`. `AlertManager` increments duplicate/repeat counters at the suppression decision; `PromptQueue` increments deferral when an INFO/non-critical prompt waits for READY/SECURED. Budgeting never delays CRITICAL/WARNING alerts. Evaluation reports metrics; no arbitrary quota suppresses a time-critical alert.
+- **Alert budget telemetry (NFR-17, product §17):** per operating hour (hours with engine on), the engine keeps `{window_start, operating_s, alerts_raised, critical_time_ms, repeats_spoken, repeats_suppressed_after_ack, duplicate_raises_prevented, noncritical_prompts_deferred, critical_delivery_ms[], acknowledged, resolved}` in `EngineSnapshot.alerts.budget` (current and completed hours of the shift). `AlertManager` increments duplicate/repeat counters at the suppression decision; `PromptQueue` (`engine/promptQueue.ts`, §8.16.4) increments deferral when an INFO/non-critical prompt waits for READY/SECURED. `resolved` counts alerts that reached CLEARED (or REVIEWED), never mere acknowledgement. The counters are device-side evaluation telemetry: the eval harness (§12.6) reads them from the engine; they are not written to the ledger. Budgeting never delays CRITICAL/WARNING alerts or A-EXIT-UNSEC; no arbitrary quota suppresses a time-critical alert.
 
 ### 8.4 Proximity and conditions
 
@@ -1943,25 +1985,27 @@ rate_per_hour =
   bucket                : bucket_capacity_m3 × fill_factor[mat] × (tt.cycles_per_hour_override ?? cycles_per_hour)
   haul                  : payload_t × 60 / cycle_min_default
 if rate missing or quantity ≤ 0 → null
+job_efficiency = site.job_efficiency_override ?? profile.job_efficiency      # product F4: default 50/60, configurable per site
 baseline_min = quantity / (rate_per_hour × job_efficiency) × 60
 ```
 Examples: trenching 40 m clay → 40 / (58 × 0.8333) × 60 = **49.7 min**; truck loading 60 m³ clay → 1.19 × 0.85 × 150 = 151.7 m³/h → 60 / (151.7 × 0.8333) × 60 = **28.5 min**; haul 1 600 t → 90 × 60/12 = 450 t/h → 1 600 / (450 × 0.8333) × 60 = **256 min**.
 
 #### 8.6.2 Feature encoding and prediction (`ridge.ts`)
 Inputs and derivations:
-- `skill_level`, `experience_months` (operator); `machine_age_years = current year − year_of_manufacture`.
+The feature set is exactly the product F4 list (skill level, experience months, task type, material, weather, visibility, temperature band, machine age, time of day, site congestion). "Planned start" below = the task's `planned_start_at` if it is set and later than now, else now.
+- `skill_level`, `experience_months` (operator); `machine_age_years = year(planned start) − year_of_manufacture` (training uses the year of the task's start, never the current year).
 - `task_type`, `material` (task).
 - `weather` from effective conditions at the estimate's planned start: rain → `rain`; else dust → `dusty`; else visibility < 1 000 m → `foggy`; else wind ≥ 38 → `windy`; else `clear`.
 - `visibility`: forecast visibility ≥ 5 000 m `good`, 1 000–5 000 `moderate`, < 1 000 `poor`; darkness raises `good` to `moderate`; missing → `good`.
 - `temperature_band`: temp < 20 `cool`, 20–30 `mild`, 30–38 `hot`, > 38 `extreme`; missing → `mild`.
 - `time_of_day` from the planned start's local hour: [6, 12) `morning`, [12, 18) `afternoon`, [18, 22) `evening`, else `night`.
-- `site_congestion` = site field `congestion_level` (seed; default `medium`).
-- `baseline_min` from §8.6.1.
+- `site_congestion` = site field `congestion_level` (§5.2 `sites`; seed/bootstrap; default `medium`). The generator samples a daily level per site for history (§8.22) and stores it on each task as `site_congestion_at_start`.
+- `baseline_min` from §8.6.1 is the denominator of the target, not a feature.
 
 Vector: for each categorical feature, one column per non-reference level (1 if equal, else 0); an unknown level → all zeros + note `unknown_level:<name>`. For each numeric feature, `v = clip(source, lo, hi)`, `v = transform(v)` (`log1p`, `ln`, `identity`), `z = (v − mean)/std`. `pred = intercept + Σ coef[key] × x[key]` (missing key → 0).
 
 #### 8.6.3 Contributions (`contributions.ts`)
-`c_g = Σ_{keys in group g} coef × x`; `pct_g = exp(c_g) − 1`. Exclude groups `task_type` and `task_size`; keep |pct| ≥ 0.03; sort by |pct| desc, ties by group name; take 3. Labels (i18n): Rain / Wind / Dust / Fog (weather), "Skill level (beginner)", "Experience (N months)", "Machine age (N yrs)", "Material (rock)", "Visibility (poor)", "Temperature (hot)", "Time of day (night)", "Site congestion (high)", and "Your recent pace" (F18 offset, when |offset| ≥ 0.03). Display `+18%`/`−5%` (rounded integer, sign always shown), tagged "model contribution".
+`c_g = Σ_{keys in group g} coef × x`; `pct_g = exp(c_g) − 1`. Exclude group `task_type`; keep |pct| ≥ 0.03; sort by |pct| desc, ties by group name; take 3. Labels (i18n): Rain / Wind / Dust / Fog (weather), "Skill level (beginner)", "Experience (N months)", "Machine age (N yrs)", "Material (rock)", "Visibility (poor)", "Temperature (hot)", "Time of day (night)", "Site congestion (high)", and "Your recent pace" (F18 offset, when |offset| ≥ 0.03). Display `+18%`/`−5%` (rounded integer, sign always shown), tagged "model contribution".
 
 #### 8.6.4 Basis and range (`estimateService.ts`)
 ```
@@ -2001,14 +2045,29 @@ Progress source: latest `report/progress_report` if newer than the machine value
 *Example:* p50 53, p10 46, p90 62, Q 40 m, q 8 m, a 12 min → p = 0.2; r_obs 0.667; r_prior 0.755; w 0.667; r = 0.696 m/min → rem50 = 32 / 0.696 = **46.0 min**; rem10 = 46.0 × (1 − 0.132 × 0.8) = **41.1**; rem90 = 46.0 × (1 + 0.170 × 0.8) = **52.3**.
 
 #### 8.6.7 Time accounting (`timeAccounting.ts`)
-From the task's effective events: ACTIVE intervals `[start|resume, next pause|block|complete|cancel | now)`, BLOCKED intervals, PAUSED intervals. Idle intervals `[candidate_started_at, ended_at | now)` with their effective reason category (current ledger view). Within ACTIVE intervals: overlap with `site_delay` or `other` idle → **waiting**; with `break` → **break**; unexplained/required idle stays **active**. BLOCKED time → waiting. PAUSED time → neither. `active_min = ACTIVE − waiting overlap − break overlap`.
+From the task's effective events: ACTIVE intervals `[start|resume, next pause|block|complete|cancel | now)`, BLOCKED intervals, PAUSED intervals. Idle intervals `[candidate_started_at, ended_at | now)` with their effective reason category (current ledger view). Within ACTIVE intervals: overlap with `site_delay` or `other` idle → **waiting**; with `break` → **break**; unexplained/required idle stays **active**. BLOCKED time → waiting. PAUSED time → `paused_min` (neither active nor waiting). `active_min = ACTIVE − waiting overlap − break overlap`. At completion, `active_min + waiting_min + break_min + paused_min = actual_end − actual_start` (minutes, ± 0.1 rounding).
 *Example:* ACTIVE 13:15–14:20 (65 min); idle 13:40–13:52 reported `waiting_truck` → active 53, waiting 12. Correction to `break` → active 53, waiting 0, break 12.
 
 #### 8.6.8 Change log and "why" (`explain.ts`)
 At start, keep E0 (the `inference/estimate` entry) and `finish50_0`. After each recompute caused by a propagation or a progress update, if `finish50` moves by ≥ 1 min, append `{at, cause, cause_entry_id, delta_min}` with cause ∈ `waiting_reported, reason_corrected, progress_rate, condition_change, blocked, resumed, reassigned`; `progress_rate` changes are merged into one entry per 5 min. **WHY answer:** no changes → "No change since start. Finish {HH:MM}." Otherwise sum deltas by cause since start, take the top 2 by |delta| → "Finish {HH:MM}. Truck wait added 12 min. Slower progress added 5 min." (≤ 25 words).
 
 #### 8.6.9 Downstream shift-impact preview (`tasks/impactPreview.ts`)
-After an accepted delay or blocked reason, recompute the active task and select the next `PLANNED` task by immutable `sequence`. Return `{current_delta_min, next_task_id?, planned_start_at?, risk}` where `risk = likely_miss` when the current task P50 finish exceeds the next task's planned-start window, `at_risk` when only P90 exceeds it, otherwise `none`. A3/A4 state the current ETA delta and, when relevant, “Task {n} may miss its planned start window.” `TASK_REQUEST_REASSIGN` and `TASK_NOTIFY_SUPERVISOR` append requests/follow-ups only. This function never mutates task sequence, assignment, or execution state.
+Triggered by the propagation consumer `downstream_impact` (§8.9) after an accepted delay reason (`report/idle_reason` with category `site_delay`), a task block, or a correction of either.
+```
+cur   = current task (ACTIVE, or the task just BLOCKED)
+delta = finish50_after − finish50_before                 # from §8.6.6 before/after the triggering entry; whole minutes
+next  = first task with exec_state PLANNED and sequence > cur.sequence, same machine and planned_date (immutable sequence)
+if cur has no p50 estimate (basis insufficient_data)                      → risk "unavailable"
+elif next == null or next.planned_start_at == null                        → risk "unavailable"
+window_end = next.planned_start_at + next.planned_start_window_min          # the next task can still start on time until window_end
+if cur.finish50 > window_end                                              → risk "likely_miss"
+elif cur.finish90 > window_end                                            → risk "at_risk"
+else                                                                      → risk "none"
+return ImpactSummary {current_task_id, current_delta_min: delta, current_p50_finish_at, next_task_id,
+                      next_planned_start_at, next_window_end_at: window_end, risk}
+```
+The window width comes from the assignment (dispatcher's tolerance, default 15 min), so a finish a few minutes after the nominal start is not reported as a miss. A `planned_start_window_min` of 0 makes the planned start a hard time.
+While the current task is BLOCKED with no restart time, `finish50/finish90` are not clock times (F4-R4); the preview then uses `now + rem50/rem90 + w_rem` only to compare with the next start and still shows the current task as conditional. A3/A4/A5 show "Current task ETA updated by {+delta} minutes" and, for `at_risk`/`likely_miss`, "Task {n} may miss its planned start window"; for `unavailable`, "Downstream impact unavailable" (F4-R11). `none` shows only the current delta. `TASK_REQUEST_REASSIGN` appends `report/reassignment_request` and `TASK_NOTIFY_SUPERVISOR` appends `report/supervisor_notification`, both carrying the `ImpactSummary`; a second request of the same kind for the same task while one is pending is refused with "Already sent". This function never mutates task sequence, assignment or execution state (F4-R10). The preview itself is a derived view and is not persisted.
 
 ### 8.7 Idle detection and classification (`idle/*`)
 
@@ -2048,8 +2107,9 @@ Routing principle: rules first; when a rule cannot choose between technique and 
 | `idle_event/*`, `inference/idle_classification` | estimates, usage_review, handover_draft, followups |
 | `task_event/*`, `report/progress_report` | task_board, estimates, downstream_impact, working_view, handover_draft |
 | `incident/*`, `report/incident_report`, `inference/incident_extraction`, `correction/incident_report` | incident_records, training_recs, handover_draft, followups |
-| `report/condition_report`, `observation/condition_forecast` | estimates, proximity_params, briefing |
-| `alert/raised`, `alert/escalated`, `alert/cleared` | working_view, usage_review, handover_draft |
+| `report/condition_report`, `observation/condition_forecast` | estimates, proximity_params, briefing, training_recs (condition prep) |
+| `alert/raised`, `alert/escalated`, `alert/cleared` (incl. `A-EXIT-UNSEC`) | working_view, usage_review, handover_draft |
+| `report/reassignment_request`, `report/supervisor_notification` | task_board (pending badge only), followups |
 | `learning_event/*`, `report/recommendation_feedback` | training_recs |
 | `handover_item/*` | handover_draft, briefing |
 | `shift_event/*` | all consumers |
@@ -2080,12 +2140,30 @@ Routing principle: rules first; when a rule cannot choose between technique and 
 
 ### 8.12 Training recommender (`training/recommender.ts`)
 
-Order of sources (max 3 `offered` at a time; priority replay/published near-miss > pattern > task prep):
+Order of sources (max 3 `offered` at a time; priority replay/published near-miss > pattern > condition prep > task prep > refresher):
 1. **Pattern:** findings with owner `operator` and evidence `corroborated`: `belt_repeat_operating` → excavator `[ex-l-belt-lockout, ex-s-belt-reposition]` (truck: none); `unexplained_idle_repeat` → excavator `[ex-l-idle-engine-off, ex-s-truck-queue]`, truck `[ht-l-queue-discipline, ht-s-crusher-queue]`; `overspeed_repeat` → `[ht-l-haul-speed, ht-s-downhill-overspeed]`. Reason key `rec.reason.pattern.<code>` with `{count, period}` → "Suggested because the belt came off while digging 3 times this shift."
 2. **Replay/published near-miss:** replay completion recommends the matching hazard scenario; published overrides retain the existing reason text.
-3. **Task prep:** unchanged; < 3 comparable completions remains unfamiliar and does not activate personal estimation.
+3. **Task prep:** a remaining task today whose task type the operator has completed < 3 times is unfamiliar: its guided card is shown on start (F3-R7) and the first lesson/scenario tagged with its `content_tags` is recommended. Unfamiliarity does not activate personal estimation.
+4. **Condition prep (`training/conditionPrep.ts`, product F10-R12).** Evaluated at sign-in, on `observation/condition_forecast` / `report/condition_report` propagation, and at each offer moment:
+```
+cfg = profile.training                                         # §5.4.1
+if operator.experience_months ≥ cfg.prep_max_experience_months (12): return none
+if no remaining PLANNED/ACTIVE task today for this operator:    return none
+for c in [rain, darkness, dust]:                                # fixed order; the first match wins
+    upcoming = c active now (effective conditions, §8.4)
+               or forecast/darkness window starts within cfg.prep_lookahead_h (10 h)   # same horizon as briefing risk notes §8.15
+    exposure = number of distinct task_ids with an `inference/estimate` entry at task start (the original estimate)
+               for this operator and machine class whose `context` had c = true          # device ledger, kept indefinitely
+    if upcoming and exposure < cfg.prep_exposure_threshold (3):
+        content = first id in cfg.condition_prep[c] not completed in the last 30 days and not suppressed
+        if content: return Recommendation(source "condition_prep", reason "rec.reason.condition_prep.<c>",
+                                          params {onset: "now" | HH:MM, exposure})
+return none
+```
+   At most one condition-prep recommendation per shift. Reason text, e.g. "Rain after 14:00 — you have trenched in rain 0 times so far." Exposure is derived only from this device's ledger (seeded history + live), so an operator new to the tablet may get one extra offer; "Not relevant" suppresses it for 14 days as usual. Exposure counts are never shown to anyone else and are not synced (`inference/recommendation` is `operator_only`).
+5. **Refreshers (`training/refreshers.ts`, product F10-R13).** When a lesson or scenario is completed, the player asks once "Remind me with a quick question in a few days? 1 Yes · 2 No" (`TRAINING_REFRESHER_OPT_IN`). Yes sets `learning_progress.review_step = 1`, `next_review_at = completed_at + 2 d`. Intervals by step: `[2 d, 7 d, 30 d]`, each measured from the previous answer. A refresher is due when `next_review_at ≤ now`; at most one refresher is offered per shift, as a single question: for a lesson `questions[(review_step − 1) mod questions.length]`, for a scenario its situation and 3 choices. Correct at step 1 or 2 → `review_step += 1`, `next_review_at = now + interval[review_step]` (7 d, then 30 d); correct at step 3 → `next_review_at = null` (done). Wrong → show the explanation, `review_step = 1`, `next_review_at = now + 2 d`. "Later" leaves it due; "Not relevant" stops refreshers for that item. There are no scores, streaks or counts shown.
 
-**Never:** from a single alert; from patterns `required_idle, idle_reported_wait, sensor_unavailable_persistent, belt_switch_flapping, fuel_per_cycle_high`; for content completed in the last 14 days; for suppressed (pattern, content) pairs. **Offer moment:** state SECURED for ≥ 120 s, or OFF → prompt "A {duration}-second {kind} is ready: {title}. 1 Start · 2 Later" once per recommendation per shift.
+**Never:** from a single alert; from patterns `required_idle, idle_reported_wait, sensor_unavailable_persistent, belt_switch_flapping, fuel_per_cycle_high`; for content completed in the last 14 days (refreshers are exempt: they exist only for completed content); for suppressed (pattern, content) pairs. **Offer moment:** state SECURED for ≥ 120 s, or OFF → prompt "A {duration}-second {kind} is ready: {title}. 1 Start · 2 Later" (refresher: "Quick question from {title}? 1 Start · 2 Later"; condition prep: its reason text first) once per recommendation per shift.
 
 ### 8.13 Voice pipeline (`voice/*`, app `voice/*`)
 
@@ -2127,7 +2205,7 @@ Reason nouns: `truck` → `waiting_truck`; `loader` → `waiting_loader`; `shove
 #### 8.13.4 Multilingual DistilBERT ONNX classifier (`classifier.ts`, app `OnnxIntentModel`, artifact §5.4.5)
 Deterministic rules remain authoritative for EMERGENCY, CANCEL, CONFIRM, explicit negation/correction patterns and direct reason/slot patterns. Otherwise the interpreter calls `IntentInferencePort.infer(model_text)`; the app tokenizes with the bundled WordPiece config, pads/truncates to 48 tokens, creates int64 tensors, runs the quantized ONNX graph, applies stable softmax to logits and returns ordered candidates with model/version metadata.
 
-Accept only when the top intent is allowed in the current state, `max_prob >= config.thresholds.min_prob`, and `max_prob - second_prob >= min_margin`. Thresholds are selected on validation data to minimize high-confidence wrong actions, not maximize aggregate accuracy. Otherwise show up to three allowed intents on keys 1–3. Model load failure, tokenizer mismatch, runtime exception or > 1.2 s classifier timeout records diagnostics and uses rules/buttons; it does not auto-execute a model guess. Slot extraction and negation remain deterministic after intent selection. Consequential record creation still requires the existing read-back/confirmation policy.
+Accept only when the top intent is allowed in the current state, `max_prob >= config.thresholds.min_prob`, and `max_prob - second_prob >= min_margin`. Thresholds are selected on validation data to minimize high-confidence wrong actions, not maximize aggregate accuracy. Otherwise show up to three allowed intents on keys 1–3. Model load failure, tokenizer mismatch, runtime exception or > 1.2 s classifier timeout records diagnostics and uses rules/buttons; it does not auto-execute a model guess. **Decision record (F11-R5):** every interpreted utterance yields `IntentDecision = {decision_source: 'consequential_rule'|'onnx_model'|'button_fallback', artifact_id|null, top_three: [{intent, prob}], policy_result: 'accepted'|'clarification'|'forbidden'|'negated'|'model_unavailable'|'timeout', selected_intent|null, inference_ms|null, end_to_end_ms|null}`, emitted as the diagnostics event `intent_decision` (no utterance text) and returned to the eval harness; it is not a ledger entry. Slot extraction and negation remain deterministic after intent selection. Consequential record creation still requires the existing read-back/confirmation policy.
 
 Training uses `distilbert-base-multilingual-cased` (or the exact approved multilingual DistilBERT checkpoint recorded in config), class-weighted cross-entropy, fixed seeds, early stopping on validation safety-weighted macro F1, and speaker/template-disjoint train/validation/test splits covering English, Devanagari Hindi, Romanised Hindi, code-switching and Vosk-corrupted text. Export to ONNX opset supported by the pinned device runtime; apply dynamic INT8 quantization; require PyTorch-vs-ONNX intent decisions to match on the golden set and logits within tolerance.
 
@@ -2154,7 +2232,7 @@ Items in this order, deduplicated by `task_id` / `incident_id` (carried items wi
 7. Operator notes → `note` · `[next_operator]`.
 8. Site tips (S3) → `tip`.
 
-Entries with audience `operator_only` (learning events, recommendations, own findings) can never become items (asserted in code and tests). On save: `handovers` row, `handover_item/added` entries, `report/handover_note` for notes, outbox `handover` bundle (after the voice-note upload). Resolution by task completion appends `handover_item/resolved (task_completed)`.
+Entries with audience `operator_only` (learning events, recommendations, own findings) can never become items (asserted in code and tests). On save: `handovers` row, `handover_item/added` entries, `report/handover_note` for notes added in A13 (earlier notes already have theirs), outbox `handover` bundle (after the voice-note upload). Resolution by task completion appends `handover_item/resolved (task_completed)`.
 
 ### 8.15 Briefing and risk notes (`briefing/*`)
 
@@ -2182,7 +2260,7 @@ Risk-note rules in priority order (max 3, first matching wins):
 Safe Exit A7E is a separate full-screen advisory above the prompt queue. Queue priority: `read_back` > `incident_report_offer` > `idle_reason` > `voice_disambiguation` > operator-initiated prompts > `engine_off_suggestion` > `lesson_offer` > `voice_consent`. While WORKING/TRAVELLING, non-critical unsolicited prompts are deferred until READY/SECURED; critical alerts and A7E are never delayed by this budget. Only the top eligible prompt is shown; others wait.
 
 #### 8.16.5 Commands (`engine/commands.ts`)
-`SIGN_IN, END_SHIFT, ACK_HANDOVER {item_id|'all'}, TASK_START/PAUSE/RESUME {task_id}, TASK_BLOCK {task_id, reason}, TASK_COMPLETE {task_id, output_qty}, TASK_REQUEST_REASSIGN {task_id, reason}, TASK_NOTIFY_SUPERVISOR {task_id, reason}, PROGRESS_REPORT {task_id, qty}, IDLE_REASON {idle_event_id, reason, free_text?, via}, CORRECT_LAST {…}, ALERT_ACK, ALERT_FEEDBACK {alert_id, feedback}, SAFE_EXIT_CANCEL, MARK_EVENT, INCIDENT_LOG {utterance?}, INCIDENT_REPORT {incident_id, fields, via}, INCIDENT_REPLAY_OPEN/APPLY/RECOMMEND {incident_id, counterfactual?}, CONDITION_REPORT {condition, active}, HANDOVER_OPEN, HANDOVER_ADD_NOTE {text, via}, HANDOVER_REMOVE {item_id, reason}, HANDOVER_EDIT {item_id, text}, HANDOVER_ATTACH_VOICE {path}, HANDOVER_SAVE, TRAINING_START/ANSWER/DEFER/COMPLETE/NOT_RELEVANT/HELP {…}, SOS_TRIGGER, SOS_CANCEL, SET_LANGUAGE, SET_GUIDANCE, RESET_PERSONAL, VOICE_UTTERANCE {text, lang, test_input: boolean}, PROMPT_ANSWER {prompt_id, option}, CONFIRM {token}, CANCEL {token}`.
+`SIGN_IN, END_SHIFT, ACK_HANDOVER {item_id|'all'}, TASK_START/PAUSE/RESUME {task_id}, TASK_BLOCK {task_id, reason}, TASK_COMPLETE {task_id, output_qty}, TASK_REQUEST_REASSIGN {task_id, reason}, TASK_NOTIFY_SUPERVISOR {task_id, reason}, PROGRESS_REPORT {task_id, qty}, IDLE_REASON {idle_event_id, reason, free_text?, via}, CORRECT_LAST {…}, ALERT_ACK, ALERT_FEEDBACK {alert_id, feedback}, SAFE_EXIT_CANCEL, MARK_EVENT, INCIDENT_LOG {utterance?}, INCIDENT_REPORT {incident_id, fields, via}, INCIDENT_REPLAY_OPEN/APPLY/RECOMMEND {incident_id, counterfactual?}, CONDITION_REPORT {condition, active}, HANDOVER_OPEN, HANDOVER_ADD_NOTE {text, via}, HANDOVER_REMOVE {item_id, reason}, HANDOVER_EDIT {item_id, text}, HANDOVER_ATTACH_VOICE {path}, HANDOVER_SAVE, TRAINING_START/ANSWER/DEFER/COMPLETE/NOT_RELEVANT/HELP {…}, TRAINING_REFRESHER_OPT_IN {content_id, yes}, SOS_TRIGGER, SOS_CANCEL, SET_LANGUAGE, SET_GUIDANCE, RESET_PERSONAL, VOICE_UTTERANCE {text, lang, test_input: boolean}, PROMPT_ANSWER {prompt_id, option}, CONFIRM {token}, CANCEL {token}`.
 
 #### 8.16.6 Snapshot (selected fields)
 `{now, shift, machine:{machine_id, profile_id, state, state_since}, signal_health, conditions, alerts:{active, history, budget}, safe_exit_advisory, prompts, tasks: TaskView[], downstream_impact, next_task_id, day_finish:{p50_at, p90_at}, working_view, drive_view, idle, briefing, incidents, findings (own), recommendations, handover_draft, summary, pending_confirmation, last_propagation, versions:{profile, artifacts, content}}`.
@@ -2234,7 +2312,10 @@ After each comparable completed task, store `r = ln(actual_active / p50_without_
 | `alert/*` | Mirror. On `A-SPEED` raised: distinct operators with A-SPEED raised in the same `zone_id` in 7 days ≥ 3 → `overspeed_zone:<zone>` (priority 2) |
 | `report/alert_feedback` | `alert_review:<alert_type>:<machine>:<local_date>` (priority 3) |
 | `report/help_request` | `help_requests` + follow-up `help:<entry_id>` (priority 3) |
-| `report/reassignment_request` | `reassignment_requests` + follow-up `reassign:<entry_id>` (priority 2) |
+| `report/reassignment_request` | `reassignment_requests` + follow-up `reassign:<entry_id>` (category `assignment_request`, priority 2; summary includes the `impact` risk) |
+| `report/supervisor_notification` | Follow-up `notify:<entry_id>` (category `supervisor_notification`, priority 2 if `impact.risk = likely_miss` else 3; title "{Task} delayed +{delta} min — next task {risk text}"). Task untouched |
+| `alert/reviewed` (server-authored) | Mirror only |
+| `incident/reviewed` (server-authored) | Incident status `reviewed`, field corrections applied with source `reviewed` |
 | `handover_bundle` | Upsert `handovers` + `handover_items`; change `handover.published` |
 | `handover_item/acknowledged` · `/resolved` | Update item; change `handover_item.acknowledged` / `.resolved` |
 | `observation/signal_summary_5m` | `machine_summaries` |
@@ -2245,18 +2326,18 @@ Each projector returns the WS invalidation keys to publish after commit.
 ### 8.22 Data generation, training and evaluation (Python, `server/shiftmate_ml`)
 
 **Generator** (`datagen/generate.py`, config `data/generator/config.yaml`, `generator_version: gen-1.0`, `seed: 20260923`, anchor date 2026-09-22, `numpy.random.Generator(PCG64(seed))`):
-- Entities from `demo_seed.json` (sites, 24 detailed machines, 100 fleet, 48 operators). Twelve weeks × 6 working days; excavators and trucks (18 machines) get ~2 tasks per machine-day → ~2 500 tasks. Each machine has 2–3 regular operators.
+- Entities from `demo_seed.json` (sites, zones, 24 detailed machines, 100 fleet, 48 operators). Twelve weeks × 6 working days; excavators and trucks (18 machines) get ~2 tasks per machine-day → ~2 500 tasks. The 6 wheel loaders are detailed machines with no generated tasks (profile-only class, F16-R4). Each machine has 2–3 regular operators. Each machine-day's tasks get a `sequence`, a `planned_start_at` (~10 % null, so the "downstream impact unavailable" path is exercised) and a `planned_start_window_min` (15 for most tasks; 0 or 30 for a sampled minority).
 - Task sampling: type by class mix; material by site; quantity per type range (trenching 10–60 m, truck loading 20–120 m³, backfilling 10–80 m³, grading 100–800 m², pipe lifting 2–12, haul 400–2 400 t); weather per site/day/hour (P(rain) 0.25 at Chennai, P(dust) 0.30 at mining sites); visibility conditional on weather; temperature band; shift start (06:00, 14:00, 22:00 for mining); congestion per site/day.
 - `actual_active = baseline × exp(Σ effects + operator_effect + site_effect + noise)`. Effects (log scale, published in `docs/GENERATOR_ASSUMPTIONS.md`): skill beginner +0.30, expert −0.05; experience −0.06·(log1p(months) − 3); weather rain +0.14, windy +0.10 (+0.20 more for wind-sensitive tasks), dusty +0.07, foggy +0.09; visibility moderate +0.04, poor +0.10; temperature hot +0.03, extreme +0.08; night +0.06, evening +0.03; congestion medium +0.04, high +0.11; machine age +0.012/year; rock +0.05; operator effect N(0, 0.06); site effect N(0, 0.04); noise N(0, 0.12).
 - Planner minutes = baseline × 0.92 × exp(N(0, 0.08)) (ignores conditions, so it underestimates). Waits per task ~ Poisson(λ: truck loading 0.8, trenching 0.3, haul 1.2); duration lognormal (median 9 min, σ 0.5); reasons by class; 85 % reported, 15 % unexplained. Extra habitual unexplained idles for 6 operators; cool-downs after heavy tasks; belt episodes (beginners 3×), overspeed (3 habitual truck operators), proximity episodes; 5-minute summaries.
-- Outputs `data/generated/`: `tasks.csv, idle_events.csv, alerts.csv, summaries_5m.csv, operators.csv, machines.csv, fleet.csv, manifest.json` (version, seed, row counts, sha256 per file); also `packages/content/seed/demo_history.json` and `docs/GENERATOR_ASSUMPTIONS.md`. `--effect-scale {0.5, 1.5}` writes `data/generated/sens_<scale>/`. Same seed → byte-identical outputs (test).
+- Outputs `data/generated/` — the bundle is specified column by column in `docs/DATASET_SCHEMA.md` (schema version `1.2.0`): `manifest.json, sites.csv, zones.csv, operators.csv, machines.csv, fleet.csv, shifts.csv, tasks.csv, conditions_hourly.csv, summaries_5m.csv, idle_events.csv, alerts.csv, ledger_entries.jsonl`. The flat files are projections of the generated ledger (`ledger_entries.jsonl`, §5.3 payloads). Also `packages/content/seed/demo_history.json` (last 14 days of that ledger for the demo machines and their operators) and `docs/GENERATOR_ASSUMPTIONS.md`. `--effect-scale {0.5, 1.5}` writes `data/generated/sens_<scale>/` with its own manifest. Same seed → byte-identical outputs (test). The validation gates in DATASET_SCHEMA §5 run at the end of generation and fail the command.
 
-**Estimator training** (`train/estimator.py`), per machine class (excavator, haul_truck):
-- **Split A (temporal):** fit on weeks 1–8, calibrate on weeks 9–10, test on weeks 11–12.
-- **Split B (unseen operators):** 8 fixed held-out operators (4 excavator, 4 truck; listed in the config); fit/calibrate on the others (weeks 1–8 / 9–10); test on all tasks of the held-out operators.
+**Estimator training** (`train/estimator.py`), per machine class (excavator, haul_truck), on `tasks.csv` rows with `training_eligible = true`, using only the pre-start feature columns (DATASET_SCHEMA §4.2) and the target `ln(actual_active_min / baseline_minutes)`:
+- **Split A (temporal):** column `split_temporal` — fit on weeks 1–8, calibrate on weeks 9–10, test on weeks 11–12.
+- **Split B (unseen operators):** column `split_unseen_operator` — 8 fixed held-out operators (4 excavator, 4 truck; listed in the config); fit/calibrate on the others (weeks 1–8 / 9–10); test on all tasks of the held-out operators.
 - `RidgeCV(alphas=[0.1, 0.3, 1, 3, 10, 30], cv=5)` on the manually encoded matrix (the same encoding as §8.6.2, reference levels dropped, numeric standardised with training mean/std). The shipped artifact comes from split A. Golden parity file `models/parity/estimator.<class>.golden.json` = 50 test rows (raw inputs + Python p10/p50/p90).
 
-**Intent training** (`train/intent.py`): reads the reviewed bilingual/mixed-language intent examples, makes stratified train/validation/test splits grouped by paraphrase family, fine-tunes the pinned multilingual DistilBERT checkpoint, selects confidence and top-two-margin abstention thresholds on validation data, then exports an int8-quantized `intent.multilingual-distilbert.v1.onnx`, tokenizer files and `intent.config.json`. `models/parity/intent.golden.json` contains at least 30 held-out utterances with token IDs, attention masks, logits and ordered intents for Python/TypeScript/runtime parity. Training reports per-language and mixed-language accuracy, macro-F1, calibration, abstention and forbidden-action rates.
+**Intent training** (`train/intent.py`): reads the reviewed bilingual/mixed-language examples in `data/voice_train/intent_examples.jsonl` (rows with `review_status = human_reviewed`) using their `split` column (`train`/`validation`, grouped by paraphrase family and speaker/template); the held-out test set is `data/voice_test/utterances.jsonl`, which must be disjoint by text, paraphrase family and speaker group (checked by `voice:export-tokens`). It fine-tunes the pinned multilingual DistilBERT checkpoint, selects confidence and top-two-margin abstention thresholds on validation data only, then exports an int8-quantized `intent.multilingual-distilbert.v1.onnx`, tokenizer files and `intent.config.v1.json`. `models/parity/intent.golden.json` contains at least 50 held-out utterances (§5.4.5) with token IDs, attention masks, logits and ordered intents for Python/TypeScript/runtime parity. Training reports per-language and mixed-language accuracy, macro-F1, calibration, abstention and forbidden-action rates.
 
 **Estimate evaluation** (`eval/estimates.py`) on identical test rows per split, class and task type: MAE (min), MAPE, P10–P90 coverage, mean relative width `(P90 − P10)/P50`, bias (mean signed error), for: (1) task-type average (median minutes per unit in training × quantity), (2) baseline formula alone, (3) planner estimate, (4) Ridge + conformal, (5) LightGBM + SHAP top features (S7; reported only; "adopted" only if MAE is lower on both splits by ≥ 5 %, and it never ships in this build). Sensitivity: retrain and evaluate on `sens_0.5` and `sens_1.5`. Organiser T001–T005 check when E-01 mapping provides task rows. Output `eval/results/estimates.json`.
 
@@ -2283,21 +2364,21 @@ Template by (machine_class, object): `T-EX-PERSON`, `T-EX-VEHICLE`, `T-HT-PERSON
 
 ### 9.2 Authorization matrix (enforced by `require_role(...)` + `site_guard(site_id)` dependencies; every console query is filtered by `user.site_ids`)
 
-| Capability | supervisor | trainer | safety |
-|---|---|---|---|
-| Read follow-ups | categories in §5.2 | `help_request`; `safety_incident` read-only | categories in §5.2 |
-| Assign / resolve / comment follow-ups | own categories | `help_request` | own categories |
-| Decide reassignment request; reassign or cancel a task | ✓ | — | — |
-| Read incidents | ✓ (operator display name) | ✓ (operator identity hidden) | ✓ (operator display name) |
-| Review incident, correct fields | — | — | ✓ |
-| Send incident to trainer | ✓ | — | ✓ |
-| Read scenarios | ✓ | ✓ | ✓ |
-| Edit / approve / reject / redraft scenarios | — | ✓ | — |
-| Read handovers; play voice notes | ✓ | ✓ | ✓ |
-| Resolve handover item | ✓ | — | — |
-| Answer help request | — | ✓ | — |
-| Read fleet (S6) | ✓ | ✓ | ✓ |
-| Read / acknowledge SOS (S5) | ✓ | — | ✓ |
+| Capability | supervisor | trainer | safety | mechanic |
+|---|---|---|---|---|
+| Read follow-ups | categories in §5.2 | `help_request`; `safety_incident` read-only | categories in §5.2 | `machine_check` |
+| Assign / resolve / comment follow-ups | own categories | `help_request` | own categories | `machine_check` |
+| Decide reassignment request; reassign or cancel a task | ✓ | — | — | — |
+| Read incidents | ✓ (operator display name) | ✓ (operator identity hidden) | ✓ (operator display name) | — |
+| Review incident, correct fields | — | — | ✓ | — |
+| Send incident to trainer | ✓ | — | ✓ | — |
+| Read scenarios | ✓ | ✓ | ✓ | — |
+| Edit / approve / reject / redraft scenarios | — | ✓ | — | — |
+| Read handovers; play voice notes | ✓ | ✓ | ✓ | ✓ |
+| Resolve handover item (product F12-R5) | ✓ | — | — | ✓ |
+| Answer help request | — | ✓ | — | — |
+| Read fleet (S6) | ✓ | ✓ | ✓ | ✓ |
+| Read / acknowledge SOS (S5) | ✓ | — | ✓ | — |
 
 **Device scoping:** a device may push entries only for its current machine (`machine_mismatch` otherwise); bootstrap returns only its site's data; pull returns only its scopes (machine, site, machine class, all). Operator private data never reaches the server (push rejects `operator_only` and `learning_event`).
 
@@ -2550,7 +2631,7 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 
 **Critical path:** T01 → T03 → T06 → T07 → T08 → T09 → T10 → T11 → T12 → T13 → T14 → T15 → T16 → T17 → T18 → T19 → (T02 → T20 → T21) → T22 → T23 → **CP1** → T24 → T25 → T27 → T28 → T29 → T30 → T31 → T35 → T36 → T39 → **CP2** → T48 → T50 → T51. Parallel lanes (other team members or later model sessions): T02/T20/T21 alongside T06–T14; T05 alongside T06; T35 as soon as T04 lands; T23 alongside T22.
 
-**Cut order if behind schedule** (Should first; announce each cut): T43 site tips → T44 fleet → T45 IsolationForest/LightGBM → T46 forecast (seed forecast remains) → T41 SOS → T42 personalisation → T40 AI (templates remain) → T47 Tamil. **Cutting any Must item requires the product owner's decision**; the smallest Must reductions to propose, in order: Hindi translation of truck content (English fallback), audio-level voice eval (text-level stays), web voice (already best-effort, SD-02).
+**Cut order if behind schedule** (Should first; announce each cut): T43 site tips → T44 fleet → T45 IsolationForest/LightGBM → T46 forecast (seed forecast remains) → T41 SOS → T42 personalisation → T40 AI (templates remain) → T47 Tamil. **Cutting any Must item requires the product owner's decision**; the smallest Must reductions to propose, in order: Hindi translation of truck content (English fallback), audio-level voice eval (text-level stays), web voice (already best-effort, SD-02), the mechanic console role (supervisors resolve defect items and machine checks on the mechanic's behalf; product F12-R5 / open question 3).
 
 ### 11.2 Tasks
 
@@ -2572,8 +2653,8 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 - Done when: `pnpm --filter @shiftmate/core test` and `typecheck` pass.
 
 **T04 — Content package, profiles and demo seed (M).** Prereqs: T02, T03.
-- Files: `packages/content/{package.json, src/index.ts}`, `profiles/*.json` (§5.4.1, all three), `i18n/en.json` + `hi.json` (all keys used so far; Hindi `translation_status: draft`), `audio/alert_clips.json` (§5.4.7 segments incl. `obj_person, obj_light_vehicle, obj_heavy_vehicle, obj_structure`, 8 `dir_*`, `close, stop_person_swing, stop_person_path, prox_unavailable, belt_move, belt_oper, belt_unavailable, speed_over, heat, wind, idle_ask, sos_sent`), `seed/demo_seed.json` (§5.4.2 complete: 4 sites with `congestion_level`, zones, 100 machines, 48 operators, 3 console users, pairing codes, assignments, EX-07 previous handover + seeded machine_fault incident, hourly forecast 48 h), `tools/scripts/validate_profiles.ts`, `tools/scripts/check_content.ts` (initial checks: i18n key parity, profile validity, clip manifest keys), `server/shiftmate/cli.py` sub-command `hash-pin --pin 1234 --salt <hex>` (used to compute seed hashes) and `hash-password`.
-- Instructions: compute all PIN hashes (20 000 iterations) with the CLI; generate salts deterministically as `sha256("salt:" + operator_id)[:32]` so the seed is reproducible; console passwords argon2-hashed via `hash-password` (hash stored in seed; plaintext only in `docs/DEMO_RUNBOOK.md`: `sup.priya / Priya-Demo-2026`, `trn.arjun / Arjun-Demo-2026`, `saf.meena / Meena-Demo-2026`). Compute the PIN parity vector (§8.24) and put the expected hex in `packages/core/test/pin.test.ts` and `server/tests/test_pin.py`.
+- Files: `packages/content/{package.json, src/index.ts}`, `profiles/*.json` (§5.4.1, all three), `i18n/en.json` + `hi.json` (all keys used so far; Hindi `translation_status: draft`), `audio/alert_clips.json` (§5.4.7 segments incl. `obj_person, obj_light_vehicle, obj_heavy_vehicle, obj_structure`, 8 `dir_*`, `close, stop_person_swing, stop_person_path, prox_unavailable, belt_move, belt_oper, belt_unavailable, speed_over, heat, wind, idle_ask, exit_unsecured, sos_sent`), `seed/demo_seed.json` (§5.4.2 complete: 4 sites with `congestion_level` and `job_efficiency_override`, zones, 100 machines, 48 operators, 4 console users, pairing codes, assignments with `sequence` and `planned_start_local`, EX-07 previous handover + seeded machine_fault incident, hourly forecast 48 h), `tools/scripts/validate_profiles.ts`, `tools/scripts/check_content.ts` (initial checks: i18n key parity, profile validity, clip manifest keys), `server/shiftmate/cli.py` sub-command `hash-pin --pin 1234 --salt <hex>` (used to compute seed hashes) and `hash-password`.
+- Instructions: compute all PIN hashes (20 000 iterations) with the CLI; generate salts deterministically as `sha256("salt:" + operator_id)[:32]` so the seed is reproducible; console passwords argon2-hashed via `hash-password` (hash stored in seed; plaintext only in `docs/DEMO_RUNBOOK.md`: `sup.priya / Priya-Demo-2026`, `trn.arjun / Arjun-Demo-2026`, `saf.meena / Meena-Demo-2026`, `mec.dinesh / Dinesh-Demo-2026`). Compute the PIN parity vector (§8.24) and put the expected hex in `packages/core/test/pin.test.ts` and `server/tests/test_pin.py`.
 - Tests: TC-36; `pnpm profiles:validate`; `pnpm content:check`.
 - Done when: all three profiles validate and the seed parses against its zod schema.
 
@@ -2590,7 +2671,7 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 
 **T09 — Seatbelt rules and Safe Exit Guard (S).** Prereqs: T06, T08. Files: `safety/{seatbelt,safeExitGuard}.ts`, tests. §8.2 including flapping, the belt-move incident hook, context-sensitive exit intent and the advisory-only/no-machine-control boundary. Tests: TC-03, TC-04, TC-05, TC-72.
 
-**T10 — Tasks: model, time accounting, day plan and downstream preview (M).** Prereqs: T07. Files: `tasks/*`, tests. §7.4.2, §8.6.7–9; request actions append records but never mutate sequence or assignment. Tests: TC-40, TC-13, TC-73.
+**T10 — Tasks: model, time accounting, day plan and downstream preview (M).** Prereqs: T07. Files: `tasks/*`, tests. §7.4.2, §8.6.7–9; `TASK_REQUEST_REASSIGN` / `TASK_NOTIFY_SUPERVISOR` append `report/reassignment_request` / `report/supervisor_notification` with the `ImpactSummary` but never mutate sequence or assignment. Tests: TC-40, TC-13, TC-73.
 
 **T11 — Estimation (L).** Prereqs: T10, T04. Files: `estimate/*` (except `personal.ts` logic, which returns 0 until T42), `packages/core/test/fixtures/estimator.fixture.json` (valid artifact with hand-set coefficients, **test-only**), tests. §8.6.1–8.6.8. Tests: TC-09, TC-11, TC-12, TC-14. Done when all worked examples in §8.6 reproduce to 0.1 min.
 
@@ -2648,8 +2729,9 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 
 **T23 — Console v1 (L).** Prereqs: T21.
 - Files: `apps/console/*` scaffold (`pnpm create vite@latest apps/console -- --template react-ts`, then add Tailwind 4 via `@tailwindcss/vite`, React Router 7, TanStack Query), `api/client.ts`, `api/queries.ts`, `auth/AuthContext.tsx`, `realtime/useConsoleSocket.ts`, `layout/Shell.tsx`, `pages/LoginPage.tsx`, `pages/FollowUpsPage.tsx` (+ detail), components; server `security/console_auth.py`, `passwords.py`, `routers/console_auth.py`, `routers/console_followups.py`, `routers/console_ws.py` (hub with after-commit notify), `static.py` (mounts `/console` with SPA fallback: unknown sub-paths return `index.html`; `/app` with COOP/COEP headers on every response under `/app`).
-- Tests: TC-52, TC-53 (follow-up endpoints), TC-61.
-- Done when `sup.priya` logs in, sees the J1 site-delay follow-up appear live (WS) and resolves it.
+- Instructions: roles `supervisor, trainer, safety, mechanic` are enforced through the same `require_role`/category filters (§5.2, §9.2). The mechanic role reuses existing pages and endpoints only (C2 filtered to `machine_check`, C5 resolve); no mechanic-specific page, component or endpoint is built.
+- Tests: TC-52, TC-53 (follow-up endpoints, all four roles), TC-61.
+- Done when `sup.priya` logs in, sees the J1 site-delay follow-up appear live (WS) and resolves it, and `mec.dinesh` sees only machine-check follow-ups.
 
 **CP1 — Integration checkpoint.** Run J1 steps 1–7 on web + Android against the server; confirm the site-delay follow-up in C2; confirm offline queueing and single sync. Fix before continuing.
 
@@ -2665,7 +2747,7 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 - Done when a proximity WARNING creates an incident whose snapshot, report and review are visible in C3 with "Integrity verified".
 
 **T26 — Usage review, findings, shift summary (M).** Prereqs: T13, T21.
-- Files: `usage/*`, `followups` consumer, `summary/shiftSummary.ts` (findings, alerts, belt compliance), `app/summary.tsx` (A12), server follow-ups `machine_check`, `usage_review`, `alert_review`, `overspeed_zone` projectors, A7 "wrong or annoying" feedback flow, scenarios `pair5_belt_habit.yaml`, `pair5_belt_faulty_switch.yaml`, `pair5_site_layout.yaml`.
+- Files: `usage/*`, `followups` consumer, `summary/shiftSummary.ts` (findings, alerts, belt compliance), `app/summary.tsx` (A12), A3 "My review" sheet (shared component with A12), server follow-ups `machine_check`, `usage_review`, `alert_review`, `overspeed_zone` projectors, A7 "wrong or annoying" feedback flow, scenarios `pair5_belt_habit.yaml`, `pair5_belt_faulty_switch.yaml`, `pair5_site_layout.yaml`.
 - Tests: TC-17, TC-38 (pair 5).
 - Done when each pattern in §8.8 produces the specified owner in tests and console items appear for site/machine/needs-review owners only.
 
@@ -2680,15 +2762,15 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 - Done when PTT voice works offline on the tablet and degrades to "Voice unavailable — use buttons" on failure.
 
 **T29 — Handover end to end (L).** Prereqs: T25, T26, T28, T22.
-- Device: `handover/*`, `handover_draft` consumer, `app/handover.tsx` (A13 incl. quick notes and voice note), briefing acknowledgement wiring, task-completion resolution, voice-note upload before the bundle push.
-- Server: handover bundle + item projectors, `routers/console_handovers.py`, uploads streaming endpoint, console `HandoversPage`.
+- Device: `handover/*`, `handover_draft` consumer, `app/handover.tsx` (A13 incl. quick notes and voice note), A3 "Add handover note" row and shift-level `handover_id` for notes added before A13, briefing acknowledgement wiring, task-completion resolution, voice-note upload before the bundle push.
+- Server: handover bundle + item projectors, `routers/console_handovers.py` (resolve allowed for supervisor and mechanic), uploads streaming endpoint, console `HandoversPage`.
 - Tests: TC-26, TC-56, TC-21 (handover exclusion part), TC-38 (pair 8: one correction updates all views; safety unchanged).
 - Done when J1 steps 12–13 work: blocked task + defect + near miss survive the shift change; acknowledgement does not resolve; C5 shows ack status.
 
 **T30 — Training hub (L).** Prereqs: T26, T18. External: E-06 review.
-- Files: `packages/content/packs/{excavator,haul_truck}.{en,hi}.json` (full launch lists §5.4.3 with guided cards), `packages/content/src/illustrations.ts` (≥ 12 SVG scenes referenced by packs), `training/*`, `app/training/index.tsx` (A10), `app/training/[contentId].tsx` (A11), help requests, suppressions, lesson offers, and content checks including speech-length limits §F11-R9.
-- Tests: TC-24, TC-25, TC-38 (pair 7: same correct answer with and without later behaviour → no certification field, recommendation unchanged).
-- Done when F10 acceptance holds: pattern → recommendation with reason; defer; later completion while secured; visible in history; truck wait never triggers a technique lesson.
+- Files: `packages/content/packs/{excavator,haul_truck}.{en,hi}.json` (full launch lists §5.4.3 with guided cards), `packages/content/src/illustrations.ts` (≥ 12 SVG scenes referenced by packs), `training/*` (incl. `conditionPrep.ts`, `refreshers.ts`), `app/training/index.tsx` (A10), `app/training/[contentId].tsx` (A11 incl. refresher mode and completion opt-in), `profile.training` blocks, `inference/estimate.context`, `data/scenarios/pair11_condition_prep.yaml`, help requests, suppressions, lesson offers, and content checks including speech-length limits §F11-R9.
+- Tests: TC-24, TC-25, TC-75, TC-76, TC-38 (pair 7: same correct answer with and without later behaviour → no certification field, recommendation unchanged; pair 11: condition prep).
+- Done when F10 acceptance holds: pattern → recommendation with reason; defer; later completion while secured; visible in history; truck wait never triggers a technique lesson; Ravi gets the rain prep before forecast rain and Senthil does not; an opted-in lesson returns as one question after 2 simulated days.
 
 **T31 — Near-miss to scenario pipeline (M).** Prereqs: T25, T30, T23.
 - Server: `services/scenarios.py` (§8.23 templates en/hi), review → draft, `routers/console_scenarios.py`, publish change. Console: `ScenariosPage`, `ScenarioEditorPage` with preview. Device: `content_overrides` + published recommendation source.
@@ -2698,7 +2780,7 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 **T31A — Secured incident replay and deterministic counterfactual (S9) (S).** Prereqs: T25, T30. Files: `incident/replay.ts`, A17 timeline, one lower-speed or two-seconds-earlier-stop comparator, focused scenario recommendation. Tests: TC-74. Done when replay is inaccessible in active states, closes if state becomes active, reads only the captured incident timeline, and cannot modify live safety logic.
 
 **T32 — Reassignment and cancellation (M).** Prereqs: T22, T23.
-- Device: A4 "Request reassignment", pending badge, cancellation handling from pull. Server: `routers/console_tasks.py` (list, reassign), reassignment decide endpoint, projector. Console: C2 assignment-request actions + machine select.
+- Device: A3/A4 "Request reassignment" and impact-card "Notify supervisor", pending badges, cancellation handling from pull. Server: `routers/console_tasks.py` (list, reassign), reassignment decide endpoint, `report/reassignment_request` and `report/supervisor_notification` projectors. Console: C2 assignment-request actions + machine select; supervisor-notification detail with the impact summary.
 - Tests: TC-55, TC-47 (end to end with the device core reducer), TC-38 (pair 10a: offline then reconnect → no duplicates).
 - Done when an offline completion of a task reassigned meanwhile shows "Conflict" on the device and a `sync_conflict` follow-up in the console, and resolving it clears the device badge.
 
@@ -2713,7 +2795,7 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 - Done when F13 acceptance and NFR-11 hold.
 
 **T35 — Synthetic data generator (M).** Prereqs: T04.
-- Files: `data/generator/config.yaml`, `server/shiftmate_ml/{paths.py, datagen/*}`, outputs listed in §8.22, `docs/GENERATOR_ASSUMPTIONS.md` (generated from the config: every effect with its value and rationale, seed, version, sensitivity runs), `packages/content/seed/demo_history.json`.
+- Files: `data/generator/config.yaml`, `server/shiftmate_ml/{paths.py, datagen/*}` (including `datagen/validate.py` for the DATASET_SCHEMA §5 gates), outputs listed in §8.22 with exactly the columns of `docs/DATASET_SCHEMA.md`, `docs/GENERATOR_ASSUMPTIONS.md` (generated from the config: every effect with its value and rationale, seed, version, sensitivity runs), `packages/content/seed/demo_history.json`.
 - Tests: TC-62.
 - Done when `pnpm ml:generate` is deterministic and the app shows `comparable history` basis for trenching on first launch.
 
@@ -2759,7 +2841,7 @@ Sizes (coding-model effort): **S** ≤ 1 h · **M** 1–3 h · **L** 3–6 h. Ev
 
 **T45 — IsolationForest and LightGBM comparison (S7) (M).** Prereqs: T35, T21. Files: `services/isoforest.py` (fit on `summaries_5m.csv` at startup when enabled; score each new `machine_summaries` row; `iso_flag` shown as "secondary flag (needs review)" in C2 usage-review detail), `shiftmate_ml/eval/{isoforest_eval,lgbm_compare}.py`, results sections. Done when both appear in `results.md`.
 
-**T46 — Forecast feed (S8) (S).** Prereqs: T21. Files: `services/forecast.py` (poller every `FORECAST_POLL_MINUTES`; map Open-Meteo hourly → `forecasts` rows: weather = rain if precipitation ≥ 0.5 mm, windy if wind ≥ 38, foggy if visibility < 1 000 m, dusty never from Open-Meteo, else clear; heat index = apparent temperature), `forecast.upsert` change, `cli fetch-forecast`. Tests: MockTransport. Done when a fetched forecast reaches the device with its age.
+**T46 — Forecast feed (S8) (S).** Prereqs: T21. Files: `services/forecast.py` (poller every `FORECAST_POLL_MINUTES`; map Open-Meteo hourly → `forecasts` rows: weather = rain if precipitation ≥ 0.5 mm, windy if wind ≥ 38, foggy if visibility < 1 000 m, dusty never from Open-Meteo, else clear; `visibility_m` = `visibility`; `visibility` band per §8.6.2; heat index = apparent temperature; `issued_at` = fetch time), `forecast.upsert` change, `cli fetch-forecast`. Tests: MockTransport. Done when a fetched forecast reaches the device with its age.
 
 **T47 — Tamil UI strings (S2 partial) (S).** Prereqs: T30. Files: `i18n/ta.json` (UI strings only, `translation_status: draft`), language cycle includes `ta` when the file exists; voice stays en/hi (SD-01). Done when operator screens render in Tamil with English fallback for missing keys.
 
@@ -2810,7 +2892,7 @@ Snapshots are not used as the sole assertion anywhere. Tests assert values, stat
 | TC-08 | Conditions | rain + darkness + dust | Multiplier capped at 1.6 | F7-R8 |
 | TC-09 | Profiles | Baselines for §8.6.1 examples | 49.7 / 28.5 / 256 min (±0.1) | F4 |
 | TC-10 | Trained artifacts + golden | Predict 50 golden rows per class | |rel diff| < 1e-6 for p10/p50/p90 | F4-R8 |
-| TC-11 | Fixture artifact | Known type; unknown type; quantity 0 | comparable_history; fallback with band; insufficient_data | F4-R9 |
+| TC-11 | Fixture artifact | Known type; unknown type; quantity 0 | comparable_history; fallback with band; insufficient_data | F4-R12 |
 | TC-12 | Live update | §8.6.6 example; BLOCKED task; progress 0 with a > p50 | 46.0 / 41.1 / 52.3; conditional text, no clock time; remaining ≥ 10 % of p50, never negative | F4-R2, R4 |
 | TC-13 | Task + idle | §8.6.7 example; then correction to `break` | active 53, waiting 12; then waiting 0, break 12 | F4-R3, F3-R5 |
 | TC-14 | Task with changes | Truck wait (+12), slower progress (+5) | WHY answer names both, ≤ 25 words | F4-R6 |
@@ -2837,7 +2919,7 @@ Snapshots are not used as the sole assertion anywhere. Tests assert values, stat
 | TC-35 | LoRa codec | Fixture packet | Round-trip equal in TS and Python | F14 |
 | TC-36 | PIN | Parity vector; 5 wrong attempts | Hash equal in TS/Python; lockout 60 s | F1-R1 |
 | TC-37 | Organiser | Fixture rows (and real rows after E-01) | Rows 2 and 4 flagged only | F6-R5, M18 |
-| TC-38 | Scenario pairs 1–10 (§13.5 product) + J2 | Run compiled scenarios | All `expect` entries pass | F6–F11, M18 |
+| TC-38 | Scenario pairs 1–11 (§13.5 product) + J2 | Run compiled scenarios | All `expect` entries pass | F6–F11, M18 |
 | TC-39 | Personal baseline | 0–2, 3–4, 5–7 and >10 comparable tasks | No adjustment below 3; evidence count shown; bounded shrinkage; wider intervals at low n; private/resettable; no rating labels | F18 |
 | TC-40 | Task model | Every transition row §7.4.2 incl. auto-pause and illegal ones | Next state / refusal as specified | F3-R2, R3 |
 
@@ -2871,12 +2953,14 @@ Snapshots are not used as the sole assertion anywhere. Tests assert values, stat
 
 | ID | Setup | Action | Expected | Req |
 |---|---|---|---|---|
-| TC-62 | Generator, `--weeks 2` | Run twice with the same seed; once with another seed | Identical file hashes; different hashes | §13.4 product |
+| TC-62 | Generator, `--weeks 2` | Run twice with the same seed; once with another seed; run the DATASET_SCHEMA §5 gates | Identical file hashes; different hashes; every gate passes (columns exactly as the schema, keys/FKs, chronology, no outcome field in pre-start features) | §13.4 product, DATASET_SCHEMA §5 |
 | TC-63 | Training | Train on small data; export | Artifact validates (zod via a Node check invoked from pytest or the TS parity test); calibration coverage 0.80 ± 0.08 | F4 |
 | TC-64 | Intent training | Fine-tune, quantize, export and load | ONNX/tokenizer/config hashes recorded; golden parity written; model loads offline and meets memory/latency budget or rules/buttons fallback is explicit | F11 |
 | TC-71 | Alert budget | Run mixed critical, duplicate and non-critical events for one simulated hour | Reports alerts/hour, repeats suppressed, duplicates prevented, deferred prompts, critical latency, acknowledgement and resolution | NFR-17 |
-| TC-72 | Safe Exit Guard | Belt off alone; then seat vacant/door open while unsecured; then secure machine | No full-screen for belt alone; A7E checklist for conjunction; clears when secured; no control command emitted | F6-R6–R9 |
-| TC-73 | Delay with a following planned task | Accept +18 min delay; select both optional actions | Current ETA and next-window risk update; request/notify records append; task order and assignee unchanged | F4-R9–R11 |
+| TC-72 | Safe Exit Guard | Belt off alone; seat vacant / door open while unsecured, then (a) secure the machine, (b) seat occupied + door closed, (c) "Not exiting"; door open 12 s after the belt transition; stale seat/door signals | No A7E for belt alone or outside the 10 s window; `A-EXIT-UNSEC` raised for the conjunction and cleared with `secured` / `seat_and_door_restored` / `not_exiting`; stale inputs named unavailable, never "secured"; no control command emitted | F6-R6–R9 |
+| TC-73 | Delay with a following planned task (window 15 min, and 0 min); finish inside the window; next task without a planned start; no next task | Accept +18 min delay; select both optional actions; repeat a request | Current ETA delta and `likely_miss`/`at_risk` risk measured against the window end; `none` when the finish is inside the window; `unavailable` for the other two cases; `report/reassignment_request` and `report/supervisor_notification` appended once (duplicate refused); task order, sequence and assignee unchanged | F4-R9–R11 |
+| TC-75 | Condition prep | Rain forecast at +3 h with remaining tasks: (a) operator 0 months, 0 rain tasks; (b) same operator after 3 tasks started in rain; (c) 132-month operator; (d) no remaining task; (e) "Not relevant"; (f) rain + darkness both upcoming | (a) one `condition_prep` offer with reason and exposure 0, max one per shift; (b)–(d) none; (e) suppressed 14 days; (f) rain chosen (fixed order); never while WORKING/TRAVELLING | F10-R12, F10-R2, F10-R4 |
+| TC-76 | Refreshers | Complete a lesson with opt-in yes; advance the `FixedClock` 1 d, 2 d; answer correct; +7 d correct; +30 d correct; separately answer wrong at step 2; opt-in no | Nothing due at 1 d; one-question offer at 2 d; steps 2 and 3 due at +7 d and +30 d; done after step 3; wrong → explanation and due again 2 d later at step 1; opt-in no → never due; at most one refresher per shift; entries `learning_event` `mode = refresher`, `operator_only` | F10-R13, F10-R6 |
 | TC-74 | Captured incident, SECURED then WORKING | Open replay, apply one counterfactual, request training, change state | Deterministic comparison and focused scenario; replay closes in WORKING; live state/rules unchanged | F8-R9–R12, F10-R11 |
 | TC-65 | Eval | `pnpm eval` on generated data | `results.json` has every §12.6 section; `results.md` starts with the SIMULATED DATA banner | M19 |
 | TC-66 | Compose stack, `sup.priya` | Helper pushes a site-delay batch as EX-07 | Follow-up appears without reload (WS); resolve works | F15-R4 |
@@ -2905,11 +2989,13 @@ Snapshots are not used as the sole assertion anywhere. Tests assert values, stat
 | Suite | Data | Metrics | Compared with |
 |---|---|---|---|
 | Estimates (Python) | Generated tasks, splits A and B, sensitivity runs, organiser T001–T005 when available | MAE, MAPE, P10–P90 coverage, relative width, bias per class/task type | Task-type average; baseline alone; planner; LightGBM (S7) |
-| Safety (TS) | Pair + challenge scenarios with `expect` | Missed alerts, nuisance alerts (raised where `alert_absent` expected), detection delay (s), "unavailable" latency ≤ 2 s pass rate | Rule variants: no condition modifiers; no debounce |
+| Safety (TS) | Pair + challenge scenarios with `expect`, incl. Safe Exit pairs (belt only vs belt + door/seat; stale inputs) | Missed alerts, nuisance alerts (raised where `alert_absent` expected), detection delay (s), "unavailable" latency ≤ 2 s pass rate, Safe Exit false/missed advisories; results split by scenario `author_role` ("challenge scenarios: author-independent = yes/no") | Rule variants: no condition modifiers; no debounce |
+| Alert budget (TS) | Pair, challenge and J1/J2 scenarios; `EngineSnapshot.alerts.budget` (§8.3) | Alerts per operating hour, repeats suppressed after ack, duplicates prevented, non-critical prompts deferred until READY/SECURED, critical delivery latency (p90/max, simulated), acknowledgement and resolution rate; assertion that every WARNING/CRITICAL raise was delivered | Ungrouped / no-deferral variant on identical scenarios |
 | Usage review | Pair 1 and 5 scenarios + challenge | Correct follow-up owner rate; valid waits labelled as waste | Idle-threshold-only rule (every idle > 5 min = operator waste) |
-| Training relevance | Site-delay, required-idle, sensor-fault scenarios | Irrelevant recommendations count | Recommend-on-every-alert rule |
-| Voice (text) | `data/voice_test/utterances.jsonl` | Intent accuracy, slot accuracy, wrongly accepted actions, negation accuracy, per language | Buttons-only path (reported as 100 % by construction, with input counts) |
-| Voice (audio, if E-07) | WAV clips transcribed with Python `vosk` + same grammar | Same metrics, reported separately from text | — |
+| Training relevance | Site-delay, required-idle, sensor-fault scenarios; pair 11 condition-prep scenarios | Irrelevant recommendations count; condition-prep offers to operators new to the condition vs to experienced/exposed operators (target: all vs none); refresher schedule adherence (TC-76) | Recommend-on-every-alert rule |
+| Voice (text) | `data/voice_test/utterances.jsonl` + `IntentDecision` records (§8.13.4) | Intent and slot accuracy, high-confidence wrong actions, abstention/top-3 rate, forbidden-in-state rate, negation accuracy, calibration; per language/script slice (English, Devanagari Hindi, Romanised Hindi, code-switched) and challenge split | Deterministic rules-only path; buttons-only path (reported as 100 % by construction, with input counts) |
+| Voice (audio, if E-07) | WAV clips transcribed with Python `vosk` + same grammar | Same metrics, reported separately from text; device end-to-end latency from MC-01 | — |
+| Downstream impact | Delay/block scenarios with and without a next planned start | Correct risk (`none/at_risk/likely_miss/unavailable`); task order/assignee unchanged after request actions | — |
 | Propagation | Correction scenarios | All mapped consumers updated; no safety state change | — |
 | Organiser | `rows.json` | Rows flagged vs recorded alert flags | Recorded flags |
 | Operator effort | J1/J2 scenarios | Inputs per task; prompts per operating hour | v1 design (all prompts immediate) |
@@ -2929,7 +3015,7 @@ Snapshots are not used as the sole assertion anywhere. Tests assert values, stat
 | F7 | TC-07, TC-08, TC-23, TC-38 (pair 3) |
 | F8 | TC-06, TC-20, TC-22, TC-23, TC-49, TC-68 |
 | F9 | TC-15 – TC-18, TC-48, TC-50, TC-38 (pairs 1, 5, 8) |
-| F10 | TC-21, TC-24, TC-25, TC-54, TC-68, TC-38 (pair 7) |
+| F10 | TC-21, TC-24, TC-25, TC-54, TC-68, TC-75, TC-76, TC-38 (pairs 7, 11) |
 | F11 | TC-28 – TC-31, TC-70, MC-01, MC-09 |
 | F12 | TC-21, TC-26, TC-56 |
 | F13 | TC-32, TC-33, TC-45, TC-47, TC-51, TC-69, MC-04, MC-07 |
@@ -2959,6 +3045,7 @@ Snapshots are not used as the sole assertion anywhere. Tests assert values, stat
 | Senthil (OP-0021), HT-03, Hindi | PIN `7777` | J2 excerpt |
 | Supervisor | `sup.priya` / `Priya-Demo-2026` | C2, C5 |
 | Safety coordinator | `saf.meena` / `Meena-Demo-2026` | C3 review |
+| Mechanic | `mec.dinesh` / `Dinesh-Demo-2026` | C2 machine checks, C5 resolving defect items (not in the 5-minute script) |
 | Trainer | `trn.arjun` / `Arjun-Demo-2026` | C4 approve |
 | Pairing codes | `100007` (EX-07), `300003` (HT-03) | A0 |
 
@@ -2969,16 +3056,16 @@ Use three separate browser sessions (e.g. Chrome, Chrome incognito, Edge) for th
 | Time | Presenter / operator action | Expected visible result |
 |---|---|---|
 | 0:00 | Tablet on A1. Select Ravi, type 1234, OK | A2 in Guided mode; the handover is read aloud ("Trench T2 blocked…", "Hydraulic oil temperature high at 02:10…"); key 2 → both items show "Acknowledged" and remain open |
-| 0:30 | Continue → A3; OK on task 1 | A4: "Active ~48–58 min · Waiting ~10 min · Finish …", basis "comparable history", factors (e.g. "Skill level (beginner) +…%"), planner 30 min; key 1 → guided card → OK → task ACTIVE |
+| 0:30 | Continue → A3; OK on task 1 | A4: "Active ~48–58 min · Waiting ~10 min · Finish …", basis "comparable history", factors (e.g. "Skill level (beginner) +…%"), planner 30 min; prompt "Rain after 14:00 — you have trenched in rain 0 times so far. A 90-second scenario is ready: Rain starts during trenching. 1 Start · 2 Later" → 2 (stays under A10 Recommended); key 1 → guided card → OK → task ACTIVE |
 | 1:00 | Presenter: scenario `demo_j1`, beat "Digging"; open Organiser replay (F2) | A5 Focus tile; replay view: rows 2 and 4 "Extended idle with belt unfastened — context needed", rows 1 and 3 not flagged |
 | 1:30 | Beat “Belt off while digging”; ACK; show belt-off alone has no exit advisory. Then open cab door while unsecured; finally engage lockout/neutralise implement | Normal belt alert first; door + belt-off opens A7E checklist; securing clears it. Presenter states “advisory only—no machine control.” |
 | 1:50 | Beat “Truck wait”; hold V: “waiting for the truck”; select “Notify supervisor” | “Current task ETA updated by +18 minutes” and “Task 2 may miss its planned start window”; notification request appears, but task order/assignee remain unchanged |
 | 2:20 | Hold V: "actually, access blocked" | Updated chip again; C2 item moves to "Access blocked"; the original reason is visible in history |
 | 2:40 | Beat "Rain + worker from rear"; beat "Sensor drop"; beat "Sensor restore" | CAUTION "Person, rear." earlier than in dry run, then WARNING; incident auto-created; "Proximity monitoring unavailable" within 2 s; restored |
 | 3:00 | Beat "Stop and secure"; prompt → key 1; hold V: "log near miss, worker behind me, no contact"; OK | Read-back "Near miss. Person, rear. No contact. Severity high. OK to save?" → Saved |
-| 3:20 | Safety session: C3 → Mark reviewed. Trainer session: C4 → Approve. Tablet: A14 "Sync now" (or wait ≤ 15 s) | Lesson offer / A10 Recommended "From a real near-miss on this site"; play the scenario: wrong answer → explanation → retry → correct |
+| 3:20 | Safety session: C3 → Mark reviewed. Trainer session: C4 → Approve. Tablet: A14 "Sync now" (or wait ≤ 15 s) | Lesson offer / A10 Recommended "From a real near-miss on this site" (the deferred rain prep is listed too, with its reason); play the near-miss scenario: wrong answer → explanation → retry → correct |
 | 3:50 | Presenter: "Simulate no signal" | Status bar "Offline — safety and tasks working, assistant limited"; task 2 start works; belt alert still works; "N waiting" grows |
-| 4:10 | Menu → Handover & end shift; record a voice note; key 4 → OK. Kumar signs in (2468), key 2. Restore signal | Draft lists blocked T2, defect, near miss, site delay; after Kumar's ack items stay open; sync → "0 waiting"; C5 shows "Acknowledged by Kumar" |
+| 4:10 | Presenter: engine off (A13 is OFF-only); Menu → Handover & end shift; record a voice note; key 4 → OK. Kumar signs in (2468), key 2. Restore signal | Draft lists blocked T2, defect, near miss, site delay; after Kumar's ack items stay open; sync → "0 waiting"; C5 shows "Acknowledged by Kumar" |
 | 4:30 | Presenter: Switch machine → HT-03 (code 300003); Senthil (7777); scenario `demo_j2`: beat "Overspeed on Road 3", beat "Shovel queue" → key 1 | Hindi UI; Drive Mode "42 / Limit 35 OVER" with spoken warning; queue reason recorded → site delay |
 | 4:45 | Laptop: open `eval/results/results.md` | SIMULATED DATA banner; estimate errors vs baselines; safety scenario results; voice accuracy |
 
@@ -3022,7 +3109,8 @@ A requirement is done only when it is implemented, integrated (reachable from th
 You are implementing ShiftMate in the repository at the current working directory.
 
 1. Read, in full, before writing code: docs/TECHNICAL_SPEC.md (the source of truth for architecture, contracts,
-   paths, algorithms and task order) and docs/PRODUCT_PLAN.md (the source of truth for product behaviour). Read any
+   paths, algorithms and task order), docs/PRODUCT_PLAN.md (the source of truth for product behaviour) and
+   docs/DATASET_SCHEMA.md (the generated dataset, used by T35–T39). Read any
    README/CLAUDE.md/AGENTS.md instructions present in the repository.
 2. Work through the tasks in §11 in order (T01 → T51), respecting prerequisites and checkpoints CP1, CP2, CP3.
    Keep a task list; mark each task done only when its "Done when" criteria and listed tests pass.
@@ -3055,7 +3143,10 @@ Checks performed against the whole document, with fixes applied:
 
 | Check | Result |
 |---|---|
-| Every product feature F1–F18, Must M1–M19 and Should S1–S8 has requirements (§1), design (§5–§8) and tasks (§11) | Yes. S2 is split: Tamil UI → T47; Tamil voice excluded (SD-01) |
+| Every product feature F1–F18, Must M1–M19 and Should S1–S9 has requirements (§1), design (§5–§8) and tasks (§11) | Yes. S2 is split: Tamil UI → T47; Tamil voice excluded (SD-01). S9 incident replay → F8-R9–R12, F10-R11, §8.11, T31A |
+| Requirement IDs `Fn-Rk` equal the product's for every ID the product defines; spec-added IDs are numbered above the product's range | Yes (F4-R12, F5-R7, F6-R10–R14, F8-R13–R15, F9-R8–R13, F10-R14, F11-R7–R11, F13-R6–R7, F15-R4–R8, F16-R4 are spec-added) |
+| Product alert catalogue (§12) equals `AlertType` | Yes, including `A-EXIT-UNSEC` (`ADVISORY`) |
+| Generated dataset (§8.22) equals `docs/DATASET_SCHEMA.md` and uses only contracts defined here | Yes (schema 1.2.0) |
 | Every screen in product §10 (including A7E and A17) is specified and assigned | A7E T09/T19; A17 T31A; all prior A/C screens retain their listed implementation tasks |
 | Every endpoint in §6 has an implementing task and tests | health T02; devices/sync/uploads T21; ai T40; lora T41; console auth/follow-ups/ws T23; incidents T25; scenarios T31; handovers T29; tasks/reassignment T32; help T30; fleet T44; sos T41 |
 | Every change type has a producer and a device reducer | Producers in §8.21/§6.3; reducer table §8.17; tests TC-32, TC-51 |

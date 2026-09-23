@@ -96,6 +96,7 @@ The data is already collected, but it is not turned into timely, fair, explained
 | Site supervisor / dispatcher (2–3 people for ~100 machines) | Web console | Only the items that need action: site delays, machine checks, incident reviews, assignment requests |
 | Trainer / instructor | Web console | Review near-misses, approve scenarios, see help requests |
 | Safety coordinator | Web console | Incident records with context and review status |
+| Mechanic | Web console | Machine-check follow-ups (e.g. belt switch flapping) and resolving defect handover items |
 
 ### 3.3 Jobs to be done (operator)
 1. Know today's work and what "done" means for each task.
@@ -116,7 +117,7 @@ The data is already collected, but it is not turned into timely, fair, explained
 5. **Unknown stays unknown.** Missing or stale data is shown as unavailable, never as safe or normal.
 6. **Safety is independent.** No explanation, acknowledgement or correction can switch off an active hazard.
 7. **Acknowledged is not resolved.** Alerts and handover items have separate acknowledge and resolve states.
-8. **Coach only when it helps.** Training is recommended only for a trainable cause that repeats, and only when the machine is secured and the operator chooses it.
+8. **Coach only when it helps.** Corrective coaching is recommended only for a trainable cause that repeats. Preparation is offered only for work or conditions the operator is about to face and has rarely faced; refreshers only when the operator asked for them. All training is offered only when the machine is secured and the operator chooses it.
 9. **Route to the right owner.** Every finding goes to the operator, the site, the machine, or nobody.
 10. **The AI never creates numbers.** Numbers and safety states come from rules and models; language AI only interprets and phrases.
 11. **Offline first.** Safety, tasks, estimates, records, lessons and core voice work with no internet, ever.
@@ -158,7 +159,7 @@ The data is already collected, but it is not turned into timely, fair, explained
 | M8 | Alert lifecycle (raised, acknowledged, cleared, reviewed) with grouping |
 | M9 | Incident capture: automatic context snapshot + one-sentence or button report + correction |
 | M10 | Unusual behaviour: idle classes, reason capture, overspeed, fuel per cycle, repeated alerts, follow-up routing |
-| M11 | Training hub: library, micro-lessons, decision scenarios, recommendation with reason, defer/resume, history, help request |
+| M11 | Training hub: library, micro-lessons, decision scenarios, recommendation with reason, condition prep before a rarely faced condition, spaced refresher questions, defer/resume, history, help request |
 | M12 | Near-miss → scenario pipeline (template drafting, trainer approval) |
 | M13 | Voice: push-to-talk, offline speech-to-text, ~12 intents in English and Hindi, confirmation for records; full button/controller fallback |
 | M14 | Handover authoring: draft, edit, voice note, acknowledgement, carry forward |
@@ -217,6 +218,7 @@ An append-only record of everything that happens in a shift, stored on the devic
 | `original_text` | The operator's words (reports) |
 | `supersedes` | Previous entry ID when this is a correction |
 | `audience` | operator_only / next_operator / site / trainer / safety |
+| `data_origin` | Where the record came from: live app / demo seed / synthetic generator version + seed / organiser / team-recorded (§13.2) |
 | `sync_status` | pending / sent / confirmed / needs_review |
 
 **Rules:** entries are never edited in place; corrections create a new entry that supersedes the old one; the latest non-superseded entry is the current truth; history is always viewable.
@@ -244,7 +246,7 @@ When a report or correction is added, the propagation engine re-evaluates only t
 | Delay or blocked reason accepted | Current-task ETA, downstream next-assignment impact preview, optional reassignment/supervisor-notification request; task order and assignment remain unchanged |
 | Task event (start, pause, block, complete) | Task board, estimate, handover draft |
 | Incident report / correction | Incident record, training (scenario candidate), handover, safety follow-up |
-| Condition change | Estimate, proximity thresholds, briefing notes |
+| Condition change | Estimate, proximity thresholds, briefing notes, condition prep (F10-R12) |
 | Alert raised / cleared | Working view, usage review (repeat patterns), handover |
 
 **Invariant:** propagation never changes an active safety alert's state.
@@ -500,11 +502,12 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 | Decision scenario | Situation (text + illustration + audio), 3 choices, explanation for each | 1–2 min |
 | Near-miss scenario | Decision scenario generated from a reviewed real near-miss, anonymised | 1–2 min |
 | Guided task card | 3 steps before an unfamiliar task (Guided mode) | 15 s |
+| Refresher question | One question taken from a lesson or scenario the operator already completed, asked again days later (F10-R13) | 20–30 s |
 | Site tip (Should) | 20-second voice tip from an experienced operator, tagged to task type or area | 20 s |
 
 **Requirements**
 - F10-R1: Library browsable by machine class, task type and topic; searchable offline.
-- F10-R2: Recommendations come from: task preparation (upcoming unfamiliar task), operator request, or a reviewed pattern with a trainable cause. One alert never triggers a recommendation by itself.
+- F10-R2: Recommendations come from: task preparation (upcoming unfamiliar task), condition preparation (F10-R12), operator request (including refreshers, F10-R13), or a reviewed pattern with a trainable cause. One alert never triggers a recommendation by itself.
 - F10-R3: Every recommendation shows its reason ("Suggested because belt came off while digging 3 times this week") and a "not relevant" button; feedback reduces similar suggestions.
 - F10-R4: Content is offered only in `SECURED` or `OFF` and only when the operator opts in; it can be deferred and resumed.
 - F10-R5: Wrong scenario answers show the explanation and allow another attempt; two failures offer "ask a trainer" (creates a help request in the console).
@@ -514,6 +517,8 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F10-R9 (near-miss pipeline): reviewed near-miss → draft scenario (template on the server; Claude drafting when online, S1) → trainer edits and approves in the console → published to all operators of that machine class in the next content sync.
 - F10-R10: Launch content pack: at least 6 micro-lessons and 6 decision scenarios for the excavator profile, 3 lessons and 3 scenarios for the haul-truck profile, in English and Hindi.
 - F10-R11 (Should/Later): A secured-state incident replay may recommend a focused scenario for the same hazard and machine class; the replay and recommendation retain the source incident ID but published training is anonymised.
+- F10-R12 (condition prep): When rain, dust or darkness is active or forecast during the operator's remaining work today, and the operator has worked fewer than 3 tasks in that condition on this machine class, offer one short scenario or lesson for that condition before it arrives (e.g. "Rain after 14:00 — you haven't trenched in rain yet. 60-second scenario: rain starts during trenching."). It applies only in the operator's first 12 months, uses the machine profile's condition-to-content list, is offered at most once per shift, and counts only the operator's own history, which stays private.
+- F10-R13 (refreshers): On finishing a lesson or scenario, the operator may choose "Remind me with a quick question". One of its questions then comes back about 2, 7 and 30 days later, parked only and at most once per shift. A correct answer moves to the next gap; a wrong answer shows the explanation and starts again at 2 days. After the 30-day question is answered correctly, refreshers for that item stop. There are no scores, streaks or comparisons.
 
 **Launch content list (excavator)**
 Lessons: seatbelt and hydraulic lockout; working near people (swing radius); working in rain and poor visibility; idle and engine-off decisions; loading trucks efficiently; trenching near utilities.
@@ -523,7 +528,7 @@ Scenarios: person enters swing radius; truck driver walks behind machine; rain s
 Lessons: speed on haul roads; light vehicles on haul roads; queue discipline at shovel and crusher.
 Scenarios: pickup crossing in dust; overspeed on downhill; queue at crusher with engine running.
 
-**Acceptance:** an event pattern leads to a recommendation with a reason; the operator defers it, later completes a scenario while secured, and finds it in history; a truck wait never triggers a technique lesson; a reviewed near-miss appears as a new scenario after approval.
+**Acceptance:** an event pattern leads to a recommendation with a reason; the operator defers it, later completes a scenario while secured, and finds it in history; a truck wait never triggers a technique lesson; a reviewed near-miss appears as a new scenario after approval; a new operator with no rain history is offered the rain scenario before forecast rain, while an operator with 3 or more rain tasks is not; a completed lesson with refreshers on returns as one question 2 days later, and a wrong answer brings it back after another 2 days.
 
 ---
 
@@ -675,7 +680,7 @@ Machine profiles, rules, task-estimator coefficients, launch content pack (lesso
 
 **Requirements**
 - F15-R1: Console never shows operators' private learning answers.
-- F15-R2: Role-based access: supervisor, trainer, safety coordinator.
+- F15-R2: Role-based access: supervisor, trainer, safety coordinator, mechanic (machine checks and resolving handover items, F12-R5).
 - F15-R3: Mouse and keyboard allowed (no-touch rule applies to the cab only).
 
 **Acceptance:** a truck-queue report from the cab appears as a site follow-up; a near-miss can be approved as a scenario and reaches the operator app on next sync.
@@ -687,7 +692,7 @@ Machine profiles, rules, task-estimator coefficients, launch content pack (lesso
 **Purpose:** one core, many machines; adding a machine class is configuration, not code.
 
 **Profile contents**
-Machine class and models; supported signals and freshness limits; machine-state thresholds; task types with progress units and rated rates; job efficiency default; idle thresholds and reason lists; seatbelt rule variants; proximity zones and thresholds; condition modifiers with provenance notes; speed limits (trucks); alert texts and voice clip IDs; lesson and scenario tags; guided task cards.
+Machine class and models; supported signals and freshness limits; machine-state thresholds; task types with progress units and rated rates; job efficiency default; idle thresholds and reason lists; seatbelt rule variants; proximity zones and thresholds; condition modifiers with provenance notes; speed limits (trucks); alert texts and voice clip IDs; lesson and scenario tags; guided task cards; condition-prep content list (which lesson or scenario prepares for rain, dust or darkness on this machine class).
 
 **Launch profiles**
 | Profile | Sector | Depth |
@@ -759,7 +764,7 @@ Machine class and models; supported signals and freshness limits; machine-state 
 |---|---|---|---|
 | 1 | OFF | Signs in with PIN via buttons; Tamil/English | F1 |
 | 2 | OFF | Hears handover: "Trench T2 blocked by utility mark; hydraulic temperature high at 02:10"; acknowledges | F2, F12 |
-| 3 | SECURED | Task board: trench 40 m in clay, rain after 14:00; estimate 48–58 min active + ~10 min expected waiting; basis: comparable history | F3, F4 |
+| 3 | SECURED | Task board: trench 40 m in clay, rain after 14:00; estimate 48–58 min active + ~10 min expected waiting; basis: comparable history. Offer: "Rain after 14:00 — you haven't trenched in rain yet. 60-second scenario?" → Later (stays under Recommended) | F3, F4, F10-R12 |
 | 4 | WORKING | Focus Mode tile; progress 8/40 m; finish time updating | F5, F4 |
 | 5 | WORKING | Belt slips off while digging → "Seatbelt, machine operating" | F6 |
 | 6 | READY → idle | Idle 6 min → "Why the wait?" → says "waiting for truck" | F9, F11 |
@@ -783,7 +788,7 @@ Machine class and models; supported signals and freshness limits; machine-state 
 | 7 | Back at yard → 12 records sync; queue goes to supervisor, near-miss to trainer | F13, F15 |
 
 ### J3. New operator's first week
-Day 0: tutorial using buttons only, language, Guided mode on. Days 1–5: guided task cards before each new task type; handover tips from experienced operators. Week 2: recommended lessons with reasons, scenarios during breaks. Week 3: help request answered by a trainer. After at least three comparable completions, task-specific estimates may privately adapt with an evidence count and wider early uncertainty; no automatic certification or permanent operator rating.
+Day 0: tutorial using buttons only, language, Guided mode on. Days 1–5: guided task cards before each new task type; handover tips from experienced operators. Week 2: recommended lessons with reasons, scenarios during breaks; before the first rain and first night shift, a short prep scenario for that condition; lessons finished with "Remind me" come back as one quick question after about 2, 7 and 30 days. Week 3: help request answered by a trainer. After at least three comparable completions, task-specific estimates may privately adapt with an evidence count and wider early uncertainty; no automatic certification or permanent operator rating.
 
 ### J4. Trainer turns a near-miss into practice
 Machine secured → operator/trainer replays the captured timeline → optionally compares one deterministic "lower speed" or "stop two seconds earlier" counterfactual → incident review in console → focused scenario draft appears → trainer edits choices and explanation → approve → next sync publishes to all excavator operators → operators see it with reason "From a real near-miss on this site".
@@ -808,7 +813,7 @@ Follow-up list: "Truck queue at Loading Bay 2 — 3 reports, 55 min total today"
 | A7E | Safe Exit Guard | Full-screen advisory checklist; security signal status; "Not exiting" acknowledgement; never machine control | READY, WORKING, TRAVELLING, UNKNOWN when exit intent is present |
 | A8 | Idle prompt | "Why the wait?" with 4 reasons + voice | READY, SECURED |
 | A9 | Incident report | Snapshot summary, fields with sources, read-back, confirm/correct | SECURED, OFF (or on demand) |
-| A10 | Training hub | Recommended (with reasons), library, history, help | SECURED, OFF |
+| A10 | Training hub | Recommended (with reasons, including condition prep and refreshers due), library, history, help | SECURED, OFF |
 | A11 | Lesson / scenario player | Cards, audio, choices, explanation | SECURED, OFF |
 | A12 | Shift summary | Tasks planned vs actual, active vs waiting, alerts, private belt compliance | OFF |
 | A13 | Handover editor | Draft items with audience, voice note, save | OFF |
@@ -870,7 +875,7 @@ Covered in F11. Additional rules:
 Machine, MachineProfile, Operator, Site, Zone, Shift, Task, TaskEvent, Estimate, DownstreamImpactPreview, Observation, Condition, ProximityEvent, Alert, AlertBudgetMetric, Incident, IncidentReplay, IdleEvent, Report, Correction, Finding, FollowUp, HandoverItem, Lesson, Scenario, LearningEvent, Recommendation, HelpRequest, OutboxEntry, SOSEvent.
 
 ### 13.2 Provenance on every record
-`source` (organiser / synthetic generator version + seed / team-recorded / live app), units, timestamps (event and receipt), missingness flags.
+`data_origin` (organiser / synthetic generator version + seed / demo seed / team-recorded / live app), units, timestamps (event and receipt), missingness flags. `data_origin` says where a record came from; it is separate from the ledger's `source` (observed / reported / inferred / reviewed), which says how a fact is known.
 
 ### 13.3 Organiser data
 Kept verbatim in its own folder, flagged `organiser`, never modified or interpolated. Replay must flag rows 2 and 4 only.
@@ -901,6 +906,7 @@ Generator assumptions (effects of skill, weather, age, material) are published a
 8. One reason corrected: all affected views update; unrelated safety facts unchanged.
 9. No progress or unknown restart: uncertainty shown, never negative time.
 10. Offline records then reconnect: no duplicates; separately, sensor outage.
+11. Same rain forecast: new operator with no rain history vs operator with 3+ rain tasks vs experienced operator (prep offered / not offered / not offered).
 
 Challenge scenarios are authored by a teammate who did not write the rules.
 
@@ -993,7 +999,7 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Safety behaves? | Missed alerts, nuisance alerts, detection delay; "unavailable" within 2 s | Rule variants — on challenge scenarios |
 | Alert budget respected? | Alerts per operating hour; repeats suppressed; duplicates prevented; non-critical prompts deferred until READY/SECURED; critical alerts delivered without delay; acknowledgement/resolution rate | Ungrouped/no-deferral variant on identical scenarios |
 | Usage review fair? | Correct follow-up owner on paired scenarios; valid waits labelled as waste | Idle-threshold-only rule |
-| Training relevant? | Irrelevant recommendations on site-delay/sensor cases | Recommend-on-every-alert rule |
+| Training relevant? | Irrelevant recommendations on site-delay/sensor cases; condition-prep offers only to operators new to the forecast condition; refreshers on the 2/7/30-day schedule | Recommend-on-every-alert rule |
 | Voice works? | Intent and field accuracy, high-confidence wrong actions, abstention/top-3 rate, negation cases, end-to-end latency, per language and code-switch slice; text and audio separate | Deterministic rules-only path; buttons-only path |
 | Propagation consistent? | All affected views updated, no safety change | — |
 | Organiser compatibility | Rows 2 and 4 flagged, 1 and 3 not | Recorded flags |
@@ -1008,14 +1014,14 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Time | Show | Point made |
 |---|---|---|
 | 0:00 | Ravi signs in with buttons; handover read aloud; acknowledges | Continuity; acknowledged ≠ resolved |
-| 0:30 | Task board: trench 40 m, rain later; range with reasons and basis | Honest estimates |
+| 0:30 | Task board: trench 40 m, rain later; range with reasons and basis; "you haven't trenched in rain yet" prep offer → Later | Honest estimates; training prepares before the condition arrives |
 | 1:00 | Focus Mode; organiser rows replay → rows 2 and 4 flagged "context needed" | Compatible with organiser data, no overclaim |
 | 1:30 | Belt off while digging → alert but no exit advisory; door opens while unsecured → Safe Exit Guard; lockout engaged → advisory clears | Context-sensitive advisory; never machine control |
 | 1:50 | "Waiting for the truck" → current ETA +18 min, next task may miss its window, site delay, no lesson, handover — all update; "Notify supervisor" creates a request only | Explain once, downstream impact, human assignment control |
 | 2:20 | "Actually, access blocked" → consistent updates, history kept | Corrections |
 | 2:40 | Worker approaches in rain → earlier warning; sensor stops → "unavailable" | Honest safety |
 | 3:00 | "Log near miss…" → read back → confirmed | One-sentence reporting |
-| 3:20 | Trainer approves near-miss as scenario; Ravi practises on break | Shared learning, only when parked |
+| 3:20 | Trainer approves near-miss as scenario; Ravi practises on break; the rain prep he deferred at 0:30 is still under Recommended with its reason | Shared learning and preparation, only when parked |
 | 3:50 | Network off → everything core still works; status shows offline | Offline first |
 | 4:10 | Handover saved; next operator acknowledges | Continuity |
 | 4:30 | Switch to haul truck: Drive Mode, overspeed, queue reason | Same core, other sector |
@@ -1070,7 +1076,7 @@ Backup: recorded video and seeded offline replay mode.
 |---|---|---|
 | Daily task dashboard | F2, F3, F4 | 0:00–0:30 |
 | Safety features (seatbelt, Safe Exit Guard, proximity, incident logging, working conditions, alert budget) | F6, F7, F8, §17 | 1:30, 2:40, 3:00 |
-| Operator training hub (creative format) | F8/F10 (lessons, decision scenarios, incident replay/counterfactual Should, near-miss scenarios, help request) | 3:20 |
+| Operator training hub (creative format) | F8/F10 (lessons, decision scenarios, condition prep, spaced refreshers, incident replay/counterfactual Should, near-miss scenarios, help request) | 0:30, 3:20 |
 | Unusual behaviour (idling, unsafe patterns) | F9 | 1:00, 1:50, 4:30 |
 | Task time estimation (past data + conditions + downstream impact + private task-specific baseline) | F4, F18 | 0:30, 1:50 |
 
@@ -1109,4 +1115,6 @@ Backup: recorded video and seeded offline replay mode.
 | Profile | Configuration for a machine class |
 | Near-miss scenario | Practice question built from a reviewed real near-miss |
 | Guided mode | Extra explanation for new operators |
+| Condition prep | A short scenario or lesson offered before a condition (rain, dust, darkness) the operator has rarely worked in |
+| Refresher | One question from a completed lesson or scenario, asked again after about 2, 7 and 30 days if the operator asked for it |
 | SOS | Emergency message, sent over LoRaWAN when there is no mobile signal |

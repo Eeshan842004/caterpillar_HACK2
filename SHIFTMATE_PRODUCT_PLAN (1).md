@@ -151,9 +151,9 @@ The data is already collected, but it is not turned into timely, fair, explained
 | M1 | Operator app sign-in and machine pairing (PIN; key-fob simulated) |
 | M2 | Shift briefing with handover receipt and acknowledgement |
 | M3 | Daily task board with task states, blockers and completion criteria |
-| M4 | Task time estimation: baseline + learned correction + range + work/wait split + live update + conditional ETA |
+| M4 | Task time estimation: baseline + learned correction + range + work/wait split + live update + conditional ETA + downstream next-assignment impact preview |
 | M5 | Working view (Focus Mode) and Drive Mode driven by machine state |
-| M6 | Seatbelt logic using machine state and hydraulic lockout |
+| M6 | Seatbelt logic using machine state and hydraulic lockout, plus a context-sensitive Safe Exit Guard when belt-off coincides with exit intent |
 | M7 | Proximity alerts by zone and time-to-contact, condition-aware, freshness-aware |
 | M8 | Alert lifecycle (raised, acknowledged, cleared, reviewed) with grouping |
 | M9 | Incident capture: automatic context snapshot + one-sentence or button report + correction |
@@ -179,6 +179,7 @@ The data is already collected, but it is not turned into timely, fair, explained
 | S6 | Fleet status view for 100 simulated machines |
 | S7 | IsolationForest secondary usage flag; LightGBM + SHAP estimate comparison |
 | S8 | Weather from a forecast feed, cached |
+| S9 | Secured-state incident replay with one deterministic counterfactual and a focused training-scenario recommendation, when the existing timeline makes it inexpensive |
 
 ### 6.3 Later (designed, stated, not built)
 - Real Product Link / VisionLink / ISO 15143-3 integration and CAN/J1939 gateway.
@@ -187,6 +188,7 @@ The data is already collected, but it is not turned into timely, fair, explained
 - On-device small language model.
 - Camera-based proximity or fatigue detection.
 - Fleet dispatch optimisation.
+- Full incident reconstruction or physics simulation beyond the bounded deterministic replay in S9.
 
 ### 6.4 Never
 - Machine control of any kind.
@@ -239,6 +241,7 @@ When a report or correction is added, the propagation engine re-evaluates only t
 | Trigger | Consumers re-evaluated |
 |---|---|
 | Idle reason reported / corrected | Estimate (waiting vs active), usage review (attribution), training relevance, handover draft, site follow-ups |
+| Delay or blocked reason accepted | Current-task ETA, downstream next-assignment impact preview, optional reassignment/supervisor-notification request; task order and assignment remain unchanged |
 | Task event (start, pause, block, complete) | Task board, estimate, handover draft |
 | Incident report / correction | Incident record, training (scenario candidate), handover, safety follow-up |
 | Condition change | Estimate, proximity thresholds, briefing notes |
@@ -341,8 +344,11 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F4-R6: "Why did my estimate change?" (voice or button) explains the change from stored factors.
 - F4-R7: The planner's own estimate, when present, is shown next to ShiftMate's for comparison.
 - F4-R8: Runs fully on the device (model coefficients shipped in the app).
+- F4-R9: When an accepted delay or blocked reason changes the current ETA, immediately recompute the likely effect on the next planned assignment and show both messages, for example: "Current task ETA updated by +18 minutes" and "Task 2 may miss its planned start window."
+- F4-R10: The impact preview may offer "Request reassignment" or "Notify supervisor"; these create requests/follow-ups only. ShiftMate never silently reorders tasks or reassigns an operator.
+- F4-R11: If the next task has no planned start window or the impact cannot be calculated, show only the current-task change and state that downstream impact is unavailable rather than inventing one.
 
-**Acceptance:** the same task gets different estimates in rain vs dry; a reported truck wait moves the finish time but not active time; progress updates move it again; a new task type shows "fallback".
+**Acceptance:** the same task gets different estimates in rain vs dry; a reported truck wait moves the finish time but not active time and previews the next assignment's likely delay; requesting reassignment creates a supervisor decision item without changing task order; progress updates move the estimate again; a new task type shows "fallback".
 
 ---
 
@@ -375,14 +381,23 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 | `OFF` | Any | Nothing |
 | Any | Belt or lockout signal missing/stale | Status "belt monitoring unavailable"; never shows "OK" |
 
+**Safe Exit Guard**
+- Exit intent is present only when the belt changes to unfastened and, within 10 seconds, either the seat becomes vacant or the cab door opens. Belt-off alone never triggers the guard.
+- If exit intent is present and the machine is not `SECURED` or `OFF`, show a full-screen advisory: lower or neutralize the implement; engage hydraulic lockout or parking brake; confirm machine motion has stopped; exit only after the machine is secured.
+- The advisory clears when the machine becomes `SECURED`/`OFF`, the seat is occupied and door closed again, or the operator acknowledges "Not exiting". It never sends a machine-control command and is not a certified interlock.
+
 **Requirements**
 - F6-R1: Evaluate rules every second on the device.
 - F6-R2: Debounce: condition must hold for 2 consecutive seconds before alerting (avoid switch bounce).
 - F6-R3: Per-shift belt compliance summary shown privately to the operator at end of shift.
 - F6-R4: A belt switch that flaps repeatedly (e.g. > 10 changes in 5 min while secured) creates a machine-check follow-up, not an operator alert.
 - F6-R5: Organiser rows 2 and 4 (belt unfastened + long idle, lockout unknown) are presented as "extended idle with belt unfastened — context needed", compatible with the recorded flags, without claiming the operator left the cab.
+- F6-R6: Evaluate Safe Exit Guard inputs every second using fresh belt, seat-occupancy, cab-door, motion, implement-neutral and lockout/parking-brake signals.
+- F6-R7: Belt-off without a fresh seat-vacant or door-open signal produces only the existing state-based belt response; it never produces the full-screen exit advisory.
+- F6-R8: When exit intent is detected while unsecured, the full-screen advisory is visual and spoken, remains advisory-only, and cannot lower an implement, apply a brake, engage lockout or otherwise control the machine.
+- F6-R9: Missing or stale seat/door/security signals must be named as unavailable; ShiftMate must not state that the machine is secured.
 
-**Acceptance:** belt off while digging → spoken warning; belt off with lockout engaged → no alarm; belt signal removed → "unavailable".
+**Acceptance:** belt off while digging → spoken warning but no exit advisory; belt off plus door open or seat vacant while unsecured → full-screen Safe Exit Guard; securing the machine clears it; belt off with lockout engaged → no alarm; belt signal removed → "unavailable"; no test causes machine control.
 
 ---
 
@@ -430,6 +445,10 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F8-R6: Records are append-only with a hash chain (each record stores the hash of the previous one) so later edits are detectable.
 - F8-R7: Incidents are routed to the safety coordinator and trainer queues in the console; near-misses become scenario candidates (F10).
 - F8-R8: Offline: record and snapshot saved on the device; free-form text is extracted with on-device rules; if extraction is incomplete, the text is kept and refined online later (S1).
+- F8-R9 (Should/Later): After the machine is `SECURED` or `OFF`, the operator or trainer may replay the captured 60-second-before/30-second-after incident timeline. Replay is unavailable in `READY`, `WORKING`, `TRAVELLING` or `UNKNOWN`.
+- F8-R10 (Should/Later): Replay may apply one deterministic, clearly labelled counterfactual to the recorded timeline, such as reducing travel speed or stopping two seconds earlier. It is an educational comparison, not a claim of what certainly would have happened.
+- F8-R11 (Should/Later): Replay never feeds values back into live alerts, machine state or the safety engine, and never controls the machine.
+- F8-R12 (Should/Later): Completing a replay recommends or drafts one focused training scenario tied to the incident; trainer approval remains required before wider publication.
 
 **Acceptance:** a near-miss is captured with context automatically, described in one sentence, read back and confirmed in under 20 seconds; acknowledging an active proximity alert leaves the hazard shown.
 
@@ -494,6 +513,7 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F10-R8: Site delays, required idle and sensor faults never produce technique lessons.
 - F10-R9 (near-miss pipeline): reviewed near-miss → draft scenario (template on the server; Claude drafting when online, S1) → trainer edits and approves in the console → published to all operators of that machine class in the next content sync.
 - F10-R10: Launch content pack: at least 6 micro-lessons and 6 decision scenarios for the excavator profile, 3 lessons and 3 scenarios for the haul-truck profile, in English and Hindi.
+- F10-R11 (Should/Later): A secured-state incident replay may recommend a focused scenario for the same hazard and machine class; the replay and recommendation retain the source incident ID but published training is anonymised.
 
 **Launch content list (excavator)**
 Lessons: seatbelt and hydraulic lockout; working near people (swing radius); working in rain and poor visibility; idle and engine-off decisions; loading trucks efficiently; trenching near utilities.
@@ -526,7 +546,7 @@ Scenarios: pickup crossing in dust; overspeed on downhill; queue at crusher with
 1. Push-to-talk starts recording.
 2. Speech-to-text on the device (Vosk small models; vocabulary biased to domain words).
 3. Normalise: lower-case, remove fillers, map synonyms and languages to canonical words ("lorry", "dumper", "gaadi" → `truck`).
-4. Intent: keyword rules first; tiny on-device classifier (TF-IDF + logistic regression) second; current machine state and last question narrow the options.
+4. Intent: deterministic rules first for emergency, cancel, confirm and other high-consequence commands; a fine-tuned multilingual DistilBERT model exported to ONNX handles the remaining English/Hindi intent classification on-device; current machine state and last question narrow the allowed options.
 5. Slots: reason, object, place, numbers, contact yes/no.
 6. Negation and correction handling ("no", "not", "nahi", "illa"; "actually…").
 7. Confidence check: below threshold → offer top 3 options on buttons.
@@ -557,6 +577,8 @@ Tamil examples (Should) are added after validation by a native speaker.
 - F11-R2: Every intent has an equivalent button path.
 - F11-R3: Unrecognised utterances (with operator permission) are stored to improve the next content update.
 - F11-R4: Voice output: pre-recorded clips for all alerts (all launch languages); device text-to-speech for dynamic text.
+- F11-R5: The quantized ONNX intent model and tokenizer ship inside the app, run fully offline, and record model version, top intent, confidence and whether rules or the model produced the decision.
+- F11-R6: Low confidence, small top-two margin, an intent forbidden in the current machine state, or model-load/inference failure routes to the top-three/button clarification path; it never silently performs a consequential action.
 
 **Acceptance:** all launch intents work offline in English and Hindi on the voice test set; "there was no near miss" creates no record; every intent can also be completed with buttons.
 
@@ -583,7 +605,7 @@ Tamil examples (Should) are added after validation by a native speaker.
 **Purpose:** the app works fully with no internet, including a device that never had internet.
 
 **What ships inside the app**
-Machine profiles, rules, model coefficients, launch content pack (lessons, scenarios, audio), alert voice clips, speech models (English, Hindi; Tamil Should), intent classifier and word lists, demo scenarios, organiser data.
+Machine profiles, rules, task-estimator coefficients, launch content pack (lessons, scenarios, audio), alert voice clips, speech models (English, Hindi; Tamil Should), quantized multilingual DistilBERT ONNX intent model and tokenizer, intent rules and word lists, demo scenarios, organiser data.
 
 **On-device storage:** SQLite for the Shift Ledger, tasks, records, learning progress, outbox and personal baselines.
 
@@ -721,9 +743,12 @@ Machine class and models; supported signals and freshness limits; machine-state 
 | Lesson relevance | Quiz results and "not relevant" feedback | Better recommendations |
 
 **Requirements**
-- F18-R1: All updates are explainable ("your estimate grew because your last 5 trenches took longer").
-- F18-R2: Personal data stays on the device unless the operator agrees to share summaries.
-- F18-R3: A reset option restores defaults.
+- F18-R1: Task-specific estimate personalisation starts only after at least 3 comparable completed tasks for the same operator, machine class and task type; before that, the shared estimate remains unchanged.
+- F18-R2: Every personalised estimate names the task type and evidence count (for example, "Adjusted using your last four trenching tasks") and widens uncertainty when the evidence count is small.
+- F18-R3: All updates are explainable and bounded; a personal offset supplements rather than replaces the shared task estimator.
+- F18-R4: Personal task history stays private to the operator by default and is not shown in the supervisor console, handover or team comparisons unless the operator explicitly opts in to share a summary.
+- F18-R5: The system never labels an operator weak, slow or unsafe and never creates a permanent operator score or rating from personal pace.
+- F18-R6: A reset option restores defaults and deletes the operator's device-only personal statistics.
 
 ---
 
@@ -758,10 +783,10 @@ Machine class and models; supported signals and freshness limits; machine-state 
 | 7 | Back at yard → 12 records sync; queue goes to supervisor, near-miss to trainer | F13, F15 |
 
 ### J3. New operator's first week
-Day 0: tutorial using buttons only, language, Guided mode on. Days 1–5: guided task cards before each new task type; handover tips from experienced operators. Week 2: recommended lessons with reasons, scenarios during breaks. Week 3: help request answered by a trainer. Throughout: estimates adapt to their pace; no automatic certification.
+Day 0: tutorial using buttons only, language, Guided mode on. Days 1–5: guided task cards before each new task type; handover tips from experienced operators. Week 2: recommended lessons with reasons, scenarios during breaks. Week 3: help request answered by a trainer. After at least three comparable completions, task-specific estimates may privately adapt with an evidence count and wider early uncertainty; no automatic certification or permanent operator rating.
 
 ### J4. Trainer turns a near-miss into practice
-Incident review in console → mark reviewed → scenario draft appears → edit choices and explanation → approve → next sync publishes to all excavator operators → operators see it with reason "From a real near-miss on this site".
+Machine secured → operator/trainer replays the captured timeline → optionally compares one deterministic "lower speed" or "stop two seconds earlier" counterfactual → incident review in console → focused scenario draft appears → trainer edits choices and explanation → approve → next sync publishes to all excavator operators → operators see it with reason "From a real near-miss on this site".
 
 ### J5. Supervisor handles follow-ups
 Follow-up list: "Truck queue at Loading Bay 2 — 3 reports, 55 min total today" → reassign a truck → resolve. "Belt switch flapping on EX-07" → create mechanic check.
@@ -780,6 +805,7 @@ Follow-up list: "Truck queue at Loading Bay 2 — 3 reports, 55 min total today"
 | A5 | Focus Mode | One tile: task, progress, finish time, belt, proximity, idle | WORKING |
 | A6 | Drive Mode | Speed vs limit, next stop, proximity | TRAVELLING |
 | A7 | Alert overlay | Icon, word, colour, object and direction, ACK hint | Any |
+| A7E | Safe Exit Guard | Full-screen advisory checklist; security signal status; "Not exiting" acknowledgement; never machine control | READY, WORKING, TRAVELLING, UNKNOWN when exit intent is present |
 | A8 | Idle prompt | "Why the wait?" with 4 reasons + voice | READY, SECURED |
 | A9 | Incident report | Snapshot summary, fields with sources, read-back, confirm/correct | SECURED, OFF (or on demand) |
 | A10 | Training hub | Recommended (with reasons), library, history, help | SECURED, OFF |
@@ -789,6 +815,7 @@ Follow-up list: "Truck queue at Loading Bay 2 — 3 reports, 55 min total today"
 | A14 | Status and sync | Online/offline, records waiting, sensor health, conflicts | Any |
 | A15 | SOS | Hold-to-send, delivery status, radio reminder | Any |
 | A16 | Settings | Language, guidance level, personal data reset | OFF |
+| A17 | Incident replay (Should/Later) | Recorded timeline, one deterministic counterfactual, training recommendation | SECURED, OFF |
 
 ### Web console
 | # | Screen |
@@ -832,6 +859,7 @@ Covered in F11. Additional rules:
 | A-HEAT | Heat index above threshold with long working time | INFO | "High heat. Consider a water break." | No | — |
 | A-WIND | Wind above threshold during lifting/demolition task | CAUTION | "Strong wind. Check load and boom." | No | — |
 | A-IDLE-ASK | Idle > threshold, no reason | INFO (prompt) | "Why the wait?" | No | Per reason |
+| A-EXIT-UNSEC | Belt off + seat vacant or cab door open while machine not secured | ADVISORY (full-screen) | "Secure the machine before exiting." | No | None; advisory only |
 | A-SOS | Operator SOS | CRITICAL | "SOS sent. Also call on radio." | Yes | Console alarm |
 
 ---
@@ -839,7 +867,7 @@ Covered in F11. Additional rules:
 ## 13. Data and content requirements
 
 ### 13.1 Entities (product level)
-Machine, MachineProfile, Operator, Site, Zone, Shift, Task, TaskEvent, Estimate, Observation, Condition, ProximityEvent, Alert, Incident, IdleEvent, Report, Correction, Finding, FollowUp, HandoverItem, Lesson, Scenario, LearningEvent, Recommendation, HelpRequest, OutboxEntry, SOSEvent.
+Machine, MachineProfile, Operator, Site, Zone, Shift, Task, TaskEvent, Estimate, DownstreamImpactPreview, Observation, Condition, ProximityEvent, Alert, AlertBudgetMetric, Incident, IncidentReplay, IdleEvent, Report, Correction, Finding, FollowUp, HandoverItem, Lesson, Scenario, LearningEvent, Recommendation, HelpRequest, OutboxEntry, SOSEvent.
 
 ### 13.2 Provenance on every record
 `source` (organiser / synthetic generator version + seed / team-recorded / live app), units, timestamps (event and receipt), missingness flags.
@@ -892,11 +920,11 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Usage review | Rules → robust z vs comparable context → IsolationForest secondary (Should) | Device (rules, z); server (IsolationForest) | "Insufficient evidence" state |
 | Training relevance | Cause → tag rules + feedback | Device | Reason shown for every recommendation |
 | Speech-to-text | Vosk small models | Device | Offline; domain vocabulary |
-| Intent understanding | Keyword rules + TF-IDF/logistic regression | Device | ≤ 1 MB; top-3 fallback when unsure |
+| Intent understanding | Consequential-command rules + fine-tuned multilingual DistilBERT, quantized ONNX | Device via ONNX Runtime | English/Hindi and code-switch evaluation; top-3/button fallback when unsure |
 | Language AI | Claude Haiku 4.5 with tool use (Should) | Server | Guardrails in F17 |
 | Personalisation | Weighted running statistics | Device | Explainable, resettable |
 
-**Model lifecycle:** models are trained on the server, versioned, exported (coefficients/JSON), shipped in the app or downloaded on sync; every estimate and inference stores its model version.
+**Model lifecycle:** task estimators are trained on the server and exported as versioned coefficients/JSON; multilingual DistilBERT is fine-tuned on the server, exported and quantized to ONNX with a versioned tokenizer/config, and run on-device through ONNX Runtime. Artifacts ship in the app or arrive through a model update; every estimate and intent inference stores its model version.
 
 **Candidate not adopted:** Laya (421M-parameter typed-decision model) — its own card reports weak zero-shot accuracy and over-confidence; considered only if it beats the intent classifier on our voice test set.
 
@@ -910,7 +938,7 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Safety latency | Alert audio ≤ 1 s after rule trigger on device |
 | UI latency | Screen state change ≤ 300 ms; voice command ≤ 2 s end-to-end offline |
 | Startup | Cold start ≤ 5 s on a mid-range Android tablet |
-| Storage | App ≤ 160 MB with English + Hindi (≤ 250 MB with Tamil); ledger growth ≤ 20 MB/month per machine |
+| Storage | App/model size is measured and disclosed; target ≤ 320 MB with English + Hindi and quantized intent ONNX model (≤ 420 MB with Tamil if a speech model becomes available); ledger growth ≤ 20 MB/month per machine |
 | Battery and heat | Speech recognition only while push-to-talk is held; no continuous heavy processing |
 | Devices | Android 10+ tablets/phones, 3 GB RAM minimum; 10-inch landscape primary; 6-inch portrait supported |
 | Accessibility | Colour + icon + word; large targets; night and high-contrast themes; audio for all critical info |
@@ -931,10 +959,10 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Operator app | React Native + Expo (TypeScript); Android first; iOS from the same code; web build for judges |
 | On-device storage | SQLite (expo-sqlite) |
 | On-device voice | Vosk small models (English, Hindi; Tamil Should); device text-to-speech (expo-speech); pre-recorded alert clips |
-| On-device intent | Keyword rules + TF-IDF/logistic-regression exported to JSON and run in TypeScript |
+| On-device intent | Consequential-command rules + fine-tuned multilingual DistilBERT exported as quantized ONNX; ONNX Runtime on Android; versioned tokenizer/config bundled offline |
 | Supervisor/trainer console | React web, Tailwind CSS, Recharts |
 | Backend | Python, FastAPI, WebSockets, Pydantic, PostgreSQL |
-| ML | scikit-learn (Ridge, conformal intervals, robust z, IsolationForest); LightGBM + SHAP (comparison) |
+| ML | PyTorch + Hugging Face Transformers/Optimum for DistilBERT fine-tuning and ONNX export; ONNX Runtime for device intent inference; scikit-learn for Ridge, conformal intervals, robust z and IsolationForest; LightGBM + SHAP (comparison) |
 | Language AI | Claude API (Haiku 4.5) with tool use, server-side only |
 | Emergency channel | LoRaWAN (IN865) via gateway → network server (e.g. ChirpStack) → backend (simulated in demo) |
 | Data generation | Python generator + YAML scenario families |
@@ -953,7 +981,7 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Share of idle minutes explained (required + reported) | Fair attribution works |
 | Estimate error and range coverage vs planner | Planning improves |
 | Time to log an incident | Reporting effort drops |
-| Prompts per operating hour | Interruption stays low |
+| Alert budget: alerts/prompts per operating hour, repeated-alert suppression, duplicate alerts prevented, deferred non-critical prompts, critical delivery latency, acknowledgement/resolution | Interruption stays low without delaying safety-critical communication |
 | Handover items acknowledged by next operator | Continuity works |
 | "Not relevant" rate on recommendations | Training relevance |
 | Repeat safety events per 10 shifts after related practice | Learning signal (observational only) |
@@ -963,9 +991,10 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 |---|---|---|
 | Estimates useful? | MAE, MAPE, P10–P90 coverage and width by task type | Task-type average; baseline alone; planner estimate where present — same held-out operators/sites/weeks |
 | Safety behaves? | Missed alerts, nuisance alerts, detection delay; "unavailable" within 2 s | Rule variants — on challenge scenarios |
+| Alert budget respected? | Alerts per operating hour; repeats suppressed; duplicates prevented; non-critical prompts deferred until READY/SECURED; critical alerts delivered without delay; acknowledgement/resolution rate | Ungrouped/no-deferral variant on identical scenarios |
 | Usage review fair? | Correct follow-up owner on paired scenarios; valid waits labelled as waste | Idle-threshold-only rule |
 | Training relevant? | Irrelevant recommendations on site-delay/sensor cases | Recommend-on-every-alert rule |
-| Voice works? | Intent and field accuracy, wrongly accepted actions, negation cases, latency, per language; text and audio separate | Buttons-only path |
+| Voice works? | Intent and field accuracy, high-confidence wrong actions, abstention/top-3 rate, negation cases, end-to-end latency, per language and code-switch slice; text and audio separate | Deterministic rules-only path; buttons-only path |
 | Propagation consistent? | All affected views updated, no safety change | — |
 | Organiser compatibility | Rows 2 and 4 flagged, 1 and 3 not | Recorded flags |
 | Operator effort | Inputs per task; prompts per hour | v1 design |
@@ -981,8 +1010,8 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | 0:00 | Ravi signs in with buttons; handover read aloud; acknowledges | Continuity; acknowledged ≠ resolved |
 | 0:30 | Task board: trench 40 m, rain later; range with reasons and basis | Honest estimates |
 | 1:00 | Focus Mode; organiser rows replay → rows 2 and 4 flagged "context needed" | Compatible with organiser data, no overclaim |
-| 1:30 | Belt off while digging → alert; belt off with lockout → silence | Machine state decides |
-| 1:50 | "Waiting for the truck" → finish time, site delay, no lesson, handover — all update | Explain once |
+| 1:30 | Belt off while digging → alert but no exit advisory; door opens while unsecured → Safe Exit Guard; lockout engaged → advisory clears | Context-sensitive advisory; never machine control |
+| 1:50 | "Waiting for the truck" → current ETA +18 min, next task may miss its window, site delay, no lesson, handover — all update; "Notify supervisor" creates a request only | Explain once, downstream impact, human assignment control |
 | 2:20 | "Actually, access blocked" → consistent updates, history kept | Corrections |
 | 2:40 | Worker approaches in rain → earlier warning; sensor stops → "unavailable" | Honest safety |
 | 3:00 | "Log near miss…" → read back → confirmed | One-sentence reporting |
@@ -1002,10 +1031,11 @@ Backup: recorded video and seeded offline replay mode.
 |---|---|
 | React Native setup or device issues | Expo managed workflow; web build as fallback; test on one physical Android device from hour 1 |
 | Voice fails in a noisy room | Every intent has a button path; demo uses buttons if voice misbehaves |
-| Offline speech accuracy for Hindi/Tamil | Domain vocabulary biasing; top-3 fallback; Tamil is Should |
+| Offline speech/intent accuracy for Hindi or code-switching | Domain vocabulary biasing in Vosk; multilingual DistilBERT evaluated on English, Hindi, Romanised Hindi and mixed utterances; top-3/button fallback; Tamil is Should |
+| DistilBERT ONNX exceeds device latency, RAM or APK budget | Quantize and benchmark on the target Android device from the first model build; deterministic rules and buttons remain the safe fallback; disclose measured footprint |
 | Model looks circular on synthetic data | Published generator assumptions; independent challenge cases; same-case baselines; honest claims |
 | Scope too large | Must list only until checkpoint; freeze at hour 18 |
-| Alert fatigue | Grouping, debounce, condition-aware thresholds, operator "wrong alert" feedback |
+| Alert fatigue | Alert-budget quality gate, grouping, debounce, repeated-alert suppression, deferral of non-critical prompts while operating, and operator "wrong alert" feedback |
 | Operators feel watched | Own data first; private learning; fair attribution; no speed ranking |
 | Claude unavailable | All flows complete with templates |
 | LoRaWAN hardware unavailable | Simulated gateway with real packet format |
@@ -1017,6 +1047,7 @@ Backup: recorded video and seeded offline replay mode.
 
 **Assumptions**
 - Hydraulic lockout, belt, speed, load factor and proximity detection signals are available (simulated in the prototype).
+- Seat occupancy, cab-door, implement-neutral, park-brake/motion and lockout signals used by the Safe Exit Guard are available or explicitly shown as unavailable (simulated in the prototype).
 - Each machine is shared by 2–3 operators across shifts; 2–3 supervisors oversee ~100 machines.
 - "No touch screen" applies to the cab; the console may use a mouse.
 - Synthetic data is acceptable when calibrated, labelled and documented.
@@ -1038,10 +1069,10 @@ Backup: recorded video and seeded offline replay mode.
 | Outcome | Features | Demo time |
 |---|---|---|
 | Daily task dashboard | F2, F3, F4 | 0:00–0:30 |
-| Safety features (seatbelt, proximity, incident logging, working conditions) | F6, F7, F8 | 1:30, 2:40, 3:00 |
-| Operator training hub (creative format) | F10 (lessons, decision scenarios, near-miss scenarios, help request) | 3:20 |
+| Safety features (seatbelt, Safe Exit Guard, proximity, incident logging, working conditions, alert budget) | F6, F7, F8, §17 | 1:30, 2:40, 3:00 |
+| Operator training hub (creative format) | F8/F10 (lessons, decision scenarios, incident replay/counterfactual Should, near-miss scenarios, help request) | 3:20 |
 | Unusual behaviour (idling, unsafe patterns) | F9 | 1:00, 1:50, 4:30 |
-| Task time estimation (past data + conditions) | F4, F18 | 0:30, 1:50 |
+| Task time estimation (past data + conditions + downstream impact + private task-specific baseline) | F4, F18 | 0:30, 1:50 |
 
 ### Briefing and Persona constraints
 | Constraint | Where met |

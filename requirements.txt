@@ -1,3 +1,0 @@
-# The current starter pack is a Next.js/TypeScript application and has no
-# Python runtime dependencies. Add version-pinned packages here only if the
-# post-reveal Implementation Manifest activates a Python service or workflow.

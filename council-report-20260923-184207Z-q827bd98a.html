@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLM Council — ShiftMate intent and duration model choice</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #f5f5f0;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 800px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 600; color: #2d5a88; margin-bottom: 0.25rem; }
+    .header .meta { font-size: 0.8rem; color: #888; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .badge {
+      background: #e8f0fb;
+      color: #2d5a88;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .badge.codex { background: #e8f4ea; color: #2a7a3a; }
+    .badge.mode-quick { background: #fff3e0; color: #b36a00; }
+    .badge.mode-deep { background: #f3e5f5; color: #6a1b9a; }
+
+    /* Confidence header */
+    .confidence-block {
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+      border-left: 4px solid;
+    }
+    .confidence-high { background: #f0faf0; border-color: #4caf50; }
+    .confidence-medium { background: #fff8e1; border-color: #ff9800; }
+    .confidence-low { background: #fff5f5; border-color: #f44336; color: #c62828; }
+    .confidence-block strong { display: block; margin-bottom: 0.25rem; }
+
+    /* Section cards */
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0d8;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .card-title {
+      padding: 0.875rem 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #666;
+      border-bottom: 1px solid #e0e0d8;
+      background: #fafaf8;
+    }
+    .card-body { padding: 1.25rem 1.5rem; }
+
+    /* Question */
+    .question-text {
+      background: #f8f8f5;
+      border-left: 3px solid #2d5a88;
+      padding: 0.875rem 1rem;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Bias flags */
+    .bias-flags {
+      margin-top: 0.875rem;
+      padding: 0.75rem 1rem;
+      background: #fffde7;
+      border: 1px solid #f9e200;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+    .bias-flags strong { display: block; margin-bottom: 0.25rem; color: #856900; }
+
+    /* Verdict */
+    .verdict h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 1.25rem 0 0.5rem;
+      color: #2d5a88;
+      padding-top: 1rem;
+      border-top: 1px solid #e8e8e0;
+    }
+    .verdict h2:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+    .verdict p { margin-bottom: 0.75rem; }
+    .verdict ul { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    .verdict li { margin-bottom: 0.4rem; }
+    .verdict strong { font-weight: 600; }
+
+    /* Dissent ledger */
+    .dissent-ledger {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: #fff5f5;
+      border: 1px solid #ffcdd2;
+      border-radius: 6px;
+    }
+    .dissent-ledger strong { display: block; margin-bottom: 0.5rem; color: #b71c1c; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dissent-ledger ul { padding-left: 1.25rem; font-size: 0.9rem; }
+    .dissent-ledger li { margin-bottom: 0.4rem; }
+
+    /* Agreement grid */
+    .grid-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .grid-table th {
+      padding: 0.4rem 0.75rem;
+      text-align: center;
+      background: #f0f4fa;
+      color: #2d5a88;
+      font-weight: 600;
+      border: 1px solid #dde4f0;
+    }
+    .grid-table th:first-child { text-align: left; min-width: 160px; }
+    .grid-table td {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid #e8e8e0;
+      text-align: center;
+    }
+    .grid-table td:first-child { text-align: left; font-size: 0.8rem; color: #333; }
+    .dot { color: #2d5a88; font-size: 1.1rem; }
+
+    /* RICE table */
+    .rice-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .rice-table th { padding: 0.4rem 0.75rem; background: #f0f4fa; color: #2d5a88; font-weight: 600; border: 1px solid #dde4f0; text-align: left; }
+    .rice-table td { padding: 0.4rem 0.75rem; border: 1px solid #e8e8e0; vertical-align: top; }
+    .rice-score { font-weight: 700; color: #2d5a88; }
+    .status-draft { color: #f57c00; font-weight: 600; font-size: 0.75rem; }
+
+    /* Decision science matrix */
+    .ds-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .ds-table th { padding: 0.4rem 0.6rem; background: #f0f4fa; color: #2d5a88; font-weight: 600; border: 1px solid #dde4f0; }
+    .ds-table td { padding: 0.4rem 0.6rem; border: 1px solid #e8e8e0; vertical-align: top; }
+    .dominant { background: #f0faf0; }
+    .dominated { background: #f8f8f8; color: #999; }
+
+    /* Advisor details */
+    details { margin-bottom: 0.5rem; }
+    details summary {
+      cursor: pointer;
+      padding: 0.6rem 1rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶"; font-size: 0.7rem; transition: transform 0.15s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    details .detail-body {
+      padding: 0.875rem 1rem 0.875rem 1.5rem;
+      font-size: 0.875rem;
+      border-left: 3px solid #e0e0d8;
+      margin-left: 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Advisor color coding */
+    .advisor-red-team summary { border-left: 3px solid #e53935; background: #fff5f5; }
+    .advisor-red-team .detail-body { border-left-color: #e53935; }
+    .advisor-first-principles summary { border-left: 3px solid #1e88e5; background: #f0f4fb; }
+    .advisor-first-principles .detail-body { border-left-color: #1e88e5; }
+    .advisor-expansionist summary { border-left: 3px solid #43a047; background: #f0faf0; }
+    .advisor-expansionist .detail-body { border-left-color: #43a047; }
+    .advisor-outsider summary { border-left: 3px solid #fb8c00; background: #fff8f0; }
+    .advisor-outsider .detail-body { border-left-color: #fb8c00; }
+    .advisor-executor summary { border-left: 3px solid #8e24aa; background: #f8f0fb; }
+    .advisor-executor .detail-body { border-left-color: #8e24aa; }
+
+    /* Confidence inline badges */
+    .conf-high { color: #2e7d32; font-weight: 600; }
+    .conf-medium { color: #e65100; font-weight: 600; }
+    .conf-low { color: #c62828; font-weight: 600; }
+
+    /* Debate section */
+    .debate-callout {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem;
+      font-size: 0.875rem;
+    }
+    .debate-side { margin-bottom: 0.875rem; }
+    .debate-side strong { display: block; margin-bottom: 0.25rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .prosecutor strong { color: #b71c1c; }
+    .defender strong { color: #1b5e20; }
+
+    /* Footer */
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0d8;
+      font-size: 0.75rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>LLM Council</h1>
+    <div class="meta">
+      <span>2026-09-23T18:42:07Z</span>
+      <span class="badge mode-standard">Standard</span>
+      
+    </div>
+  </div>
+
+  <!-- Confidence block -->
+  <div class="confidence-block confidence-high"><strong>Council confidence: high (4/5 high, 1/5 medium, 0/5 low)</strong><div>Dominant assumption: dependable production behavior must precede promotion of higher-capacity models without real data or device evidence.</div><div>Breakers: unacceptable bilingual/noisy-STT error from the linear classifier; or material nonlinear duration gains on leakage-resistant real holdouts.</div></div>
+
+  <!-- Question -->
+  <div class="card">
+    <div class="card-title">Question</div>
+    <div class="card-body">
+      <div class="question-text">DECISION: For ShiftMate, choose multilingual DistilBERT + ONNX versus rules + character/word TF-IDF + logistic regression for offline English/Hindi intent classification, and a PyTorch feed-forward neural network versus the domain baseline + Ridge for task-duration correction.
+
+CONTEXT: Android-first and offline-first; Vosk STT; narrow safety-adjacent intents with read-back confirmation; cold start under 5 s; voice command under 2 s. The duration dataset is about 2,500 formula-derived synthetic rows. Real bilingual utterance counts, real task histories, and target-device benchmarks are unknown.
+
+STAKES: hackathon delivery, APK/device performance, bilingual robustness, estimator credibility, explainability, and avoiding field claims from synthetic evidence.
+
+OPTIONS: advanced/advanced, simple/simple, or independently benchmark-gated challengers.</div>
+      <div class="bias-flags"><strong>Pre-council bias scan</strong>Competing anchors were detected: sunk cost and status-quo bias favor the fully specified simple stack, while confirmation bias favors the earlier advanced-stack preference. Planning and narrative fallacies can also confuse sophistication with field robustness. These are signals, not verdicts.</div>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="card">
+    <div class="card-title">Council Verdict</div>
+    <div class="card-body verdict">
+      <h2>Where the council agrees</h2>
+<ul>
+<li>Red Team, First Principles, Outsider, and Executor: do not adopt the neural duration estimator from formula-generated synthetic records.</li>
+<li>All advisors: decide intent classification and duration estimation independently.</li>
+<li>Expansionist, First Principles, and both Chairmen: character n-gram TF-IDF is a stronger immediate baseline than word-only TF-IDF for transliteration and Vosk noise.</li>
+<li>All advisors: advanced models should remain replaceable challengers behind versioned interfaces and must clear target-device and real-data gates.</li>
+</ul>
+<h2>Where the council clashes</h2>
+<p>The Prosecutor argued that sparse intent models can fail on Hindi morphology, Romanized Hindi, code-switching, and ASR corruption, and that users may rubber-stamp confirmations. The Defender conceded this but showed that these risks justify realistic evaluation, selective acceptance, and explicit fallbacks rather than immediate promotion of an unbenchmarked transformer.</p>
+<h2>Blind spots</h2>
+<p>Template and speaker leakage can invalidate comparisons. The project also needs fixed promotion thresholds, a bilingual clarification/manual-entry fallback, privacy-safe logging of abstentions and corrections, and end-to-end testing through Vosk and confirmation rather than clean-text classifier tests alone.</p>
+<h2>Recommendation</h2>
+<p>Ship deterministic safety rules plus character n-gram TF-IDF/logistic regression for intent, with abstention, clarification, top-three fallback, and confirmation. Ship the domain formula with Ridge or a constrained additive/GAM residual correction; do not make the PyTorch network the production default. Implement quantized DistilBERT+ONNX as a mandatory same-milestone shadow challenger, and keep the FNN as a duration challenger until real longitudinal evidence exists.</p>
+<h2>One thing to do first</h2>
+<p>Within 48 hours, freeze the paired benchmark and collect the first consented English, Hindi, Romanized-Hindi, and code-switched Vosk utterances on the actual target Android device.</p>
+      <div class="dissent-ledger"><strong>Dissent Ledger</strong><ul>
+<li>Make DistilBERT+ONNX a mandatory same-milestone shadow challenger so the baseline does not become permanent through inertia.</li>
+<li>High-confidence wrong intents remain dangerous despite confirmation because users may rubber-stamp prompts.</li>
+<li>Log abstentions, alternatives, corrections, and manual overrides to prevent data-path bias.</li>
+<li>Freeze promotion thresholds before training so results cannot move the goalposts.</li>
+</ul></div>
+    </div>
+  </div>
+
+  <!-- Agreement grid -->
+  <div class="card"><div class="card-title">Agreement Grid</div><div class="card-body"><table class="grid-table"><tr><th>Position</th><th>Red</th><th>First</th><th>Expand</th><th>Outside</th><th>Execute</th></tr><tr><td>Simple production baseline now</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td></tr><tr><td>DistilBERT shadow challenger</td><td class="dot">●</td><td class="dot">●</td><td></td><td class="dot">●</td><td class="dot">●</td></tr><tr><td>No production FNN on synthetic-only data</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td></tr><tr><td>Predeclared device/data gates</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td><td class="dot">●</td></tr></table></div></div>
+
+  <!-- RICE table -->
+  <div class="card"><div class="card-title">RICE Analysis</div><div class="card-body"><table class="rice-table"><tr><th>Option</th><th>Effort</th><th>Priority score</th><th>Main risk</th></tr><tr><td>Advanced / advanced</td><td>20–30 person-days</td><td class="rice-score">4.5</td><td>Device integration and data overfit</td></tr><tr><td>Simple / simple</td><td>7–10 person-days</td><td class="rice-score">17.0</td><td>Bilingual tail failures</td></tr><tr><td>Benchmark-gated hybrid</td><td>11–16 person-days</td><td class="rice-score">12.5</td><td>Scope discipline</td></tr></table></div></div>
+
+  <!-- Decision science matrix -->
+  
+
+  <!-- Debate (collapsible, only if ran) -->
+  <div class="card"><div class="card-title">Debate Round</div><div class="card-body"><div class="debate-callout"><div class="debate-side prosecutor"><strong>Prosecutor</strong>Sparse intent models may fail on morphology, transliteration, code-switching, and Vosk corruption; confirmation can be rubber-stamped; Ridge can hide nonlinear tail error. Run advanced models in shadow mode now.</div><div class="debate-side defender"><strong>Defender</strong>Conceded those risks, but showed that stronger evaluation and safe fallback—not unverified production promotion—are the appropriate response. Preserve raw disagreements, corrections, tail errors, and device metrics behind versioned interfaces.</div></div></div></div>
+
+  <!-- Advisor responses (collapsed by default) -->
+  <div class="card">
+    <div class="card-title">Advisor Responses</div>
+    <div class="card-body">
+      <details class="advisor-red-team"><summary>Red Team <span class="conf-high">high</span></summary><div class="detail-body">Pre-mortem: DistilBERT raises APK, cold-start, and integration risk without proven bilingual gains; the FNN can relearn the synthetic generator. Use evidence gates.</div></details>
+<details class="advisor-first-principles"><summary>First Principles <span class="conf-high">high</span></summary><div class="detail-body">Decouple the two choices. Ridge now; DistilBERT only as a challenger on bilingual noisy-STT data. Optimize abstention and predictable failure.</div></details>
+<details class="advisor-expansionist"><summary>Expansionist <span class="conf-high">high</span></summary><div class="detail-body">Use character n-gram logistic regression and consider a constrained additive/GAM duration correction as stronger middle paths.</div></details>
+<details class="advisor-outsider"><summary>Outsider <span class="conf-high">high</span></summary><div class="detail-body">Apply blinded, preregistered phase gates: safety slices, calibration, p95 latency, cold start, APK, memory, and real holdouts.</div></details>
+<details class="advisor-executor"><summary>Executor <span class="conf-medium">medium</span></summary><div class="detail-body">The project is still in Observe/Orient. Estimated 7–10 person-days for simple, 11–16 for gated hybrid, and 20–30 for advanced/advanced.</div></details>
+    </div>
+  </div>
+
+  <!-- Peer reviews (collapsed) -->
+  <div class="card">
+    <div class="card-title">Peer Reviews</div>
+    <div class="card-body">
+      <details><summary>Reviewer 1 — consensus 5/5</summary><div class="detail-body">Separate components; add numerical promotion gates, leakage-proof evaluation, and a privacy-safe data flywheel.</div></details>
+<details><summary>Reviewer 2 — consensus 5/5</summary><div class="detail-body">Phase gates are strongest but risk process theater without sample sizes and fixed margins.</div></details>
+<details><summary>Reviewer 3 — consensus 4/5</summary><div class="detail-body">Add dataset governance, code-mixed target-device audio, confirmation latency, drift, and rollback.</div></details>
+<details><summary>Reviewer 4 — consensus 4/5</summary><div class="detail-body">Specify the abstention-to-clarification-to-manual-entry loop and how it produces privacy-safe labels.</div></details>
+<details><summary>Reviewer 5 — consensus 4/5</summary><div class="detail-body">Protect construct validity: clean text and formula-generated rows do not represent field speech or task variation.</div></details>
+    </div>
+  </div>
+
+  <footer>LLM Council &middot; Mode: Standard &middot; SHA: 827bd98a &middot; <a href="council-transcript-20260923-184207Z-q827bd98a.md">Full transcript</a></footer>
+
+</div>
+</body>
+</html>
+

@@ -31,10 +31,25 @@ def server_entry(
     validate_ledger_payload(kind, subtype, payload)
     now = utc_now()
     entry = LedgerEntry(
-        entry_id=str(uuid.uuid4()), device_id=None, author_user_id=user.user_id, shift_id=None, machine_id=machine_id,
-        operator_id=None, kind=kind, subtype=subtype, source="reviewed", payload=payload, observed_at=now,
-        recorded_at=now, received_at=now, rule_or_model_version=rule, audience=audience, data_origin="live",
-        payload_sha256=hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+        entry_id=str(uuid.uuid4()),
+        device_id=None,
+        author_user_id=user.user_id,
+        shift_id=None,
+        machine_id=machine_id,
+        operator_id=None,
+        kind=kind,
+        subtype=subtype,
+        source="reviewed",
+        payload=payload,
+        observed_at=now,
+        recorded_at=now,
+        received_at=now,
+        rule_or_model_version=rule,
+        audience=audience,
+        data_origin="live",
+        payload_sha256=hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
         review_status="ok",
     )
     db.add(entry)

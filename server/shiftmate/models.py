@@ -5,7 +5,6 @@ CHECK constraint and (partial) unique index below mirrors the §5.2 DDL. Timesta
 """
 
 import uuid
-from datetime import datetime
 
 from sqlalchemy import (
     JSON,
@@ -25,6 +24,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from shiftmate.db import Base
+from shiftmate.time_util import utc_now
 
 
 def _uuid() -> str:
@@ -35,12 +35,23 @@ def _in(column: str, values: tuple[str, ...]) -> str:
     return f"{column} IN ({', '.join(repr(v) for v in values)})"
 
 
-AUDIENCES = ("next_operator", "site", "trainer", "safety")          # operator_only never reaches the server
+AUDIENCES = ("next_operator", "site", "trainer", "safety")  # operator_only never reaches the server
 SOURCES = ("observed", "reported", "inferred", "reviewed")
 ROLES = ("supervisor", "trainer", "safety", "mechanic")
 FOLLOW_UP_CATEGORIES = (
-    "site_delay", "machine_check", "safety_incident", "help_request", "assignment_request", "supervisor_notification",
-    "sync_conflict", "near_miss_cluster", "overspeed_zone", "alert_review", "usage_review", "sos", "chain_integrity",
+    "site_delay",
+    "machine_check",
+    "safety_incident",
+    "help_request",
+    "assignment_request",
+    "supervisor_notification",
+    "sync_conflict",
+    "near_miss_cluster",
+    "overspeed_zone",
+    "alert_review",
+    "usage_review",
+    "sos",
+    "chain_integrity",
 )
 EXEC_STATES = ("PLANNED", "ACTIVE", "PAUSED", "BLOCKED", "COMPLETED", "CANCELLED")
 
@@ -50,8 +61,10 @@ class Site(Base):
     __table_args__ = (
         CheckConstraint(_in("sector", ("construction", "mining")), name="ck_sites_sector"),
         CheckConstraint(_in("congestion_level", ("low", "medium", "high")), name="ck_sites_congestion"),
-        CheckConstraint("job_efficiency_override IS NULL OR (job_efficiency_override > 0 AND job_efficiency_override <= 1)",
-                        name="ck_sites_job_efficiency"),
+        CheckConstraint(
+            "job_efficiency_override IS NULL OR (job_efficiency_override > 0 AND job_efficiency_override <= 1)",
+            name="ck_sites_job_efficiency",
+        ),
     )
 
     site_id = Column(String, primary_key=True)
@@ -66,7 +79,7 @@ class Site(Base):
     job_efficiency_override = Column(Float, nullable=True)
     congestion_level = Column(String, nullable=False, default="medium")
     data_origin = Column(String, nullable=False, default="demo_seed")
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
     zones = relationship("Zone", back_populates="site", cascade="all, delete-orphan")
 
@@ -74,8 +87,13 @@ class Site(Base):
 class Zone(Base):
     __tablename__ = "zones"
     __table_args__ = (
-        CheckConstraint(_in("kind", ("trench_area", "loading_bay", "yard", "haul_road", "shovel", "crusher", "dump", "other")),
-                        name="ck_zones_kind"),
+        CheckConstraint(
+            _in(
+                "kind",
+                ("trench_area", "loading_bay", "yard", "haul_road", "shovel", "crusher", "dump", "other"),
+            ),
+            name="ck_zones_kind",
+        ),
         CheckConstraint("radius_m > 0", name="ck_zones_radius"),
         Index("zones_site", "site_id"),
     )
@@ -99,7 +117,7 @@ class MachineProfile(Base):
     version = Column(Integer, primary_key=True)
     machine_class = Column(String, nullable=False)
     body = Column(JSON, nullable=False)
-    published_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    published_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Machine(Base):
@@ -118,14 +136,16 @@ class Machine(Base):
     year_of_manufacture = Column(Integer, nullable=False)
     detail_level = Column(String, nullable=False)
     data_origin = Column(String, nullable=False, default="demo_seed")
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Operator(Base):
     __tablename__ = "operators"
     __table_args__ = (
         CheckConstraint(_in("language", ("en", "hi", "ta")), name="ck_operators_language"),
-        CheckConstraint(_in("skill_level", ("beginner", "intermediate", "expert")), name="ck_operators_skill"),
+        CheckConstraint(
+            _in("skill_level", ("beginner", "intermediate", "expert")), name="ck_operators_skill"
+        ),
         CheckConstraint("experience_months >= 0", name="ck_operators_experience"),
     )
 
@@ -140,7 +160,7 @@ class Operator(Base):
     pin_hash = Column(String(64), nullable=False)
     pin_iterations = Column(Integer, nullable=False, default=20000)
     data_origin = Column(String, nullable=False, default="demo_seed")
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Device(Base):
@@ -149,7 +169,7 @@ class Device(Base):
     device_id = Column(String, primary_key=True, default=_uuid)
     label = Column(String, nullable=False)
     machine_id = Column(String, ForeignKey("machines.machine_id"), nullable=False)
-    paired_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    paired_at = Column(DateTime, nullable=False, default=utc_now)
     last_seen_at = Column(DateTime, nullable=True)
     last_push_at = Column(DateTime, nullable=True)
     last_pull_at = Column(DateTime, nullable=True)
@@ -177,7 +197,7 @@ class ConsoleUser(Base):
     role = Column(String, nullable=False)
     site_ids = Column(JSON, nullable=False)
     password_hash = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
     disabled_at = Column(DateTime, nullable=True)
 
 
@@ -186,7 +206,7 @@ class ConsoleSession(Base):
 
     session_id = Column(String(43), primary_key=True)
     user_id = Column(String, ForeignKey("console_users.user_id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
     expires_at = Column(DateTime, nullable=False)
     revoked_at = Column(DateTime, nullable=True)
 
@@ -206,14 +226,23 @@ class LedgerEntry(Base):
     __tablename__ = "ledger_entries"
     __table_args__ = (
         CheckConstraint(_in("source", SOURCES), name="ck_ledger_source"),
-        CheckConstraint("confidence IS NULL OR " + _in("confidence", ("high", "medium", "low")), name="ck_ledger_confidence"),
+        CheckConstraint(
+            "confidence IS NULL OR " + _in("confidence", ("high", "medium", "low")),
+            name="ck_ledger_confidence",
+        ),
         CheckConstraint(_in("audience", AUDIENCES), name="ck_ledger_audience"),
         CheckConstraint(_in("review_status", ("ok", "needs_review")), name="ck_ledger_review"),
         Index("ledger_machine_time", "machine_id", "observed_at"),
         Index("ledger_kind", "kind", "subtype"),
         Index("ledger_supersedes", "supersedes"),
-        Index("ledger_chain", "device_id", "chain_seq", unique=True,
-              sqlite_where=text("chain_seq IS NOT NULL"), postgresql_where=text("chain_seq IS NOT NULL")),
+        Index(
+            "ledger_chain",
+            "device_id",
+            "chain_seq",
+            unique=True,
+            sqlite_where=text("chain_seq IS NOT NULL"),
+            postgresql_where=text("chain_seq IS NOT NULL"),
+        ),
     )
 
     entry_id = Column(String, primary_key=True, default=_uuid)
@@ -228,7 +257,7 @@ class LedgerEntry(Base):
     payload = Column(JSON, nullable=False)
     observed_at = Column(DateTime, nullable=False)
     recorded_at = Column(DateTime, nullable=False)
-    received_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    received_at = Column(DateTime, nullable=False, default=utc_now)
     freshness_s = Column(Float, nullable=True)
     confidence = Column(String, nullable=True)
     rule_or_model_version = Column(String, nullable=True)
@@ -285,15 +314,17 @@ class TaskAssignment(Base):
     waiting_min = Column(Float, nullable=True)
     output_qty = Column(Float, nullable=True)
     data_origin = Column(String, nullable=False, default="demo_seed")
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class ReassignmentRequest(Base):
     __tablename__ = "reassignment_requests"
-    __table_args__ = (CheckConstraint(_in("status", ("pending", "accepted", "rejected")), name="ck_reassign_status"),)
+    __table_args__ = (
+        CheckConstraint(_in("status", ("pending", "accepted", "rejected")), name="ck_reassign_status"),
+    )
 
-    request_id = Column(String, primary_key=True)          # = ledger entry_id of report/reassignment_request
+    request_id = Column(String, primary_key=True)  # = ledger entry_id of report/reassignment_request
     task_id = Column(String, ForeignKey("task_assignments.task_id"), nullable=False)
     machine_id = Column(String, nullable=False)
     operator_id = Column(String, nullable=False)
@@ -312,8 +343,13 @@ class FollowUp(Base):
         CheckConstraint(_in("category", FOLLOW_UP_CATEGORIES), name="ck_follow_ups_category"),
         CheckConstraint("priority BETWEEN 0 AND 3", name="ck_follow_ups_priority"),
         CheckConstraint(_in("status", ("open", "assigned", "resolved")), name="ck_follow_ups_status"),
-        Index("follow_ups_open_group", "group_key", unique=True,
-              sqlite_where=text("status <> 'resolved'"), postgresql_where=text("status <> 'resolved'")),
+        Index(
+            "follow_ups_open_group",
+            "group_key",
+            unique=True,
+            sqlite_where=text("status <> 'resolved'"),
+            postgresql_where=text("status <> 'resolved'"),
+        ),
         Index("follow_ups_list", "site_id", "status", "priority", "first_seen_at"),
     )
 
@@ -336,18 +372,18 @@ class FollowUp(Base):
     resolved_at = Column(DateTime, nullable=True)
     resolved_by = Column(String, ForeignKey("console_users.user_id"), nullable=True)
     resolution_note = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class FollowUpContribution(Base):
     __tablename__ = "follow_up_contributions"
 
-    entry_id = Column(String, primary_key=True)            # root finding entry id of a correction chain
+    entry_id = Column(String, primary_key=True)  # root finding entry id of a correction chain
     follow_up_id = Column(String, ForeignKey("follow_ups.follow_up_id", ondelete="CASCADE"), nullable=False)
     minutes = Column(Float, nullable=False, default=0)
     active = Column(Boolean, nullable=False, default=True)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class FollowUpComment(Base):
@@ -358,13 +394,15 @@ class FollowUpComment(Base):
     follow_up_id = Column(String, ForeignKey("follow_ups.follow_up_id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String, ForeignKey("console_users.user_id"), nullable=False)
     text = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Incident(Base):
     __tablename__ = "incidents"
     __table_args__ = (
-        CheckConstraint(_in("status", ("awaiting_report", "reported", "reviewed")), name="ck_incidents_status"),
+        CheckConstraint(
+            _in("status", ("awaiting_report", "reported", "reviewed")), name="ck_incidents_status"
+        ),
         CheckConstraint(_in("origin", ("auto", "operator")), name="ck_incidents_origin"),
         Index("incidents_site_time", "site_id", "occurred_at"),
         Index("incidents_zone", "zone_id", "type", "occurred_at"),
@@ -382,7 +420,9 @@ class Incident(Base):
     severity = Column(String, nullable=True)
     status = Column(String, nullable=False, default="awaiting_report")
     origin = Column(String, nullable=False)
-    fields = Column(JSON, nullable=False, default=dict)      # IncidentFields (§5.3.3): {name: {value, source, entry_id}}
+    fields = Column(
+        JSON, nullable=False, default=dict
+    )  # IncidentFields (§5.3.3): {name: {value, source, entry_id}}
     snapshot = Column(JSON, nullable=True)
     snapshot_complete = Column(Boolean, nullable=False, default=False)
     chain_ok = Column(Boolean, nullable=False, default=True)
@@ -391,8 +431,8 @@ class Incident(Base):
     review_note = Column(String, nullable=True)
     sent_to_trainer = Column(Boolean, nullable=False, default=False)
     scenario_id = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Scenario(Base):
@@ -410,8 +450,8 @@ class Scenario(Base):
     draft_method = Column(String, nullable=False)
     body = Column(JSON, nullable=False)
     prompt_version = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
     updated_by = Column(String, nullable=True)
     approved_by = Column(String, nullable=True)
     approved_at = Column(DateTime, nullable=True)
@@ -437,7 +477,9 @@ class HelpRequest(Base):
 
 class Handover(Base):
     __tablename__ = "handovers"
-    __table_args__ = (CheckConstraint(_in("wording_method", ("template", "llm")), name="ck_handovers_method"),)
+    __table_args__ = (
+        CheckConstraint(_in("wording_method", ("template", "llm")), name="ck_handovers_method"),
+    )
 
     handover_id = Column(String, primary_key=True)
     machine_id = Column(String, ForeignKey("machines.machine_id"), nullable=False)
@@ -453,8 +495,13 @@ class Handover(Base):
 class HandoverItem(Base):
     __tablename__ = "handover_items"
     __table_args__ = (
-        CheckConstraint(_in("item_type", ("unfinished_task", "blocked_task", "defect", "incident", "site_delay", "note", "tip")),
-                        name="ck_handover_items_type"),
+        CheckConstraint(
+            _in(
+                "item_type",
+                ("unfinished_task", "blocked_task", "defect", "incident", "site_delay", "note", "tip"),
+            ),
+            name="ck_handover_items_type",
+        ),
         CheckConstraint(_in("status", ("open", "resolved", "removed")), name="ck_handover_items_status"),
         Index("handover_items_open", "status"),
     )
@@ -472,7 +519,7 @@ class HandoverItem(Base):
     status = Column(String, nullable=False, default="open")
     acknowledged_by = Column(String, nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
-    resolved_by = Column(String, nullable=True)            # console user_id, or 'task_completed'
+    resolved_by = Column(String, nullable=True)  # console user_id, or 'task_completed'
     resolved_at = Column(DateTime, nullable=True)
     resolution_note = Column(String, nullable=True)
 
@@ -480,16 +527,18 @@ class HandoverItem(Base):
 class ChangeLog(Base):
     __tablename__ = "change_log"
     __table_args__ = (
-        CheckConstraint(_in("scope_type", ("machine", "site", "machine_class", "all")), name="ck_change_log_scope"),
+        CheckConstraint(
+            _in("scope_type", ("machine", "site", "machine_class", "all")), name="ck_change_log_scope"
+        ),
         Index("change_log_scope", "scope_type", "scope_id", "seq"),
     )
 
     seq = Column(Integer, primary_key=True, autoincrement=True)
     scope_type = Column(String, nullable=False)
-    scope_id = Column(String, nullable=True)                # NULL for scope 'all'
+    scope_id = Column(String, nullable=True)  # NULL for scope 'all'
     change_type = Column(String, nullable=False)
     payload = Column(JSON, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Upload(Base):
@@ -507,7 +556,7 @@ class Upload(Base):
     content_type = Column(String, nullable=False)
     size_bytes = Column(Integer, nullable=False)
     storage_key = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class SosEvent(Base):
@@ -530,7 +579,7 @@ class SosEvent(Base):
     gateway_id = Column(String, nullable=True)
     rssi = Column(Integer, nullable=True)
     snr = Column(Float, nullable=True)
-    received_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    received_at = Column(DateTime, nullable=False, default=utc_now)
     acknowledged_by = Column(String, ForeignKey("console_users.user_id"), nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
     response_note = Column(String, nullable=True)
@@ -544,7 +593,7 @@ class SmsOutbox(Base):
     to_masked = Column(String, nullable=False)
     body = Column(String, nullable=False)
     status = Column(String, nullable=False, default="simulated")
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class ModelArtifact(Base):
@@ -556,7 +605,7 @@ class ModelArtifact(Base):
     machine_class = Column(String, nullable=True)
     version = Column(Integer, nullable=False)
     body = Column(JSON, nullable=False)
-    published_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    published_at = Column(DateTime, nullable=False, default=utc_now)
 
 
 class Forecast(Base):
@@ -587,7 +636,7 @@ class FleetStatus(Base):
     state = Column(String, nullable=False)
     open_alerts = Column(Integer, nullable=False, default=0)
     last_sync_at = Column(DateTime, nullable=True)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
     data_origin = Column(String, nullable=False, default="synthetic")
 
 
@@ -607,9 +656,9 @@ class AuditLog(Base):
     __tablename__ = "audit_log"
 
     audit_id = Column(Integer, primary_key=True, autoincrement=True)
-    actor = Column(String, nullable=False)                  # console user_id | 'device:<id>' | 'cli'
+    actor = Column(String, nullable=False)  # console user_id | 'device:<id>' | 'cli'
     action = Column(String, nullable=False)
     target_type = Column(String, nullable=False)
     target_id = Column(String, nullable=False)
     detail = Column(JSON, nullable=False, default=dict)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)

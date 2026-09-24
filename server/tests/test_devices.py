@@ -44,6 +44,7 @@ def test_device_pairing_and_bootstrap(client):
     }
     rebind_path = "/api/v1/devices/rebind"
     import json
+
     rebind_bytes = json.dumps(rebind_payload).encode()
     rebind_headers = make_device_auth_headers("POST", rebind_path, rebind_bytes, device_id, device_secret)
     rebind_headers["Content-Type"] = "application/json"

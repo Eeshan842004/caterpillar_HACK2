@@ -1,18 +1,18 @@
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
 
 def compute_baseline_minutes(
-    profile: Dict[str, Any],
+    profile: dict[str, Any],
     task_type_name: str,
     material: str,
     quantity: float,
-    job_efficiency_override: Optional[float] = None,
-) -> Optional[float]:
+    job_efficiency_override: float | None = None,
+) -> float | None:
     """Computes baseline task duration in minutes per technical spec §8.6.1.
-    
+
     tt = profile task type; mat = task.material
     rate_per_hour =
       linear | area | count : tt.rate_per_hour[mat] ?? tt.rate_per_hour.any
@@ -53,7 +53,11 @@ def compute_baseline_minutes(
     if rate_per_hour is None or rate_per_hour <= 0:
         return None
 
-    job_eff = job_efficiency_override if job_efficiency_override is not None else profile.get("job_efficiency", 0.8333)
+    job_eff = (
+        job_efficiency_override
+        if job_efficiency_override is not None
+        else profile.get("job_efficiency", 0.8333)
+    )
     if job_eff <= 0:
         return None
 
@@ -62,7 +66,7 @@ def compute_baseline_minutes(
 
 
 def compute_task_effects(
-    effects_config: Dict[str, Any],
+    effects_config: dict[str, Any],
     skill_level: str,
     experience_months: int,
     weather: str,
@@ -78,9 +82,9 @@ def compute_task_effects(
     site_effect: float = 0.0,
     noise: float = 0.0,
     effect_scale: float = 1.0,
-) -> Tuple[float, List[Tuple[str, float]]]:
+) -> tuple[float, list[tuple[str, float]]]:
     """Computes total log-scale effects for a task.
-    
+
     actual_active = baseline * exp(sum(effects) + operator_effect + site_effect + noise)
     Returns:
         (total_multiplier, breakdown_of_factors)
@@ -166,12 +170,14 @@ def compute_task_effects(
     return multiplier, factor_breakdown
 
 
-def sample_task_noise(rng: np.random.Generator, baseline_min: float, noise_cfg: Dict[str, Any]) -> float:
+def sample_task_noise(rng: np.random.Generator, baseline_min: float, noise_cfg: dict[str, Any]) -> float:
     """Heteroscedastic, heavy-tailed log-scale noise (see config `noise_variance`)."""
     sigma = noise_cfg.get("sigma", 0.10) + noise_cfg.get("small_task_extra_sigma", 0.0) * math.exp(
         -baseline_min / max(1.0, noise_cfg.get("small_task_scale_min", 40))
     )
     noise = float(rng.normal(0, sigma))
     if rng.random() < noise_cfg.get("disruption_prob", 0.0):
-        noise += float(rng.uniform(noise_cfg.get("disruption_min", 0.25), noise_cfg.get("disruption_max", 0.6)))
+        noise += float(
+            rng.uniform(noise_cfg.get("disruption_min", 0.25), noise_cfg.get("disruption_max", 0.6))
+        )
     return noise

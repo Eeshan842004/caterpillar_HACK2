@@ -1,0 +1,66 @@
+[
+  {
+    "question": "why is my estimate longer today?",
+    "facts": {
+      "task_type": "trenching",
+      "p50_min": 58,
+      "factors": [
+        {
+          "factor": "Rain",
+          "pct": 12
+        },
+        {
+          "factor": "Site congestion (high)",
+          "pct": 8
+        }
+      ]
+    },
+    "expected": {
+      "answer": "Rain adds 12% and high site congestion adds 8%, so the estimate is 58 min.",
+      "used_fact_keys": [
+        "factors",
+        "p50_min"
+      ]
+    }
+  },
+  {
+    "question": "how long was I idle?",
+    "facts": {
+      "idle_total_min": 22,
+      "idle_explained_min": 15
+    },
+    "expected": {
+      "answer": "You were idle 22 min; 15 min were explained.",
+      "used_fact_keys": [
+        "idle_total_min",
+        "idle_explained_min"
+      ]
+    }
+  },
+  {
+    "question": "what is my next task?",
+    "facts": {
+      "next_task": {
+        "task_type": "backfilling",
+        "quantity": 30,
+        "unit": "m3"
+      }
+    },
+    "expected": {
+      "answer": "Your next task is backfilling 30 m3.",
+      "used_fact_keys": [
+        "next_task"
+      ]
+    }
+  },
+  {
+    "question": "who will win the cricket match?",
+    "facts": {
+      "task_type": "trenching"
+    },
+    "expected": {
+      "answer": "I don't know; that is not in your shift data.",
+      "used_fact_keys": []
+    }
+  }
+]

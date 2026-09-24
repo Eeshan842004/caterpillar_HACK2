@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -16,15 +16,15 @@ class GenConfig:
     data_origin: str
     num_weeks: int
     working_days_per_week: int
-    split_policy: Dict[str, Any]
-    effects: Dict[str, Any]
-    planner: Dict[str, Any]
-    waits: Dict[str, Any]
-    sensitivity: Dict[str, Any]
-    raw: Dict[str, Any] = field(default_factory=dict)
+    split_policy: dict[str, Any]
+    effects: dict[str, Any]
+    planner: dict[str, Any]
+    waits: dict[str, Any]
+    sensitivity: dict[str, Any]
+    raw: dict[str, Any] = field(default_factory=dict)
 
 
-def load_config(config_path: Optional[Path] = None) -> GenConfig:
+def load_config(config_path: Path | None = None) -> GenConfig:
     path = config_path or CONFIG_PATH
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)

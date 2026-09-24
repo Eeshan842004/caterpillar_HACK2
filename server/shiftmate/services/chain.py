@@ -38,8 +38,12 @@ def first_bad_chain_seq(db: Session, device_id: str) -> int | None:
             canonical = json.loads(row.canonical_payload)
         except ValueError:
             return row.chain_seq
-        if (canonical.get("entry_id") != row.entry_id or canonical.get("kind") != row.kind
-                or canonical.get("subtype") != row.subtype or canonical.get("payload") != row.payload):
+        if (
+            canonical.get("entry_id") != row.entry_id
+            or canonical.get("kind") != row.kind
+            or canonical.get("subtype") != row.subtype
+            or canonical.get("payload") != row.payload
+        ):
             return row.chain_seq
         prev = row.content_hash
     return None

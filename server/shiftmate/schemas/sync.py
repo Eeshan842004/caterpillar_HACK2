@@ -21,7 +21,7 @@ class OutboxEnvelope(StrictBaseModel):
 
 
 class SyncPushBatch(StrictBaseModel):
-    batch: list[OutboxEnvelope] = Field(max_length=100)       # §6.2: at most 100 envelopes per push
+    batch: list[OutboxEnvelope] = Field(max_length=100)  # §6.2: at most 100 envelopes per push
 
 
 class SyncPushResult(StrictBaseModel):

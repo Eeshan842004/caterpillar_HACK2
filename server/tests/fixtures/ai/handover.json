@@ -1,0 +1,55 @@
+[
+  {
+    "item_id": "hi-1",
+    "item_type": "unfinished_task",
+    "facts": {
+      "task_id": "T-20260924-EX07-1",
+      "task_type_label": "trenching",
+      "progress_qty": 24,
+      "quantity": 40,
+      "unit": "m"
+    },
+    "template_text": "Trenching: 24 of 40 m done.",
+    "expected_text": "Trenching is 24 of 40 m done; finish the rest."
+  },
+  {
+    "item_id": "hi-2",
+    "item_type": "defect",
+    "facts": {
+      "defect_keyword": "hose",
+      "machine_id": "EX-07"
+    },
+    "template_text": "Defect: hose leak reported on EX-07.",
+    "expected_text": "EX-07 has a reported hose leak."
+  },
+  {
+    "item_id": "hi-3",
+    "item_type": "site_delay",
+    "facts": {
+      "key_noun": "truck wait",
+      "minutes": 35
+    },
+    "template_text": "Truck wait: 35 min today.",
+    "expected_text": "There was 35 min of truck wait today."
+  },
+  {
+    "item_id": "hi-4",
+    "item_type": "incident",
+    "facts": {
+      "key_noun": "near miss",
+      "zone_name": "Trench Area T1"
+    },
+    "template_text": "Near miss at Trench Area T1.",
+    "expected_text": "A near miss happened at Trench Area T1."
+  },
+  {
+    "item_id": "hi-5",
+    "item_type": "note",
+    "facts": {
+      "key_noun": "fuel",
+      "text": "fuel low"
+    },
+    "template_text": "Note: fuel low.",
+    "expected_text": "The fuel is low."
+  }
+]

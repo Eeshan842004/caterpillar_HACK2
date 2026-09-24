@@ -1,5 +1,6 @@
 import json
-from datetime import datetime, timedelta, timezone
+import shutil
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -14,12 +15,14 @@ from shiftmate.models import (
     Incident,
     Machine,
     MachineProfile,
+    ModelArtifact,
     Operator,
     PairingCode,
     Site,
     TaskAssignment,
     Zone,
 )
+from shiftmate.services.changes import record_change
 
 
 def seed_database(db: Session | None = None) -> dict:
@@ -48,7 +51,7 @@ def seed_database(db: Session | None = None) -> dict:
                     version=p_data["version"],
                     machine_class=p_data["machine_class"],
                     body=p_data,
-                    published_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                    published_at=datetime.now(UTC).replace(tzinfo=None),
                 )
                 db.merge(profile)
 
@@ -107,7 +110,7 @@ def seed_database(db: Session | None = None) -> dict:
                 language=o["language"],
                 skill_level=o["skill_level"],
                 experience_months=o["experience_months"],
-                hired_at=datetime.strptime(o["hired_at"], "%Y-%m-%d").date(),
+                hired_at=date.fromisoformat(o["hired_at"]),
                 site_id=o["site_id"],
                 pin_salt=o["pin_salt"],
                 pin_hash=o["pin_hash"],
@@ -136,7 +139,7 @@ def seed_database(db: Session | None = None) -> dict:
 
         # 7. Pairing Codes
         for pc in seed_data.get("pairing_codes", []):
-            expires = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=pc.get("expires_in_days", 365))
+            expires = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=pc.get("expires_in_days", 365))
             code_obj = PairingCode(
                 code=pc["code"],
                 machine_id=pc["machine_id"],
@@ -148,7 +151,7 @@ def seed_database(db: Session | None = None) -> dict:
         # 8. Task Assignments — day offsets map to the SITE-LOCAL date, and "HH:MM" planned starts are site-local
         #    times converted to UTC (audit: they were stored as if they were UTC, 5.5 h off)
         sites_by_id = {s["site_id"]: s for s in seed_data.get("sites", [])}
-        now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+        now_utc = datetime.now(UTC).replace(tzinfo=None)
         for a in seed_data.get("assignments", []):
             offset = timedelta(minutes=sites_by_id[a["site_id"]].get("utc_offset_minutes", 330))
             site_today = (now_utc + offset).date()
@@ -156,7 +159,11 @@ def seed_database(db: Session | None = None) -> dict:
             p_start = None
             if a.get("planned_start_local"):
                 hh, mm = a["planned_start_local"].split(":")
-                p_start = datetime.combine(p_date, datetime.min.time()) + timedelta(hours=int(hh), minutes=int(mm)) - offset
+                p_start = (
+                    datetime.combine(p_date, datetime.min.time())
+                    + timedelta(hours=int(hh), minutes=int(mm))
+                    - offset
+                )
 
             task = TaskAssignment(
                 task_id=a["task_id"],
@@ -202,12 +209,13 @@ def seed_database(db: Session | None = None) -> dict:
                 wind_kmh=fc["wind_kmh"],
                 precipitation_mm=fc["precipitation_mm"],
                 issued_at=datetime.combine((now_utc + offset).date() - timedelta(days=1), datetime.min.time())
-                + timedelta(hours=18) - offset,
+                + timedelta(hours=18)
+                - offset,
                 source=fc.get("source", "seed"),
             )
             db.merge(forecast)
 
-        db.flush()                               # the session does not autoflush; lookups below need rows 1-9
+        db.flush()  # the session does not autoflush; lookups below need rows 1-9
 
         # 10. Seeded machine-fault incident referenced by the EX-07 handover (tech §5.4.2)
         for ho in seed_data.get("handovers", []):
@@ -215,33 +223,67 @@ def seed_database(db: Session | None = None) -> dict:
                 if item.get("incident_id") and db.get(Incident, item["incident_id"]) is None:
                     machine = db.get(Machine, ho["machine_id"])
                     occurred = now_utc + timedelta(minutes=ho.get("created_offset_min", -480) - 60)
-                    db.add(Incident(
-                        incident_id=item["incident_id"], machine_id=ho["machine_id"], operator_id=ho.get("from_operator_id"),
-                        site_id=machine.site_id, occurred_at=occurred, type="machine_fault", severity="medium",
-                        status="reported", origin="operator",
-                        fields={"type": {"value": "machine_fault", "source": "reported", "entry_id": None},
-                                "severity": {"value": "medium", "source": "reported", "entry_id": None}},
-                        created_at=occurred, updated_at=occurred,
-                    ))
+                    db.add(
+                        Incident(
+                            incident_id=item["incident_id"],
+                            machine_id=ho["machine_id"],
+                            operator_id=ho.get("from_operator_id"),
+                            site_id=machine.site_id,
+                            occurred_at=occurred,
+                            type="machine_fault",
+                            severity="medium",
+                            status="reported",
+                            origin="operator",
+                            fields={
+                                "type": {"value": "machine_fault", "source": "reported", "entry_id": None},
+                                "severity": {"value": "medium", "source": "reported", "entry_id": None},
+                            },
+                            created_at=occurred,
+                            updated_at=occurred,
+                        )
+                    )
             # 11. Previous-shift handover (open items the incoming operator must acknowledge)
             if db.get(Handover, ho["handover_id"]) is None:
-                db.add(Handover(handover_id=ho["handover_id"], machine_id=ho["machine_id"],
-                                from_operator_id=ho.get("from_operator_id"), wording_method="template",
-                                created_at=now_utc + timedelta(minutes=ho.get("created_offset_min", -480)),
-                                data_origin="demo_seed"))
+                db.add(
+                    Handover(
+                        handover_id=ho["handover_id"],
+                        machine_id=ho["machine_id"],
+                        from_operator_id=ho.get("from_operator_id"),
+                        wording_method="template",
+                        created_at=now_utc + timedelta(minutes=ho.get("created_offset_min", -480)),
+                        data_origin="demo_seed",
+                    )
+                )
                 db.flush()
                 for item in ho["items"]:
-                    db.add(HandoverItem(item_id=item["item_id"], handover_id=ho["handover_id"],
-                                        item_type=item["item_type"], text=item["text"], audiences=item["audiences"],
-                                        source_entry_ids=[], task_id=item.get("task_id"),
-                                        incident_id=item.get("incident_id"), status=item.get("status", "open")))
+                    db.add(
+                        HandoverItem(
+                            item_id=item["item_id"],
+                            handover_id=ho["handover_id"],
+                            item_type=item["item_type"],
+                            text=item["text"],
+                            audiences=item["audiences"],
+                            source_entry_ids=[],
+                            task_id=item.get("task_id"),
+                            incident_id=item.get("incident_id"),
+                            status=item.get("status", "open"),
+                        )
+                    )
 
         # 12. Fleet status for all machines (S6 view), status only
         for m in seed_data.get("machines", []):
             if db.get(FleetStatus, m["machine_id"]) is None:
-                db.add(FleetStatus(machine_id=m["machine_id"], state="OFF", open_alerts=0, last_sync_at=None,
-                                   data_origin="demo_seed"))
+                db.add(
+                    FleetStatus(
+                        machine_id=m["machine_id"],
+                        state="OFF",
+                        open_alerts=0,
+                        last_sync_at=None,
+                        data_origin="demo_seed",
+                    )
+                )
 
+        publish_models(db)
         db.commit()
 
         counts = {
@@ -252,12 +294,100 @@ def seed_database(db: Session | None = None) -> dict:
             "console_users": db.query(ConsoleUser).count(),
             "pairing_codes": db.query(PairingCode).count(),
             "tasks": db.query(TaskAssignment).count(),
+            "model_artifacts": db.query(ModelArtifact).count(),
         }
         return counts
 
     finally:
         if close_after:
             db.close()
+
+
+# §5.2 deletion/cascade: the dynamic tables `reset-demo` truncates, in this order.
+RESET_TABLES = (
+    "audit_log",
+    "sms_outbox",
+    "sos_events",
+    "uploads",
+    "change_log",
+    "handover_items",
+    "handovers",
+    "help_requests",
+    "scenarios",
+    "follow_up_comments",
+    "follow_up_contributions",
+    "follow_ups",
+    "reassignment_requests",
+    "machine_summaries",
+    "incidents",
+    "ledger_entries",
+    "shifts",
+    "console_sessions",
+    "devices",
+    "task_assignments",
+    "forecasts",
+    "fleet_status",
+    "model_artifacts",
+    "pairing_codes",
+    "console_users",
+    "operators",
+    "machines",
+    "machine_profiles",
+    "zones",
+    "sites",
+)
+
+
+def reset_demo(db: Session) -> dict:
+    """Empties every dynamic table (TRUNCATE … RESTART IDENTITY CASCADE on PostgreSQL), deletes uploaded files under
+    UPLOAD_DIR, then re-seeds (§5.2, §10.5). The caller checks DEMO_MODE."""
+    from sqlalchemy import text
+
+    if db.bind.dialect.name == "postgresql":
+        db.execute(text(f"TRUNCATE {', '.join(RESET_TABLES)} RESTART IDENTITY CASCADE"))
+    else:
+        for table in RESET_TABLES:
+            db.execute(text(f"DELETE FROM {table}"))  # fixed table names, no user input
+    db.commit()
+    upload_root = settings.upload_path
+    for child in upload_root.iterdir():
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+    return seed_database(db)
+
+
+def publish_models(db: Session) -> list[str]:
+    """Loads the bundled model artifacts (`packages/content/models/*.json`, §5.4.4/§5.4.5) into `model_artifacts`
+    and records a `model.published` change for each new or changed body (§6.2). Idempotent; the caller commits."""
+    published: list[str] = []
+    models_dir = settings.content_path / "models"
+    for path in sorted(models_dir.glob("*.json")) if models_dir.exists() else []:
+        body = json.loads(path.read_text(encoding="utf-8"))
+        if body.get("kind") not in ("estimator", "intent") or "artifact_id" not in body:
+            continue
+        row = db.get(ModelArtifact, body["artifact_id"])
+        if row is not None and row.body == body:
+            continue
+        machine_class = body.get("machine_class") if body["kind"] == "estimator" else None
+        db.merge(
+            ModelArtifact(
+                artifact_id=body["artifact_id"],
+                kind=body["kind"],
+                machine_class=machine_class,
+                version=int(body["version"]),
+                body=body,
+                published_at=datetime.now(UTC).replace(tzinfo=None),
+            )
+        )
+        if machine_class:
+            record_change(db, "model.published", "machine_class", machine_class, body)
+        else:
+            record_change(db, "model.published", "all", None, body)
+        published.append(body["artifact_id"])
+    db.flush()
+    return published
 
 
 if __name__ == "__main__":

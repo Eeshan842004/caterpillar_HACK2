@@ -27,11 +27,16 @@ class MachineContext:
 def machine_context(db: Session, machine_id: str) -> MachineContext:
     machine = db.get(Machine, machine_id)
     if machine is None:
-        raise ShiftMateException(status_code=404, code="not_found", message=f"Machine {machine_id} is not registered.")
+        raise ShiftMateException(
+            status_code=404, code="not_found", message=f"Machine {machine_id} is not registered."
+        )
     profile = db.get(MachineProfile, (machine.profile_id, machine.profile_version))
     if profile is None:
-        raise ShiftMateException(status_code=500, code="internal_error",
-                                 message=f"Profile {machine.profile_id}@{machine.profile_version} is not seeded.")
+        raise ShiftMateException(
+            status_code=500,
+            code="internal_error",
+            message=f"Profile {machine.profile_id}@{machine.profile_version} is not seeded.",
+        )
     site = db.get(Site, machine.site_id)
     return MachineContext(
         machine_id=machine.machine_id,

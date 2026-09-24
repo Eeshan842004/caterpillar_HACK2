@@ -1,22 +1,22 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from shiftmate_ml.paths import DEMO_HISTORY_PATH
 
 
 def export_demo_history(
-    ledger_entries: List[Dict[str, Any]],
+    ledger_entries: list[dict[str, Any]],
     anchor_date_str: str,
     output_path: Path = DEMO_HISTORY_PATH,
     lookback_days: int = 14,
 ) -> int:
     """Exports the last 14 days of ledger entries for EX-07, HT-03 and their operators to demo_history.json.
-    
+
     Includes day offsets so that dates can be mapped relative to demo first-launch date.
     """
-    anchor_dt = datetime.strptime(anchor_date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    anchor_dt = datetime.strptime(anchor_date_str, "%Y-%m-%d").replace(tzinfo=UTC)
     target_machines = {"EX-07", "HT-03"}
 
     demo_entries = []
@@ -29,7 +29,7 @@ def export_demo_history(
             continue
 
         # Parse timestamp: e.g. "2026-09-20T10:00:00.000Z"
-        obs_dt = datetime.fromisoformat(obs_str.replace("Z", "+00:00"))
+        obs_dt = datetime.fromisoformat(obs_str)
         delta_days = (obs_dt.date() - anchor_dt.date()).days
 
         # We keep entries from [anchor_date - lookback_days, anchor_date]

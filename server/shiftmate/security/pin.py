@@ -12,4 +12,7 @@ def hash_pin(pin: str, salt_hex: str, iterations: int = 20000) -> str:
 
 def verify_pin(pin: str, salt_hex: str, expected_hash_hex: str, iterations: int = 20000) -> bool:
     computed = hash_pin(pin, salt_hex, iterations)
-    return hashlib.sha256(computed.encode()).hexdigest() == hashlib.sha256(expected_hash_hex.encode()).hexdigest()
+    return (
+        hashlib.sha256(computed.encode()).hexdigest()
+        == hashlib.sha256(expected_hash_hex.encode()).hexdigest()
+    )

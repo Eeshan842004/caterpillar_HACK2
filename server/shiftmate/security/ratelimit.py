@@ -24,9 +24,12 @@ class RateLimiter:
             if tokens < 1.0:
                 retry = math.ceil((1.0 - tokens) / self.rate)
                 self._buckets[key] = (tokens, now)
-                raise ShiftMateException(status_code=429, code="rate_limited",
-                                         message=f"Too many requests. Retry in {retry} s.",
-                                         headers={"Retry-After": str(retry)})
+                raise ShiftMateException(
+                    status_code=429,
+                    code="rate_limited",
+                    message=f"Too many requests. Retry in {retry} s.",
+                    headers={"Retry-After": str(retry)},
+                )
             self._buckets[key] = (tokens - 1.0, now)
 
     def reset(self) -> None:
@@ -34,6 +37,8 @@ class RateLimiter:
             self._buckets.clear()
 
 
-login_per_user = RateLimiter(5)       # per (IP, username)
-login_per_ip = RateLimiter(20)        # per IP
-pairing_per_ip = RateLimiter(10)      # per IP
+login_per_user = RateLimiter(5)  # per (IP, username)
+login_per_ip = RateLimiter(20)  # per IP
+pairing_per_ip = RateLimiter(10)  # per IP
+lora_per_gateway = RateLimiter(60)  # per simulated gateway (§9.7)
+ai_per_device = RateLimiter(30)  # /ai/* per device (cost control, §9.7)

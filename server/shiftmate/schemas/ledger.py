@@ -1,6 +1,6 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from shiftmate.schemas.common import (
     AlertLevel,
@@ -146,6 +146,7 @@ class IdleClassificationPayload(StrictBaseModel):
 
 class EstimatePayload(StrictBaseModel):
     task_id: str
+    task_type: str
     basis: str
     baseline_min: float
     p10_min: float
@@ -233,7 +234,7 @@ class HandoverItemAddedPayload(StrictBaseModel):
     text_params: dict[str, Any] | None = None
     text: str
     audiences: list[Audience]
-    source_entry_ids: list[str] = []
+    source_entry_ids: list[str] = Field(default_factory=list)
     task_id: str | None = None
     incident_id: str | None = None
     carried_from_item_id: str | None = None
@@ -308,12 +309,12 @@ class MachineStateChangePayload(StrictBaseModel):
     to: str
     reason: str
 
-    model_config = {"extra": "forbid", "populate_by_name": True}
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class FindingObserved(StrictBaseModel):
     text_key: str
-    params: dict[str, Any] = {}
+    params: dict[str, Any] = Field(default_factory=dict)
 
 
 class FindingPayload(StrictBaseModel):
@@ -322,9 +323,16 @@ class FindingPayload(StrictBaseModel):
     finding_id: str
     subject_id: str
     pattern_code: Literal[
-        "required_idle", "idle_reported_wait", "unexplained_idle_repeat", "overspeed_repeat",
-        "overspeed_zone_multi_operator", "fuel_per_cycle_high", "belt_repeat_operating",
-        "belt_switch_flapping", "sensor_unavailable_persistent", "near_miss_cluster",
+        "required_idle",
+        "idle_reported_wait",
+        "unexplained_idle_repeat",
+        "overspeed_repeat",
+        "overspeed_zone_multi_operator",
+        "fuel_per_cycle_high",
+        "belt_repeat_operating",
+        "belt_switch_flapping",
+        "sensor_unavailable_persistent",
+        "near_miss_cluster",
     ]
     owner: Literal["nobody", "operator", "site", "machine", "needs_review"]
     evidence_status: Literal["reported", "corroborated", "unresolved", "insufficient_evidence"]
@@ -348,7 +356,7 @@ class RecommendationPayload(StrictBaseModel):
     pattern_code: str | None = None
     condition: Literal["rain", "dust", "darkness"] | None = None
     reason_key: str
-    reason_params: dict[str, Any] = {}
+    reason_params: dict[str, Any] = Field(default_factory=dict)
 
 
 class IncidentExtractionPayload(StrictBaseModel):
@@ -375,7 +383,7 @@ class AlertReviewedPayload(StrictBaseModel):
 
 class IncidentReviewedPayload(StrictBaseModel):
     incident_id: str
-    field_corrections: dict[str, Any] = {}
+    field_corrections: dict[str, Any] = Field(default_factory=dict)
     note: str | None = None
 
 

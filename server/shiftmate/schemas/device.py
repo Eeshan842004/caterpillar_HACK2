@@ -1,4 +1,6 @@
-from typing import Any
+from typing import Any, Literal
+
+from pydantic import Field
 
 from shiftmate.schemas.common import StrictBaseModel
 
@@ -105,6 +107,21 @@ class DeviceBootstrapResponse(StrictBaseModel):
     operators: list[OperatorWire]
     assignments: list[TaskAssignmentWire]
     handovers: list[dict[str, Any]]
-    scenarios: list[dict[str, Any]] = []
-    model_artifacts: list[dict[str, Any]] = []
+    scenarios: list[dict[str, Any]] = Field(default_factory=list)
+    model_artifacts: list[dict[str, Any]] = Field(default_factory=list)
     forecast: dict[str, Any]
+
+
+class UploadRequest(StrictBaseModel):
+    """POST /uploads (§6.2, §5.5): base64 audio, idempotent by `entry_id`."""
+
+    entry_id: str = Field(min_length=1, max_length=64)
+    kind: Literal["voice_note", "site_tip"]
+    content_type: Literal["audio/mp4", "audio/webm"]
+    data_b64: str
+
+
+class UploadResponse(StrictBaseModel):
+    upload_id: str
+    storage_key: str
+    size_bytes: int

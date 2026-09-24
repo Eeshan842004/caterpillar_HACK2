@@ -18,7 +18,9 @@ router = APIRouter(prefix="/console/auth", tags=["console_auth"])
 
 
 @router.post("/login", response_model=ConsoleUserResponse)
-def login_console(req: ConsoleLoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+def login_console(
+    req: ConsoleLoginRequest, request: Request, response: Response, db: Session = Depends(get_db)
+):
     ip = request.client.host if request.client else "unknown"
     login_per_ip.hit(ip)
     login_per_user.hit(f"{ip}:{req.username}")
@@ -78,11 +80,10 @@ def logout_console(
     session_id = request.cookies.get("sm_session")
     sess = db.get(ConsoleSession, session_id) if session_id else None
     if sess is not None:
-        sess.revoked_at = utc_now()           # §9.1: logout revokes the session, not just the cookie
+        sess.revoked_at = utc_now()  # §9.1: logout revokes the session, not just the cookie
         db.commit()
     response.delete_cookie(key="sm_session", path="/")
     response.status_code = 204
-    return None
 
 
 @router.get("/me", response_model=ConsoleUserResponse)

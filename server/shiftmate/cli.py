@@ -1,14 +1,16 @@
 import argparse
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy.exc import SQLAlchemyError
 
 from shiftmate.config import settings
 from shiftmate.db import Base, SessionLocal, engine
-from shiftmate.models import Device, PairingCode
+from shiftmate.models import ROLES, ConsoleUser, Device, PairingCode
 from shiftmate.security.passwords import hash_password as calc_hash_password
 from shiftmate.security.pin import compute_pin_salt
 from shiftmate.security.pin import hash_pin as calc_hash_pin
-from shiftmate.seed import seed_database
+from shiftmate.seed import publish_models, reset_demo, seed_database
 
 
 def main():
@@ -42,6 +44,21 @@ def main():
     # revoke-device
     revoke_parser = subparsers.add_parser("revoke-device", help="Revoke a paired device")
     revoke_parser.add_argument("--device-id", required=True, help="Device UUID")
+
+    # create-user
+    user_parser = subparsers.add_parser("create-user", help="Create a console user")
+    user_parser.add_argument("--username", required=True)
+    user_parser.add_argument("--display-name", required=True)
+    user_parser.add_argument("--role", required=True, choices=ROLES)
+    user_parser.add_argument("--sites", required=True, help="Comma-separated site IDs")
+    user_parser.add_argument("--password", required=True)
+
+    # publish-models
+    subparsers.add_parser("publish-models", help="Load bundled model artifacts into model_artifacts")
+
+    # fetch-forecast
+    fc_parser = subparsers.add_parser("fetch-forecast", help="Fetch the Open-Meteo forecast now (S8)")
+    fc_parser.add_argument("--site", help="Only this site ID")
 
     # doctor
     subparsers.add_parser("doctor", help="Check database connectivity and integrity")
@@ -78,17 +95,20 @@ def main():
         if not args.yes:
             print("Please confirm reset with --yes")
             sys.exit(1)
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
-        counts = seed_database()
+        db = SessionLocal()
+        try:
+            counts = reset_demo(db)
+        finally:
+            db.close()
         print("Database reset and re-seeded:", counts)
 
     elif args.command == "create-pairing-code":
         import secrets
+
         code = args.code or f"{secrets.randbelow(900000) + 100000}"
         db = SessionLocal()
         try:
-            expires = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=args.days)
+            expires = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=args.days)
             pc = PairingCode(
                 code=code,
                 machine_id=args.machine,
@@ -97,7 +117,9 @@ def main():
             )
             db.merge(pc)
             db.commit()
-            print(f"Created pairing code {code} for machine {args.machine} (reusable={args.reusable}, expires={expires})")
+            print(
+                f"Created pairing code {code} for machine {args.machine} (reusable={args.reusable}, expires={expires})"
+            )
         finally:
             db.close()
 
@@ -108,22 +130,62 @@ def main():
             if not dev:
                 print(f"Device {args.device_id} not found.")
                 sys.exit(1)
-            dev.revoked_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            dev.revoked_at = datetime.now(UTC).replace(tzinfo=None)
             db.commit()
             print(f"Device {args.device_id} has been revoked.")
         finally:
             db.close()
 
+    elif args.command == "create-user":
+        db = SessionLocal()
+        try:
+            if db.query(ConsoleUser).filter(ConsoleUser.username == args.username).first():
+                print(f"User {args.username} already exists.")
+                sys.exit(1)
+            sites = [s.strip() for s in args.sites.split(",") if s.strip()]
+            db.add(
+                ConsoleUser(
+                    username=args.username,
+                    display_name=args.display_name,
+                    role=args.role,
+                    site_ids=sites,
+                    password_hash=calc_hash_password(args.password),
+                )
+            )
+            db.commit()
+            print(f"Created {args.role} {args.username} for sites {sites}")
+        finally:
+            db.close()
+
+    elif args.command == "publish-models":
+        db = SessionLocal()
+        try:
+            published = publish_models(db)
+            db.commit()
+            print("Published:", ", ".join(published) if published else "nothing new")
+        finally:
+            db.close()
+
+    elif args.command == "fetch-forecast":
+        from shiftmate.services.forecast import refresh_all
+
+        results = refresh_all(site_id=args.site)
+        for site_id, result in results.items():
+            print(f"{site_id}: {result}")
+        if not results or any(r.startswith("error") for r in results.values()):
+            sys.exit(1)
+
     elif args.command == "doctor":
         db = SessionLocal()
         try:
             from sqlalchemy import text
+
             db.execute(text("SELECT 1"))
             print("Database connection: OK")
             print("Content path:", settings.content_path)
             print("Upload path:", settings.upload_path)
             print("Demo mode:", settings.DEMO_MODE)
-        except Exception as e:
+        except (SQLAlchemyError, OSError) as e:
             print("Doctor check failed:", e)
             sys.exit(1)
         finally:

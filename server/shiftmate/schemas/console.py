@@ -100,7 +100,7 @@ class IncidentList(StrictBaseModel):
 
 
 class IncidentDetail(IncidentSummary):
-    operator_display: str | None = None          # hidden (null) for trainers (§6.3)
+    operator_display: str | None = None  # hidden (null) for trainers (§6.3)
     fields: dict[str, Any]
     snapshot: dict[str, Any] | None = None
     snapshot_complete: bool
@@ -108,7 +108,7 @@ class IncidentDetail(IncidentSummary):
 
 
 class IncidentReviewRequest(StrictBaseModel):
-    field_corrections: dict[str, Any] = {}
+    field_corrections: dict[str, Any] = Field(default_factory=dict)
     note: str | None = Field(default=None, max_length=1000)
 
 
@@ -129,3 +129,84 @@ class HandoverItemResolveRequest(StrictBaseModel):
 
 class HelpAnswerRequest(StrictBaseModel):
     answer_text: str = Field(min_length=1, max_length=1000)
+
+
+# --- Scenarios (§6.3 C4, §5.4.3 published near-miss scenario, §8.23) ---
+
+
+class ScenarioChoice(StrictBaseModel):
+    text: str = Field(min_length=1, max_length=90)
+    explanation: str = Field(min_length=1, max_length=200)
+
+
+class ScenarioContent(StrictBaseModel):
+    """One language's text of a scenario."""
+
+    title: str = Field(min_length=1, max_length=120)
+    situation: str = Field(min_length=1, max_length=600)
+    choices: list[ScenarioChoice] = Field(min_length=3, max_length=3)
+    correct_index: int = Field(ge=0, le=2)
+    translation_status: Literal["draft", "final"] = "draft"
+
+
+class ScenarioLocalized(StrictBaseModel):
+    en: ScenarioContent
+    hi: ScenarioContent | None = None
+
+
+class ScenarioBody(StrictBaseModel):
+    """Pack scenario shape (§5.4.3) + `source`, `source_site_id`, `localized`. Top-level text mirrors `localized.en`."""
+
+    content_id: str
+    kind: Literal["scenario"] = "scenario"
+    title: str = Field(min_length=1, max_length=120)
+    tags: list[str] = Field(default_factory=list)
+    task_types: list[str] = Field(default_factory=list)
+    duration_s: int = Field(default=90, ge=10, le=600)
+    situation: str = Field(min_length=1, max_length=600)
+    illustration: str | None = None
+    choices: list[ScenarioChoice] = Field(min_length=3, max_length=3)
+    correct_index: int = Field(ge=0, le=2)
+    source: Literal["near_miss"] = "near_miss"
+    source_site_id: str | None = None
+    localized: ScenarioLocalized
+
+
+class ScenarioUpdateRequest(StrictBaseModel):
+    body: ScenarioBody
+
+
+class ScenarioRejectRequest(StrictBaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ScenarioRedraftRequest(StrictBaseModel):
+    method: Literal["template", "llm"]
+
+
+class ScenarioSummary(StrictBaseModel):
+    scenario_id: str
+    machine_class: str
+    status: str
+    draft_method: str
+    title: str
+    created_at: str
+    source_incident_id: str | None = None
+
+
+class ScenarioList(StrictBaseModel):
+    items: list[ScenarioSummary]
+
+
+class ScenarioDetail(ScenarioSummary):
+    updated_at: str
+    approved_at: str | None = None
+    rejected_reason: str | None = None
+    published_change_seq: int | None = None
+    body: ScenarioBody
+    source_summary: dict[str, Any]  # anonymised: type, object, place, time_of_day, zone_kind, conditions
+
+
+class TaskReassignRequest(StrictBaseModel):
+    new_machine_id: str | None = Field(default=None, pattern=r"^[A-Z]{2}-\d{2}$")
+    note: str | None = Field(default=None, max_length=500)

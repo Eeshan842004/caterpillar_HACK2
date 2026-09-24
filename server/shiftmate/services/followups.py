@@ -51,9 +51,22 @@ def open_group(
     now = utc_now()
     if fu is None:
         fu = FollowUp(
-            site_id=site_id, category=category, group_key=group_key, title=title, summary=summary, priority=priority,
-            status="open", machine_id=machine_id, zone_id=zone_id, reason_code=reason_code, related_id=related_id,
-            metrics=metrics or {}, first_seen_at=at, last_seen_at=at, created_at=now, updated_at=now,
+            site_id=site_id,
+            category=category,
+            group_key=group_key,
+            title=title,
+            summary=summary,
+            priority=priority,
+            status="open",
+            machine_id=machine_id,
+            zone_id=zone_id,
+            reason_code=reason_code,
+            related_id=related_id,
+            metrics=metrics or {},
+            first_seen_at=at,
+            last_seen_at=at,
+            created_at=now,
+            updated_at=now,
         )
         db.add(fu)
         db.flush()
@@ -66,9 +79,11 @@ def open_group(
 
 
 def _recompute_site_delay(db: Session, fu: FollowUp, zone_name: str | None) -> None:
-    rows = db.query(FollowUpContribution).filter(
-        FollowUpContribution.follow_up_id == fu.follow_up_id, FollowUpContribution.active.is_(True)
-    ).all()
+    rows = (
+        db.query(FollowUpContribution)
+        .filter(FollowUpContribution.follow_up_id == fu.follow_up_id, FollowUpContribution.active.is_(True))
+        .all()
+    )
     count = len(rows)
     total = round(sum(r.minutes for r in rows), 1)
     fu.metrics = {"count": count, "total_minutes": total}
@@ -96,7 +111,11 @@ def set_site_delay_contribution(
     contribution = db.get(FollowUpContribution, root_entry_id)
     old_fu = db.get(FollowUp, contribution.follow_up_id) if contribution else None
 
-    if finding is None or finding.get("owner") != "site" or finding.get("pattern_code") != "idle_reported_wait":
+    if (
+        finding is None
+        or finding.get("owner") != "site"
+        or finding.get("pattern_code") != "idle_reported_wait"
+    ):
         if contribution is not None:
             contribution.active = False
             contribution.updated_at = utc_now()
@@ -105,11 +124,21 @@ def set_site_delay_contribution(
                 _recompute_site_delay(db, old_fu, zone_name)
         return
 
-    group_key = (f"site_delay:{finding['site_id']}:{finding.get('zone_id') or 'none'}:"
-                 f"{finding.get('reason_code')}:{finding['local_date']}")
+    group_key = (
+        f"site_delay:{finding['site_id']}:{finding.get('zone_id') or 'none'}:"
+        f"{finding.get('reason_code')}:{finding['local_date']}"
+    )
     fu = open_group(
-        db, site_id=finding["site_id"], category="site_delay", group_key=group_key, title="Site delay",
-        summary="Site delay", priority=3, at=at, machine_id=finding.get("machine_id"), zone_id=finding.get("zone_id"),
+        db,
+        site_id=finding["site_id"],
+        category="site_delay",
+        group_key=group_key,
+        title="Site delay",
+        summary="Site delay",
+        priority=3,
+        at=at,
+        machine_id=finding.get("machine_id"),
+        zone_id=finding.get("zone_id"),
         reason_code=finding.get("reason_code"),
     )
     if contribution is None:

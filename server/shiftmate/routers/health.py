@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from shiftmate.config import settings
@@ -15,7 +16,7 @@ def get_health(db: Session = Depends(get_db)):
     db_status = "ok"
     try:
         db.execute(text("SELECT 1"))
-    except Exception:
+    except SQLAlchemyError:
         db_status = "error"
 
     now_iso = utc_now_iso()

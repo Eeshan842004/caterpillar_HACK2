@@ -5,11 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=("../.env", ".env"),
-        env_file_encoding="utf-8",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=("../.env", ".env"), env_file_encoding="utf-8", extra="ignore")
 
     DATABASE_URL: str = "sqlite:///./var/shiftmate.db"
     TEST_DATABASE_URL: str = "sqlite:///:memory:"
@@ -22,6 +18,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:8081,http://localhost:5173"
     CONTENT_DIR: str = "../packages/content"
     UPLOAD_DIR: str = "./var/uploads"
+    STATIC_CONSOLE_DIR: str | None = None  # built console SPA → /console (skipped if missing)
+    STATIC_OPERATOR_DIR: str | None = None  # operator web export → /app (skipped if missing)
     AI_ENABLED: bool = False
     ANTHROPIC_API_KEY: str | None = None
     AI_MODEL: str = "claude-haiku-4-5"

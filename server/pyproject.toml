@@ -2,29 +2,28 @@
 name = "shiftmate-server"
 version = "1.0.0"
 description = "ShiftMate site server and ML pipeline"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.30.0",
-    "sqlalchemy>=2.0.30",
-    "alembic>=1.13.0",
-    "pydantic>=2.9.0",
-    "pydantic-settings>=2.5.0",
-    "argon2-cffi>=23.1.0",
-    "httpx>=0.27.0",
-    "pyyaml>=6.0.2",
-    "numpy>=2.0.0",
-    "pandas>=2.2.0",
-    "scikit-learn>=1.5.0",
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.53.0",
+    "sqlalchemy==2.0.54",
+    "alembic==1.20.0",
+    "psycopg[binary]==3.3.6",
+    "pydantic==2.13.5",
+    "pydantic-settings==2.15.0",
+    "argon2-cffi==25.1.0",
+    "anthropic==1.8.0",
+    "httpx==0.28.1",
+    "pyyaml==6.0.3",
+    "numpy==2.5.3",
+    "pandas==3.0.6",
+    "scikit-learn==1.9.1",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "pytest>=8.3.0",
-    "ruff>=0.6.0",
-]
-ml = [
-    "scikit-learn>=1.5.0",
+    "pytest==9.1.1",
+    "ruff==0.16.8",
 ]
 
 [tool.ruff]
@@ -42,3 +41,10 @@ markers = [
 where = ["."]
 include = ["shiftmate*", "shiftmate_ml*"]
 exclude = ["var*", "tests*"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency markers are evaluated per request, not shared mutable defaults.
+extend-immutable-calls = [
+    "fastapi.Depends", "fastapi.Query", "fastapi.params.Depends", "fastapi.params.Query",
+    "shiftmate.security.console_auth.require_role",
+]

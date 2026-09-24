@@ -60,6 +60,7 @@ def test_demo_history_export():
 
     # In tasks.csv, OP-0007 has exactly 1 completed trenching task and 0 in rain/dust/darkness
     import csv
+
     with open(GENERATED_DIR / "tasks.csv", "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         op_0007_tasks = [r for r in reader if r["operator_id"] == "OP-0007"]
@@ -68,7 +69,8 @@ def test_demo_history_export():
     assert len(trenching_tasks) == 1
 
     adverse_weather_tasks = [
-        r for r in op_0007_tasks
+        r
+        for r in op_0007_tasks
         if r["weather_at_start"] in ("rain", "dusty") or r["darkness_at_start"] == "true"
     ]
     assert len(adverse_weather_tasks) == 0

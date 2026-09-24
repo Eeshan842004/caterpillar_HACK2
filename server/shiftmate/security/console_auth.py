@@ -60,3 +60,14 @@ def require_role(*roles: str):
         return user
 
     return role_checker
+
+
+def user_for_session(db: Session, session_id: str | None) -> ConsoleUser | None:
+    """The active, enabled user for a session cookie, else None (WebSocket upgrade check, §6.3)."""
+    if not session_id:
+        return None
+    sess = db.get(ConsoleSession, session_id)
+    if sess is None or sess.revoked_at is not None or sess.expires_at < utc_now():
+        return None
+    user = db.get(ConsoleUser, sess.user_id)
+    return user if user is not None and user.disabled_at is None else None

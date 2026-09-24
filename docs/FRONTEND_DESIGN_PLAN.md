@@ -1,4 +1,4 @@
-# ShiftMate frontend design plan
+# Throughline frontend design plan
 
 **Status:** design direction ready for visual proof · 24 September 2026  
 **Applies to:** operator app A0–A17 and console C1–C7  
@@ -6,7 +6,7 @@
 
 ## 1. Design brief
 
-ShiftMate is a cab instrument and shift-continuity tool for heavy-equipment operators. It is not a consumer productivity app, a fleet analytics landing page or a generic SaaS dashboard. The operator may be in glare, dust, vibration or darkness, may be wearing gloves, and must be able to read the active state in about two seconds without touching the display. The supervisor console serves a different job: triaging evidence-backed follow-ups across many machines without turning operators into scores.
+Throughline is a cab instrument and shift-continuity tool for heavy-equipment operators. It is not a consumer productivity app, a fleet analytics landing page or a generic SaaS dashboard. The operator may be in glare, dust, vibration or darkness, may be wearing gloves, and must be able to read the active state in about two seconds without touching the display. The supervisor console serves a different job: triaging evidence-backed follow-ups across many machines without turning operators into scores.
 
 The visual character is **quiet field instrument**:
 
@@ -55,7 +55,7 @@ An obvious direction would use black panels, bright yellow, condensed type, meta
 
 ### Why that is rejected
 
-That treatment turns the industry into a costume. It competes with real warnings, makes every screen loud, and replaces one template with another. It also risks appearing to imitate Caterpillar branding rather than creating a ShiftMate system.
+That treatment turns the industry into a costume. It competes with real warnings, makes every screen loud, and replaces one template with another. It also risks appearing to imitate Caterpillar branding rather than creating a Throughline system.
 
 ### Revised direction: quiet field instrument
 
@@ -372,7 +372,7 @@ Avoid a generic `Card` primitive. If a component cannot state its information ro
 
 **Self-review questions:**
 
-1. Would the screens still be recognisably ShiftMate without the name?
+1. Would the screens still be recognisably Throughline without the name?
 2. Is yellow carrying current/next attention rather than decoration?
 3. Does any surface resemble a generic rounded-card dashboard?
 4. Are machine, task, source, state and action visually distinct without colour?
@@ -474,4 +474,4 @@ A screen fails design review if any answer below is “yes” without a product-
 - Does an empty state fail to tell the user what to do next?
 - Does any critical state rely on colour alone?
 
-Passing this checklist is necessary but not sufficient. The screen must also express the quiet-field-instrument direction, use real ShiftMate content and make its primary job obvious at a glance.
+Passing this checklist is necessary but not sufficient. The screen must also express the quiet-field-instrument direction, use real Throughline content and make its primary job obvious at a glance.

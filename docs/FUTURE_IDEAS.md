@@ -1,4 +1,4 @@
-# ShiftMate — future ideas backlog (training, LLMs, other technologies)
+# Throughline — future ideas backlog (training, LLMs, other technologies)
 
 **Status:** parked ideas, **not part of the current build**. Implement only after the planned scope (product plan §6.1 Must, then Should) is done and only if time allows. None of this is referenced by `PRODUCT_PLAN.md`, `TECHNICAL_SPEC.md` or `DATASET_SCHEMA.md`; when an idea is picked up, add it to those three documents first (requirement IDs, contracts, tests), the same way condition prep (F10-R12) and refreshers (F10-R13) were added.
 

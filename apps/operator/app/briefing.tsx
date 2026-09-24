@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { host, useHost } from '../src/engine/host';
-import { Row, Screen, Section, StatusPill, T } from '../src/ui/components';
+import { ContinuityRail, Row, Screen, Section, StateFlag, T, WorkSurface } from '../src/ui/components';
 import { useFocusList } from '../src/ui/useFocusList';
 import { speak } from '../src/voice/speaker';
 import { clock } from '../src/ui/format';
@@ -47,17 +47,20 @@ export default function Briefing() {
   const next = snap.tasks.find((t) => t.is_next);
   const offset = snap.site.utc_offset_minutes;
   return (
-    <Screen title={`Briefing · ${snap.shift?.operator.display_name ?? ''} · ${snap.shift?.guidance === 'guided' ? 'Guided' : 'Concise'}`}
+    <Screen title={`Briefing for ${snap.shift?.operator.display_name ?? 'operator'}`}
       hints="OK acknowledge · 1 read aloud · 2 acknowledge all · 3 report rain · last row: continue">
+      <WorkSurface split>
+      <ContinuityRail stops={[{ label: 'Previous shift', detail: `${items.length} open item${items.length === 1 ? '' : 's'}` }, { label: 'Acknowledged context', detail: allAck ? 'Ready for today' : 'Review required' }, { label: 'Today', detail: `${snap.briefing.task_count} tasks` }]} active={allAck ? 2 : 0} />
+      <View style={{ flex: 1 }}>
       <Section title="Handover from last shift">
         {items.length === 0 ? <T muted>No open items from last shift.</T> : null}
         <View style={{ gap: space.sm }}>
           {items.map((i, idx) => (
             <Row key={i.item_id} focused={focus === idx} onPress={() => host.dispatch({ type: 'ACK_HANDOVER', item_id: i.item_id })}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' }}>
-                <StatusPill tone={i.item_type === 'defect' ? 'warning' : 'caution'} word={ITEM_WORD[i.item_type]} />
+                <StateFlag tone={i.item_type === 'defect' ? 'warning' : 'caution'} word={ITEM_WORD[i.item_type]} />
                 <T variant="heading" style={{ flex: 1 }}>{i.text}</T>
-                <StatusPill tone={i.acknowledged ? 'ok' : 'info'} word={i.acknowledged ? 'Acknowledged' : 'Needs acknowledgement'}
+                <StateFlag tone={i.acknowledged ? 'ok' : 'info'} word={i.acknowledged ? 'Acknowledged' : 'Needs acknowledgement'}
                   detail="still open" />
               </View>
               <T variant="caption" muted>For: {i.audiences.join(', ').replace('next_operator', 'next operator')}</T>
@@ -66,13 +69,13 @@ export default function Briefing() {
         </View>
       </Section>
       <Section title="Today">
-        <T>{snap.briefing.task_count} tasks · next: {next ? `${next.task.task_type.replace('_', ' ')} at ${next.zone_name ?? next.task.location_text}` : 'none'}
-          {snap.day_finish ? ` · day finish ~${clock(snap.day_finish.p50_at, offset)} (late case ${clock(snap.day_finish.p90_at, offset)})` : ''}</T>
+        <T>{snap.briefing.task_count} tasks. Next: {next ? `${next.task.task_type.replace('_', ' ')} at ${next.zone_name ?? next.task.location_text}` : 'none'}.
+          {snap.day_finish ? ` Expected day finish ${clock(snap.day_finish.p50_at, offset)}; late case ${clock(snap.day_finish.p90_at, offset)}.` : ''}</T>
       </Section>
       <Section title="Conditions">
         <View style={{ flexDirection: 'row', gap: space.md, alignItems: 'center' }}>
           <T>{snap.briefing.conditions_text}</T>
-          {snap.briefing.conditions_old ? <StatusPill tone="caution" word="Old" /> : null}
+          {snap.briefing.conditions_old ? <StateFlag tone="caution" word="Old report" /> : null}
         </View>
       </Section>
       {snap.briefing.risk_notes.length ? (
@@ -84,6 +87,8 @@ export default function Briefing() {
         <T variant="heading">Continue to tasks</T>
         {!allAck ? <T variant="caption" muted>Acknowledge every item first (acknowledging does not resolve it)</T> : null}
       </Row>
+      </View>
+      </WorkSurface>
     </Screen>
   );
 }

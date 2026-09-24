@@ -19,8 +19,8 @@ export default function Status() {
   return (
     <Screen title="Status & sync" hints="Back or OK returns to tasks">
       <Section title="Connectivity">
-        <T>Local only (not paired with a server) · {snap.pending_sync} records waiting · {snap.ledger_count} ledger entries on this device</T>
-        <T muted>Server sync (T22) and on-device SQLite storage (T16) arrive in the next slice; records are kept in memory for this build.</T>
+        <View style={{ gap: space.sm }}><T>Connection: Local only</T><T>{snap.pending_sync} records waiting</T><T>{snap.ledger_count} ledger entries on this device</T></View>
+        <T muted>This build has no site-server connection. Keep the app open to retain this session.</T>
       </Section>
       <Section title="Signal health">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
@@ -31,15 +31,15 @@ export default function Status() {
         </View>
       </Section>
       <Section title="Alert budget (this hour)">
-        {hour ? <T>{hour.alerts_raised} raised · {hour.repeats_spoken} repeats · {hour.repeats_suppressed_after_ack} repeats suppressed after ACK · {hour.duplicate_raises_prevented} duplicates prevented · {hour.noncritical_prompts_deferred} prompts deferred · {hour.acknowledged} acknowledged · {hour.resolved} cleared · {Math.round(hour.operating_s / 60)} operating min</T>
+        {hour ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.xl }}><T>{hour.alerts_raised} raised</T><T>{hour.repeats_spoken} repeats</T><T>{hour.repeats_suppressed_after_ack} suppressed after acknowledgement</T><T>{hour.duplicate_raises_prevented} duplicates prevented</T><T>{hour.noncritical_prompts_deferred} prompts deferred</T><T>{hour.acknowledged} acknowledged</T><T>{hour.resolved} cleared</T><T>{Math.round(hour.operating_s / 60)} operating min</T></View>
           : <T muted>No operating time yet.</T>}
       </Section>
       <Section title="Active alerts">
-        {snap.alerts.active.length ? snap.alerts.active.map((a) => <T key={a.alert_id}>{a.level} · {a.alert_type} · {a.status} · ×{a.occurrences}</T>)
+        {snap.alerts.active.length ? snap.alerts.active.map((a) => <View key={a.alert_id} style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap' }}><T>{a.level}</T><T>{a.alert_type}</T><T>{a.status}</T><T>{a.occurrences} occurrences</T></View>)
           : <T muted>None</T>}
       </Section>
       <Section title="Versions">
-        <T muted>Profile {snap.machine.profile_id}@{snap.machine.profile_version} · estimator: baseline fallback (trained artifact not installed) · voice: not in this build · alert audio: device text-to-speech (recorded clips E-05 not installed)</T>
+        <View style={{ gap: space.sm }}><T muted>Profile {snap.machine.profile_id}@{snap.machine.profile_version}</T><T muted>Estimator: baseline fallback</T><T muted>Voice: unavailable in this build</T><T muted>Alert audio: device text-to-speech</T></View>
       </Section>
       <Row focused onPress={() => router.replace('/tasks')}><T variant="heading">Back to tasks</T></Row>
     </Screen>

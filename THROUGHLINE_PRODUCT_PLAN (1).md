@@ -1,4 +1,4 @@
-# ShiftMate — Product Plan
+# Throughline — Product Plan (reference copy)
 
 **Version:** 1.0 (final for build) · **Date:** 23 September 2026 · **Event:** Caterpillar Hackathon 2026 (Cat Digital India)
 **Problem statement:** Smart Operator Assistant for CAT machinery
@@ -35,7 +35,7 @@
 
 ## 1. Product summary
 
-**One line:** ShiftMate is an offline-first, voice-and-buttons companion app for Cat machine operators that connects the day's tasks, realistic finish times, contextual safety, fair usage review, relevant training and shift handover.
+**One line:** Throughline is an offline-first, voice-and-buttons companion app for Cat machine operators that connects the day's tasks, realistic finish times, contextual safety, fair usage review, relevant training and shift handover.
 
 **Core promise:** *The operator explains an event once, and the whole shift uses it.*
 
@@ -52,7 +52,7 @@
 - Not a certification system. Completing a lesson authorises nothing.
 
 **Elevator pitch (30 seconds)**
-Cat machines already record hours, fuel, idle, load cycles, seatbelt and alerts, but the operator only sees raw numbers or a beep. ShiftMate turns that data, plus one explanation from the operator, into guidance that is fair and honest. When the operator says "waiting for the truck", the finish time adds waiting, the idle becomes a site delay rather than their fault, no pointless lesson is pushed, and the next operator hears about it in the handover, while safety alerts stay fully independent. Everything important works offline, even 4 km deep in a mine pit.
+Cat machines already record hours, fuel, idle, load cycles, seatbelt and alerts, but the operator only sees raw numbers or a beep. Throughline turns that data, plus one explanation from the operator, into guidance that is fair and honest. When the operator says "waiting for the truck", the finish time adds waiting, the idle becomes a site delay rather than their fault, no pointless lesson is pushed, and the next operator hears about it in the handover, while safety alerts stay fully independent. Everything important works offline, even 4 km deep in a mine pit.
 
 ---
 
@@ -129,16 +129,16 @@ The data is already collected, but it is not turned into timely, fair, explained
 
 ## 5. Positioning against existing Caterpillar products
 
-| Caterpillar product (public information) | What it does | How ShiftMate relates |
+| Caterpillar product (public information) | What it does | How Throughline relates |
 |---|---|---|
 | **Product Link** | Telematics hardware sending hours, fuel, idle, location, faults | A future data source through ISO 15143-3 or a CAN gateway; not replaced |
-| **VisionLink** | Fleet management; seat belt and overspeed monitoring; video event review for training | Manager-side view; ShiftMate is operator-side and syncs records that could feed it |
-| **Cat AI Assistant** | In-cab voice coach "from machine startup to shift handoff"; manuals; machine health; runs on NVIDIA Jetson Thor | Same direction. ShiftMate prototypes a focused layer: explain-once context, fair attribution, deciding when not to coach, near-miss learning, acknowledged handover |
-| **Collision Mitigation System** | Detects people and obstacles when reversing; alerts; automatic braking | ShiftMate consumes detection events, adds conditions, time-to-contact and a correctable incident record; never controls the machine |
+| **VisionLink** | Fleet management; seat belt and overspeed monitoring; video event review for training | Manager-side view; Throughline is operator-side and syncs records that could feed it |
+| **Cat AI Assistant** | In-cab voice coach "from machine startup to shift handoff"; manuals; machine health; runs on NVIDIA Jetson Thor | Same direction. Throughline prototypes a focused layer: explain-once context, fair attribution, deciding when not to coach, near-miss learning, acknowledged handover |
+| **Collision Mitigation System** | Detects people and obstacles when reversing; alerts; automatic braking | Throughline consumes detection events, adds conditions, time-to-contact and a correctable incident record; never controls the machine |
 | **Cat safety guidance** | "Always buckle up when operating"; "use your hydraulic lockout lever" before exiting | Directly shapes the seatbelt logic |
 | **Cat productivity guidance** | 50-minute hour (83% job efficiency); bucket fill factor; cycle times | Directly shapes the task-time baseline |
 
-**Positioning statement:** "Product Link collects the data and Cat AI Assistant talks to the operator. ShiftMate prototypes the layer in between: context the operator gives once is carried fairly and honestly through the whole shift, and the app decides who should act, including when nobody needs to."
+**Positioning statement:** "Product Link collects the data and Cat AI Assistant talks to the operator. Throughline prototypes the layer in between: context the operator gives once is carried fairly and honestly through the whole shift, and the app decides who should act, including when nobody needs to."
 
 **Claims we never make:** that Caterpillar lacks these capabilities; certified safety distances; accident reduction, fuel savings or learning improvement from the prototype.
 
@@ -310,7 +310,7 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 **Purpose:** show today's work and what "done" means, and let the operator update status with minimal input.
 
 **Requirements**
-- F3-R1: Each task shows: type, location/area, quantity and unit, priority, completion criterion, planned time, ShiftMate estimate range, status, blocker (if any), assignment source and revision.
+- F3-R1: Each task shows: type, location/area, quantity and unit, priority, completion criterion, planned time, Throughline estimate range, status, blocker (if any), assignment source and revision.
 - F3-R2: Task states: `PLANNED`, `ACTIVE`, `PAUSED`, `BLOCKED` (with reason), `COMPLETED`, `CANCELLED`.
 - F3-R3: Operator actions by button or voice: start, pause, block (with reason), resume, complete (with confirmation of output), request reassignment.
 - F3-R4: Only a supervisor/dispatcher can change assignments; operator requests appear as pending until accepted.
@@ -344,10 +344,10 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F4-R4: If work is stopped with no known restart time, show a conditional estimate ("about 25 min after work resumes"), never a fabricated clock time or a negative number.
 - F4-R5: Keep the original estimate and the actual outcome for every task for review and learning.
 - F4-R6: "Why did my estimate change?" (voice or button) explains the change from stored factors.
-- F4-R7: The planner's own estimate, when present, is shown next to ShiftMate's for comparison.
+- F4-R7: The planner's own estimate, when present, is shown next to Throughline's for comparison.
 - F4-R8: Runs fully on the device (model coefficients shipped in the app).
 - F4-R9: When an accepted delay or blocked reason changes the current ETA, immediately recompute the likely effect on the next planned assignment and show both messages, for example: "Current task ETA updated by +18 minutes" and "Task 2 may miss its planned start window."
-- F4-R10: The impact preview may offer "Request reassignment" or "Notify supervisor"; these create requests/follow-ups only. ShiftMate never silently reorders tasks or reassigns an operator.
+- F4-R10: The impact preview may offer "Request reassignment" or "Notify supervisor"; these create requests/follow-ups only. Throughline never silently reorders tasks or reassigns an operator.
 - F4-R11: If the next task has no planned start window or the impact cannot be calculated, show only the current-task change and state that downstream impact is unavailable rather than inventing one.
 
 **Acceptance:** the same task gets different estimates in rain vs dry; a reported truck wait moves the finish time but not active time and previews the next assignment's likely delay; requesting reassignment creates a supervisor decision item without changing task order; progress updates move the estimate again; a new task type shows "fallback".
@@ -397,7 +397,7 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F6-R6: Evaluate Safe Exit Guard inputs every second using fresh belt, seat-occupancy, cab-door, motion, implement-neutral and lockout/parking-brake signals.
 - F6-R7: Belt-off without a fresh seat-vacant or door-open signal produces only the existing state-based belt response; it never produces the full-screen exit advisory.
 - F6-R8: When exit intent is detected while unsecured, the full-screen advisory is visual and spoken, remains advisory-only, and cannot lower an implement, apply a brake, engage lockout or otherwise control the machine.
-- F6-R9: Missing or stale seat/door/security signals must be named as unavailable; ShiftMate must not state that the machine is secured.
+- F6-R9: Missing or stale seat/door/security signals must be named as unavailable; Throughline must not state that the machine is secured.
 
 **Acceptance:** belt off while digging → spoken warning but no exit advisory; belt off plus door open or seat vacant while unsecured → full-screen Safe Exit Guard; securing the machine clears it; belt off with lockout engaged → no alarm; belt signal removed → "unavailable"; no test causes machine control.
 

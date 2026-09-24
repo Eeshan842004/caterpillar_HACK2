@@ -1,4 +1,4 @@
-# ShiftMate frontend delivery plan
+# Throughline frontend delivery plan
 
 **Status:** master roadmap; slice 1 built and verified · 24 September 2026
 

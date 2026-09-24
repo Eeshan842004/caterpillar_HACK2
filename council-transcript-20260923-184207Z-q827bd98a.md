@@ -1,4 +1,4 @@
-# LLM Council Transcript — ShiftMate ML architecture
+# LLM Council Transcript — Throughline ML architecture
 
 - Timestamp: 2026-09-23T18:42:07Z
 - Mode: Standard (auto-selected — default)
@@ -9,9 +9,9 @@
 
 ## Framed question
 
-DECISION: For ShiftMate, choose the implementation strategy for two ML components: (A) multilingual DistilBERT fine-tuned for English/Hindi intent classification and exported to ONNX Runtime on Android versus keyword/rule routing plus TF-IDF/logistic regression exported to JSON and executed in TypeScript; and (B) a PyTorch feed-forward neural network for task-duration correction versus Ridge regression on `log(actual/baseline)`, with split-conformal uncertainty retained in either case.
+DECISION: For Throughline, choose the implementation strategy for two ML components: (A) multilingual DistilBERT fine-tuned for English/Hindi intent classification and exported to ONNX Runtime on Android versus keyword/rule routing plus TF-IDF/logistic regression exported to JSON and executed in TypeScript; and (B) a PyTorch feed-forward neural network for task-duration correction versus Ridge regression on `log(actual/baseline)`, with split-conformal uncertainty retained in either case.
 
-CONTEXT: ShiftMate is an Android-first, offline-first operator companion for Caterpillar machine operators. Voice is Vosk offline STT. The launch intent set is narrow, contextual, and safety-adjacent; consequential record creation must be read back and confirmed. Requirements include offline use from install, cold start under five seconds, UI transitions under 300 ms, offline voice command under two seconds, explainable basis/fallback indicators, and a top-three intent fallback. The plan contains about 2,500 synthetic task records derived from explicit formulas and effects over 12 simulated weeks. The estimator begins with a domain production formula and is evaluated with temporal and unseen-operator splits, MAE, MAPE, bias, and conformal coverage. Models run on-device. The simpler stack is fully specified, but implementation has not started. No target Android benchmark, real labelled bilingual utterance count, or real task-history count is known.
+CONTEXT: Throughline is an Android-first, offline-first operator companion for Caterpillar machine operators. Voice is Vosk offline STT. The launch intent set is narrow, contextual, and safety-adjacent; consequential record creation must be read back and confirmed. Requirements include offline use from install, cold start under five seconds, UI transitions under 300 ms, offline voice command under two seconds, explainable basis/fallback indicators, and a top-three intent fallback. The plan contains about 2,500 synthetic task records derived from explicit formulas and effects over 12 simulated weeks. The estimator begins with a domain production formula and is evaluated with temporal and unseen-operator splits, MAE, MAPE, bias, and conformal coverage. Models run on-device. The simpler stack is fully specified, but implementation has not started. No target Android benchmark, real labelled bilingual utterance count, or real task-history count is known.
 
 STAKES: Hackathon delivery risk, offline APK size and latency, bilingual intent robustness, estimator credibility, explainability to judges and operators, and avoiding claims that synthetic-data performance proves field reliability.
 
@@ -62,7 +62,7 @@ Confidence: high.
 
 ### Executor
 
-ShiftMate is in Observe/Orient. Implement simple models behind replaceable interfaces and prepare advanced challengers. Estimated effort: advanced/advanced 20–30 person-days, simple/simple 7–10, gated hybrid 11–16. Estimated priority scores were 4.5, 17.0, and 12.5 respectively. Critical missing inputs are a labelled bilingual Vosk-like corpus, device resource measurements, and real task-duration history.
+Throughline is in Observe/Orient. Implement simple models behind replaceable interfaces and prepare advanced challengers. Estimated effort: advanced/advanced 20–30 person-days, simple/simple 7–10, gated hybrid 11–16. Estimated priority scores were 4.5, 17.0, and 12.5 respectively. Critical missing inputs are a labelled bilingual Vosk-like corpus, device resource measurements, and real task-duration history.
 
 Confidence: medium.
 
@@ -104,7 +104,7 @@ These weaknesses justify stronger evaluation, not immediate promotion. With litt
 
 Council confidence: high (4/5 high, 1/5 medium, 0/5 low)
 
-Dominant assumption: ShiftMate must choose a dependable production baseline before it has the bilingual speech data, real duration history, and target-device measurements needed to justify higher-capacity models.
+Dominant assumption: Throughline must choose a dependable production baseline before it has the bilingual speech data, real duration history, and target-device measurements needed to justify higher-capacity models.
 
 Breakers: unacceptable Hindi/transliteration/code-switch recall from the linear system; or material nonlinear duration gains on leakage-resistant real holdouts.
 

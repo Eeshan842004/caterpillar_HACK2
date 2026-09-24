@@ -1,9 +1,8 @@
-// Shared cab UI components (technical spec §4.5, §7.1): every status is colour + icon + word; rows ≥ 64 dp;
-// focus ring 4 dp plus a ▶ marker (never colour-only).
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useHost } from '../engine/host';
-import { day, night, type Palette, space, type StatusTone, type } from './tokens';
+import { Icon, TONE_ICON, type IconName } from './icons';
+import { day, night, radius, type Palette, space, type StatusTone, type } from './tokens';
 
 export function usePalette(): Palette {
   const local = useHost((s) => s.snapshot?.local_time);
@@ -11,81 +10,105 @@ export function usePalette(): Palette {
   return hour >= 19 || hour < 6 ? night : day;
 }
 
-const ICONS: Record<StatusTone, string> = { ok: '✔', info: 'ℹ', caution: '▲', warning: '⚠', critical: '⛔', unavailable: '⊘' };
-
-export function StatusPill({ tone, word, detail }: { tone: StatusTone; word: string; detail?: string }) {
+export function StateFlag({ tone, word, detail, icon }: { tone: StatusTone; word: string; detail?: string; icon?: IconName }) {
   const p = usePalette();
   const c = p.status[tone];
-  return (
-    <View style={[styles.pill, { backgroundColor: c.bg }]} accessibilityLabel={`${word}${detail ? `, ${detail}` : ''}`}>
-      <Text style={[type.label, { color: c.fg }]}>{ICONS[tone]} {word}</Text>
-      {detail ? <Text style={[type.caption, { color: c.fg, marginLeft: space.sm }]}>{detail}</Text> : null}
-    </View>
-  );
+  return <View style={[styles.flag, { backgroundColor: c.bg }]} accessibilityLabel={`${word}${detail ? `, ${detail}` : ''}`}>
+    <Icon name={icon ?? TONE_ICON[tone]} color={c.fg} size={22} />
+    <Text style={[type.label, { color: c.fg }]}>{word}</Text>
+    {detail ? <Text style={[type.caption, styles.flagDetail, { color: c.fg }]}>{detail}</Text> : null}
+  </View>;
 }
 
-export function ProvenanceTag({ source }: { source: 'observed' | 'reported' | 'inferred' | 'reviewed' }) {
+/** Backwards-compatible name while screens migrate to the semantic primitive. */
+export const StatusPill = StateFlag;
+
+export function SourceMark({ source }: { source: 'observed' | 'reported' | 'inferred' | 'reviewed' }) {
   const p = usePalette();
   const word = { observed: 'Observed', reported: 'Reported', inferred: 'Inferred', reviewed: 'Reviewed' }[source];
-  return (
-    <View style={[styles.tag, { backgroundColor: p.provenance[source] }]}>
-      <Text style={[type.caption, { color: '#FFFFFF' }]}>{word}</Text>
-    </View>
-  );
+  return <View style={[styles.source, { borderColor: p.provenance[source] }]}><Text style={[type.caption, { color: p.text }]}>{word}</Text></View>;
 }
+export const ProvenanceTag = SourceMark;
 
-export function Row({ focused, disabled, onPress, children }: { focused: boolean; disabled?: boolean; onPress?: () => void; children: ReactNode }) {
+export function Row({ focused, disabled, onPress, attention, children }: { focused: boolean; disabled?: boolean; onPress?: () => void; attention?: boolean; children: ReactNode }) {
   const p = usePalette();
-  return (
-    <Pressable
-      onPress={disabled ? undefined : onPress}
-      style={[styles.row, { backgroundColor: focused ? p.surfaceAlt : p.surface, borderColor: focused ? p.focus : p.border,
-        borderWidth: focused ? 4 : 1, opacity: disabled ? 0.55 : 1 }]}
-      accessibilityState={{ selected: focused, disabled }}
-    >
-      <Text style={[type.heading, { color: p.focus, width: 28 }]}>{focused ? '▶' : ' '}</Text>
-      <View style={{ flex: 1 }}>{children}</View>
-    </Pressable>
-  );
+  return <Pressable onPress={disabled ? undefined : onPress} style={({ pressed }) => [
+    styles.row, { backgroundColor: pressed ? p.surfaceAlt : p.surface, borderColor: focused ? p.focus : p.border, opacity: disabled ? 0.5 : 1 },
+    focused && styles.rowFocused,
+  ]} accessibilityState={{ selected: focused, disabled }}>
+    <View style={[styles.rowMarker, { backgroundColor: attention ? p.attention : focused ? p.focus : 'transparent' }]} />
+    <View style={{ flex: 1 }}>{children}</View>
+  </Pressable>;
 }
+export const FocusRow = Row;
 
-export function T({ children, style, muted, variant = 'body' }: { children: ReactNode; style?: object; muted?: boolean; variant?: keyof typeof type }) {
+export function T({ children, style, muted, variant = 'body', numberOfLines }: { children: ReactNode; style?: object | object[]; muted?: boolean; variant?: keyof typeof type; numberOfLines?: number }) {
   const p = usePalette();
-  return <Text style={[type[variant], { color: muted ? p.textMuted : p.text }, style]}>{children}</Text>;
+  return <Text numberOfLines={numberOfLines} style={[type[variant], { color: muted ? p.textMuted : p.text }, style]}>{children}</Text>;
 }
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={{ marginBottom: space.lg }}>
-      <T variant="label" muted style={{ marginBottom: space.sm, textTransform: 'uppercase' }}>{title}</T>
-      {children}
-    </View>
-  );
+export function RuledGroup({ title, children }: { title?: string; children: ReactNode }) {
+  const p = usePalette();
+  return <View style={[styles.group, { borderColor: p.border }]}>
+    {title ? <T variant="heading" style={styles.groupTitle}>{title}</T> : null}
+    {children}
+  </View>;
+}
+export const Section = RuledGroup;
+
+export function WorkSurface({ children, split = false }: { children: ReactNode; split?: boolean }) {
+  const p = usePalette();
+  const { width } = useWindowDimensions();
+  return <View style={[styles.workSurface, { backgroundColor: p.surface, flexDirection: split && width >= 760 ? 'row' : 'column' }]}>{children}</View>;
+}
+
+export function InstrumentValue({ label, value, unit, range }: { label: string; value: string | number; unit?: string; range?: string }) {
+  return <View style={styles.instrument}>
+    <T variant="heading" muted>{label}</T>
+    <View style={styles.valueLine}><T variant="display">{value}</T>{unit ? <T variant="heading" style={{ marginBottom: 7 }}>{unit}</T> : null}</View>
+    {range ? <T variant="heading">{range}</T> : null}
+  </View>;
+}
+
+export function ContinuityRail({ stops, active = 0 }: { stops: { label: string; detail?: string }[]; active?: number }) {
+  const p = usePalette();
+  return <View style={styles.continuity} accessibilityRole="list">
+    {stops.map((stop, index) => <View key={`${stop.label}-${index}`} style={styles.stop}>
+      <View style={[styles.stopLine, { backgroundColor: index <= active ? p.attention : p.border }]} />
+      <View style={[styles.stopNode, { borderColor: index === active ? p.attention : p.border, backgroundColor: index === active ? p.attention : p.surface }]} />
+      <View style={{ flex: 1, paddingBottom: space.lg }}><T variant="label">{stop.label}</T>{stop.detail ? <T variant="caption" muted>{stop.detail}</T> : null}</View>
+    </View>)}
+  </View>;
 }
 
 export function Screen({ title, hints, children, scroll = true }: { title: string; hints: string; children: ReactNode; scroll?: boolean }) {
   const p = usePalette();
-  const body = <View style={{ padding: space.lg, gap: space.sm }}>{children}</View>;
-  return (
-    <View style={{ flex: 1, backgroundColor: p.bg }}>
-      <View style={{ paddingHorizontal: space.lg, paddingTop: space.md }}>
-        <T variant="title">{title}</T>
-      </View>
-      {scroll ? <ScrollView style={{ flex: 1 }}>{body}</ScrollView> : <View style={{ flex: 1 }}>{body}</View>}
-      <ActionBar hints={hints} />
-    </View>
-  );
+  const { width } = useWindowDimensions();
+  const body = <View style={[styles.screenBody, { maxWidth: 1280, paddingHorizontal: width < 600 ? space.md : space.xl }]}>{children}</View>;
+  return <View style={{ flex: 1, backgroundColor: p.bg }}>
+    <View style={[styles.screenTitle, { borderColor: p.border }]}><T variant="title">{title}</T></View>
+    {scroll ? <ScrollView style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center' }}>{body}</ScrollView> : <View style={{ flex: 1, alignItems: 'center' }}>{body}</View>}
+    <ActionBar hints={hints} />
+  </View>;
+}
+
+function hintParts(hints: string): { key: string; action: string }[] {
+  return hints.split(/\s*[·•]\s*/).filter(Boolean).map((part) => {
+    const match = /^(Up\/Down|Back|OK|ACK|Space|Digits|[1-4](?:–[1-4])?|M|F2|last row:?)\s*(.*)$/i.exec(part.trim());
+    return match ? { key: match[1] ?? '', action: match[2] || '' } : { key: '', action: part.trim() };
+  });
 }
 
 export function ActionBar({ hints }: { hints: string }) {
   const p = usePalette();
   const msg = useHost((s) => s.lastMessage);
-  return (
-    <View style={[styles.actionBar, { backgroundColor: p.primaryBg }]}>
-      <Text style={[type.label, { color: p.onPrimary, flex: 1 }]} numberOfLines={1}>{hints}</Text>
-      {msg ? <Text style={[type.label, { color: p.onPrimary }]} numberOfLines={1}>⚠ {msg}</Text> : null}
-    </View>
-  );
+  return <View style={[styles.actionBar, { backgroundColor: p.rail }]}>
+    <View style={styles.actions}>{hintParts(hints).map((part, i) => <View key={`${part.key}-${i}`} style={styles.actionPair}>
+      {part.key ? <Text style={[type.label, styles.key, { color: p.rail }]}>{part.key}</Text> : null}
+      <Text style={[type.label, { color: p.onPrimary }]}>{part.action}</Text>
+    </View>)}</View>
+    {msg ? <View style={styles.feedback}><Icon name="warning" color={p.onPrimary} size={20} /><Text style={[type.label, { color: p.onPrimary }]} numberOfLines={2}>{msg}</Text></View> : null}
+  </View>;
 }
 
 export function AppStatusBar() {
@@ -95,27 +118,42 @@ export function AppStatusBar() {
   if (!snap) return null;
   const unavailable = snap.signal_health.filter((h) => !h.fresh).length;
   const stateTone: StatusTone = snap.machine.state === 'UNKNOWN' ? 'unavailable' : snap.machine.state === 'WORKING' || snap.machine.state === 'TRAVELLING' ? 'info' : 'ok';
-  const initials = snap.shift?.operator.display_name.slice(0, 2).toUpperCase() ?? '—';
-  return (
-    <View style={[styles.statusBar, { backgroundColor: p.surface, borderColor: p.border }]}>
-      <StatusPill tone="unavailable" word="Offline" detail="safety and tasks working, assistant limited" />
-      <T variant="label">{snap.pending_sync} waiting</T>
-      <StatusPill tone={unavailable ? 'unavailable' : 'ok'} word={unavailable ? `${unavailable} unavailable` : 'Sensors OK'} />
-      <StatusPill tone={stateTone} word={snap.machine.state} />
-      <View style={{ flex: 1 }} />
-      <T variant="label">{snap.machine.machine_id}</T>
-      <Pressable onLongPress={openPresenter} delayLongPress={3000} onPress={undefined}>
-        <T variant="heading">{snap.local_time}</T>
-      </Pressable>
-      <T variant="label" muted>{initials}</T>
-    </View>
-  );
+  return <View style={[styles.machineRail, { backgroundColor: p.rail }]}>
+    <View style={styles.machineSlot}><Icon name="offline" color={p.onPrimary} size={20} /><Text style={[type.label, { color: p.onPrimary }]}>Offline</Text></View>
+    <Text style={[type.caption, { color: p.onPrimary }]}>{snap.pending_sync} waiting</Text>
+    <View style={styles.machineSlot}><Icon name={unavailable ? 'unavailable' : 'sensor'} color={p.onPrimary} size={20} /><Text style={[type.caption, { color: p.onPrimary }]}>{unavailable ? `${unavailable} unavailable` : 'Sensors clear'}</Text></View>
+    <View style={[styles.machineState, { backgroundColor: p.status[stateTone].bg }]}><Icon name={TONE_ICON[stateTone]} color={p.status[stateTone].fg} size={18} /><Text style={[type.caption, { color: p.status[stateTone].fg }]}>{snap.machine.state.toLowerCase()}</Text></View>
+    <View style={{ flex: 1 }} />
+    <Text style={[type.label, { color: p.onPrimary }]}>{snap.machine.machine_id}</Text>
+    <Pressable onLongPress={openPresenter} delayLongPress={3000}><Text style={[type.heading, { color: p.onPrimary }]}>{snap.local_time}</Text></Pressable>
+    <Text style={[type.caption, { color: p.onPrimary }]}>{snap.shift?.operator.display_name ?? 'No operator'}</Text>
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  pill: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, paddingHorizontal: space.md, paddingVertical: space.xs },
-  tag: { borderRadius: 6, paddingHorizontal: space.sm, paddingVertical: 2, alignSelf: 'flex-start' },
-  row: { minHeight: 64, flexDirection: 'row', alignItems: 'center', borderRadius: 10, paddingHorizontal: space.md, paddingVertical: space.sm },
-  actionBar: { minHeight: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.lg, gap: space.lg },
-  statusBar: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, borderBottomWidth: 1, flexWrap: 'wrap' },
+  flag: { minHeight: 36, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', borderRadius: radius.flag, paddingHorizontal: space.sm, paddingVertical: space.xs, gap: space.sm },
+  flagDetail: { paddingLeft: space.sm, borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.45)' },
+  source: { borderLeftWidth: 4, paddingLeft: space.sm, paddingVertical: 2, alignSelf: 'flex-start' },
+  row: { minHeight: 72, flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1 },
+  rowFocused: { borderWidth: 3, borderRadius: radius.control },
+  rowMarker: { width: 7, marginRight: space.md },
+  group: { borderTopWidth: 1, marginBottom: space.xl },
+  groupTitle: { paddingTop: space.md, marginBottom: space.md },
+  workSurface: { flex: 1, width: '100%', overflow: 'hidden' },
+  instrument: { flex: 1, padding: space.xl, justifyContent: 'center' },
+  valueLine: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
+  continuity: { width: 210, paddingVertical: space.md, paddingRight: space.xl },
+  stop: { minHeight: 70, flexDirection: 'row', position: 'relative' },
+  stopLine: { width: 8, marginLeft: 8, marginRight: space.lg },
+  stopNode: { position: 'absolute', left: 2, top: 4, width: 20, height: 20, borderWidth: 4, borderRadius: 10 },
+  screenTitle: { minHeight: 64, justifyContent: 'center', paddingHorizontal: space.xl, borderBottomWidth: 1 },
+  screenBody: { width: '100%', paddingVertical: space.lg, gap: space.md },
+  actionBar: { minHeight: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.lg, gap: space.lg, flexWrap: 'wrap' },
+  actions: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.lg, flexWrap: 'wrap' },
+  actionPair: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  key: { minWidth: 30, textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: radius.control, paddingHorizontal: 6, paddingVertical: 2 },
+  feedback: { flexDirection: 'row', alignItems: 'center', gap: space.sm, maxWidth: 440 },
+  machineRail: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: space.lg, flexWrap: 'wrap' },
+  machineSlot: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  machineState: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.flag },
 });

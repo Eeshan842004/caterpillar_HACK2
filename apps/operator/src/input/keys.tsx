@@ -1,8 +1,7 @@
 // No-touch input (technical spec §7.3, DR-06): keyboard + gamepad → actions, delivered to a handler stack so
 // overlays (alert, Safe Exit Guard, prompt sheet, presenter) take keys before the screen underneath.
-import { type KeyEvent, useKeyEventListener } from 'expo-key-event';
 import { createContext, type ReactNode, useContext, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { BackHandler, Platform } from 'react-native';
 
 export type Action =
   | 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'OK' | 'BACK' | 'ACK' | 'PTT' | 'MENU' | 'PRESENTER' | 'SOS'
@@ -47,11 +46,26 @@ function dispatchKey(reg: Registry, k: KeyPress): void {
 export function KeyInputProvider({ children }: { children: ReactNode }) {
   const reg = useRef<Registry>({ stack: [], seq: 0 }).current;
 
-  useKeyEventListener((event: KeyEvent) => {
-    if (event.eventType !== 'press' || event.repeat) return;
-    const key = event.key;
-    dispatchKey(reg, { action: KEY_MAP[key] ?? null, digit: digitOf(key), key });
-  }, { listenToRelease: false, preventReload: true });
+  // Expo Go cannot load expo-key-event's native module. Keep browser keyboard
+  // support and Android Back here; native hardware keys return in dev builds.
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.repeat) return;
+        const key = event.code || event.key;
+        const action = KEY_MAP[key] ?? KEY_MAP[event.key] ?? null;
+        if (action) event.preventDefault();
+        dispatchKey(reg, { action, digit: digitOf(key), key });
+      };
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      dispatchKey(reg, { action: 'BACK', digit: null, key: 'hardwareBack' });
+      return true;
+    });
+    return () => sub.remove();
+  }, [reg]);
 
   // Web gamepad polling (standard mapping), edge-detected (§7.3)
   useEffect(() => {

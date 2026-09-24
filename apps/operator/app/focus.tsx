@@ -1,9 +1,7 @@
-// A5 Focus Mode (F5-R1, R3): one tile, three groups — task + progress, finish time, safety (belt, proximity, idle).
-// Menus are locked; only ACK, PTT and SOS work (handled globally).
 import { View } from 'react-native';
 import { useHost } from '../src/engine/host';
 import { useKeys } from '../src/input/keys';
-import { ActionBar, StatusPill, T, usePalette } from '../src/ui/components';
+import { ActionBar, InstrumentValue, StateFlag, T, WorkSurface, usePalette } from '../src/ui/components';
 import { SafetyGroup } from '../src/ui/safety';
 import { clock, taskLabel } from '../src/ui/format';
 import { space, type } from '../src/ui/tokens';
@@ -21,41 +19,33 @@ export default function Focus() {
   if (!snap) return null;
   const v = snap.tasks.find((t) => t.task.task_id === snap.active_task_id);
   const offset = snap.site.utc_offset_minutes;
-  return (
-    <View style={{ flex: 1, backgroundColor: p.bg }}>
-      {snap.machine.state === 'UNKNOWN' ? (
-        <View style={{ padding: space.md }}><StatusPill tone="unavailable" word="Machine state unknown" detail="some signals missing" /></View>
-      ) : null}
-      <View style={{ flex: 1, margin: space.lg, padding: space.xl, borderRadius: 16, backgroundColor: p.surface, gap: space.xl }}>
-        <View>
-          <T variant="heading" muted>TASK</T>
-          {v ? (
-            <>
-              <T variant="title">{taskLabel(v.task.task_type)} · {v.zone_name ?? v.task.location_text}</T>
+  return <View style={{ flex: 1, backgroundColor: p.bg }}>
+    {snap.machine.state === 'UNKNOWN' ? <View style={{ padding: space.md }}><StateFlag tone="unavailable" word="Machine state unknown" detail="Some signals are missing" /></View> : null}
+    <View style={{ flex: 1, margin: space.lg, borderWidth: 1, borderColor: p.border }}>
+      <WorkSurface>
+        <View style={{ padding: space.xl, borderBottomWidth: 1, borderColor: p.border }}>
+          <T variant="heading" muted>Current task</T>
+          {v ? <>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.lg, flexWrap: 'wrap' }}>
+              <T variant="title" style={{ flex: 1 }}>{taskLabel(v.task.task_type)} at {v.zone_name ?? v.task.location_text}</T>
               <T style={type.valueL}>{v.progress} / {v.task.quantity} {v.task.unit}</T>
-              <View style={{ height: 16, backgroundColor: p.surfaceAlt, borderRadius: 8 }}>
-                <View style={{ height: 16, width: `${v.live?.progressPct ?? 0}%`, backgroundColor: p.focus, borderRadius: 8 }} />
-              </View>
-            </>
-          ) : <T variant="title">No active task. Stop to choose one.</T>}
+            </View>
+            <View style={{ height: 14, backgroundColor: p.surfaceAlt, marginTop: space.md }}>
+              <View style={{ height: 14, width: `${v.live?.progressPct ?? 0}%`, backgroundColor: p.focus }} />
+            </View>
+          </> : <T variant="title">No active task. Stop to choose one.</T>}
         </View>
-        <View>
-          <T variant="heading" muted>FINISH</T>
-          {v?.live ? (
-            v.live.mode === 'conditional'
-              ? <T style={type.valueL}>~{Math.round(v.live.rem50)} min after resume</T>
-              : <>
-                  <T style={type.display}>{clock(v.live.finish50, offset)}</T>
-                  <T variant="heading">{clock(v.live.finish10, offset)}–{clock(v.live.finish90, offset)}</T>
-                </>
-          ) : <T variant="title">—</T>}
+        <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
+          <View style={{ flex: 3, minWidth: 320, borderRightWidth: 1, borderColor: p.border }}>
+            {v?.live ? v.live.mode === 'conditional'
+              ? <InstrumentValue label="Expected finish" value={`~${Math.round(v.live.rem50)}`} unit="min after resume" />
+              : <InstrumentValue label="Expected finish" value={clock(v.live.finish50, offset)} range={`${clock(v.live.finish10, offset)}–${clock(v.live.finish90, offset)}`} />
+              : <InstrumentValue label="Expected finish" value="—" />}
+          </View>
+          <View style={{ flex: 2, minWidth: 300, padding: space.xl }}><T variant="heading" muted style={{ marginBottom: space.md }}>Safety</T><SafetyGroup /></View>
         </View>
-        <View>
-          <T variant="heading" muted>SAFETY</T>
-          <SafetyGroup />
-        </View>
-      </View>
-      <ActionBar hints="Menus locked while operating · Space ACK alert · F2 presenter" />
+      </WorkSurface>
     </View>
-  );
+    <ActionBar hints="Menus locked while operating · Space ACK alert · F2 presenter" />
+  </View>;
 }

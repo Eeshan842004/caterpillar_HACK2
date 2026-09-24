@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { host, useHost } from '../engine/host';
 import { useKeys } from '../input/keys';
-import { Row, StatusPill, T, usePalette } from './components';
+import { Row, StateFlag, T, usePalette } from './components';
+import { Icon } from './icons';
 import { levelTone, space, type } from './tokens';
 
 export function AlertOverlay() {
@@ -28,7 +29,7 @@ export function AlertOverlay() {
   if (banner) {
     return (
       <View style={[styles.banner, { backgroundColor: c.bg }]} accessibilityLiveRegion="assertive">
-        <Text style={[type.title, { color: c.fg }]}>{top.level === 'CRITICAL' ? '⛔' : '⚠'} {word}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}><Icon name={top.level === 'CRITICAL' ? 'stop' : 'warning'} color={c.fg} size={34} /><Text style={[type.title, { color: c.fg }]}>{word}</Text></View>
         <Text style={[type.heading, { color: c.fg, flex: 1, marginLeft: space.lg }]}>{alertSpeech(top, machineClass)}</Text>
         <Text style={[type.label, { color: c.fg }]}>
           {top.status === 'ACKNOWLEDGED' ? 'Acknowledged — hazard still active' : 'ACK: Space / RB'}
@@ -40,7 +41,7 @@ export function AlertOverlay() {
   return (
     <View style={[styles.pills, { backgroundColor: p.surface }]}>
       {active.slice(0, 3).map((a) => (
-        <StatusPill key={a.alert_id} tone={levelTone[a.level] ?? 'info'} word={a.level} detail={alertSpeech(a, machineClass)} />
+        <StateFlag key={a.alert_id} tone={levelTone[a.level] ?? 'info'} word={a.level} detail={alertSpeech(a, machineClass)} />
       ))}
     </View>
   );
@@ -64,12 +65,12 @@ export function SafeExitOverlay() {
   ];
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: p.status.warning.bg, padding: space.xxl, zIndex: 50 }]}>
-      <Text style={[type.display, { color: p.status.warning.fg }]}>⚠ Secure the machine before exiting</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.lg }}><Icon name="warning" color={p.status.warning.fg} size={56} /><Text style={[type.display, { color: p.status.warning.fg, flex: 1 }]}>Secure the machine before exiting</Text></View>
       <View style={{ marginTop: space.xl, gap: space.md }}>
         {rows.map(([label, key]) => (
           <View key={key} style={[styles.checkRow, { backgroundColor: p.bg }]}>
             <Text style={[type.heading, { color: p.text, flex: 1 }]}>{label}</Text>
-            <StatusPill tone={CHECK_TONE[view.checklist[key]]} word={CHECK_WORD[view.checklist[key]]} />
+            <StateFlag tone={CHECK_TONE[view.checklist[key]]} word={CHECK_WORD[view.checklist[key]]} />
           </View>
         ))}
         <View style={[styles.checkRow, { backgroundColor: p.bg }]}>
@@ -82,7 +83,7 @@ export function SafeExitOverlay() {
         </Text>
       ) : null}
       <View style={{ flex: 1 }} />
-      <Text style={[type.heading, { color: p.status.warning.fg }]}>Advisory only — ShiftMate does not control the machine.</Text>
+      <Text style={[type.heading, { color: p.status.warning.fg }]}>Advisory only — Throughline does not control the machine.</Text>
       <Text style={[type.label, { color: p.status.warning.fg, marginTop: space.sm }]}>ACK (Space / RB) = Not exiting</Text>
     </View>
   );
@@ -125,7 +126,7 @@ export function PromptSheet() {
         ))}
       </View>
       <T variant="label" muted style={{ marginTop: space.md }}>
-        Keys 1–{prompt.options.length} · OK chooses{prompt.dismissible ? ' · Back closes' : ''}{secondsLeft !== null ? ` · closes in ${secondsLeft} s` : ''}
+        Keys 1–{prompt.options.length}. OK chooses.{prompt.dismissible ? ' Back closes.' : ''}{secondsLeft !== null ? ` Closes in ${secondsLeft} s.` : ''}
       </T>
     </View>
   );
@@ -178,7 +179,7 @@ export function MenuOverlay() {
           {m.reason ? <T variant="caption" muted>{m.reason}</T> : null}
         </Row>
       ))}
-      <T variant="label" muted>Up/Down · OK opens · Back closes</T>
+      <T variant="label" muted>Up/Down moves. OK opens. Back closes.</T>
     </View>
   );
 }
@@ -186,7 +187,7 @@ export function MenuOverlay() {
 const styles = StyleSheet.create({
   banner: { minHeight: 120, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.xl, zIndex: 40 },
   pills: { flexDirection: 'row', gap: space.sm, padding: space.sm, flexWrap: 'wrap' },
-  sheet: { position: 'absolute', left: space.lg, right: space.lg, bottom: 80, borderWidth: 3, borderRadius: 14, padding: space.xl, zIndex: 45 },
-  checkRow: { flexDirection: 'row', alignItems: 'center', padding: space.lg, borderRadius: 10 },
-  menu: { position: 'absolute', top: 80, left: space.xl, width: 460, borderWidth: 2, borderRadius: 14, padding: space.lg, gap: space.sm, zIndex: 44 },
+  sheet: { position: 'absolute', left: space.lg, right: space.lg, bottom: 80, borderWidth: 3, borderRadius: 8, padding: space.xl, zIndex: 45 },
+  checkRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', padding: space.lg, borderBottomWidth: 1 },
+  menu: { position: 'absolute', top: 80, left: space.xl, width: 460, borderWidth: 2, borderRadius: 8, padding: space.lg, gap: space.sm, zIndex: 44 },
 });

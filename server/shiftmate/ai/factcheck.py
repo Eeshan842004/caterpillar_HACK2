@@ -17,6 +17,7 @@ from typing import Any
 
 NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 MACHINE_ID = re.compile(r"[A-Z]{2}-\d{2}")
+TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?Z?)?$")
 KEY_NOUN_FIELDS = ("key_noun", "task_type_label", "defect_keyword")
 
 
@@ -40,9 +41,14 @@ def _walk(value: Any, key: str = ""):
 
 
 def allowed_numbers(facts: dict[str, Any]) -> set[float]:
-    allowed = _numbers_in(_canonical(facts))
+    """Numeric fact values (+ minute/hour conversions) and numbers inside text facts such as "EX-07" or "m3".
+    Timestamp strings are skipped: their digits are not quantities the model may quote."""
+    allowed: set[float] = set()
     for key, value in _walk(facts):
+        if isinstance(value, str) and not TIMESTAMP.match(value):
+            allowed |= _numbers_in(value)
         if isinstance(value, (int, float)) and not isinstance(value, bool):
+            allowed.add(round(float(value), 1))
             k = key.lower()
             if "min" in k:
                 allowed.add(round(value / 60, 1))

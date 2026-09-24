@@ -1,14 +1,15 @@
-"""Anthropic client wrapper (technical spec §6.5, §6.6; T40 / S1).
+"""DeepSeek client wrapper (technical spec §6.5, §6.6; T40 / S1 — provider changed from Anthropic to DeepSeek).
 
-`messages.parse` with a Pydantic output model; per-call timeout/retries via `with_options`. The system prompt is the
-static template; the user message is `<facts>` (canonical JSON) plus, when present, `<operator_text>` (the only
-untrusted input). Every failure maps to an `unavailable` reason and the caller keeps its template:
-disabled/no key → `ai_disabled`, `APITimeoutError` → `timeout`, rate-limit/status/connection errors →
-`provider_error` (logged with the request id, never the prompt), `stop_reason == "refusal"` → `refused`,
-truncated or unparsable output → `invalid_output`.
+One `POST {DEEPSEEK_BASE_URL}/chat/completions` per use, in JSON mode (`response_format: json_object`) with thinking
+disabled (it is on by default and would not fit the device timeout). The system prompt is the static template plus
+the output model's JSON Schema; the user message is `<facts>` (canonical JSON) plus, when present, `<operator_text>`
+(the only untrusted input). The reply is parsed into the Pydantic output model. Every failure maps to an
+`unavailable` reason and the caller keeps its template: disabled/no key → `ai_disabled`, timeout → `timeout`,
+HTTP 4xx/5xx or connection errors → `provider_error` (logged with the status, never the prompt),
+`finish_reason == "content_filter"` → `refused`, truncated, empty or non-conforming output → `invalid_output`.
 
-Tests inject a fake raw client as `app.state.ai_client`; production creates the real one lazily when AI_ENABLED and
-ANTHROPIC_API_KEY are set.
+Tests inject an `httpx.Client` with a MockTransport as `app.state.ai_client`; production creates a plain client
+lazily when AI_ENABLED and DEEPSEEK_API_KEY are set.
 """
 
 from __future__ import annotations
@@ -18,8 +19,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-import anthropic
-from pydantic import BaseModel
+import httpx
+from pydantic import BaseModel, ValidationError
 
 from shiftmate.ai.templates import Prompt
 from shiftmate.config import settings
@@ -28,6 +29,7 @@ log = logging.getLogger("shiftmate.ai")
 
 MAX_OPERATOR_TEXT = 500
 MAX_FACTS_BYTES = 4096
+RETRYABLE_STATUS = {429, 500, 503}  # DeepSeek: rate limited, server error, overloaded
 
 
 @dataclass
@@ -45,9 +47,15 @@ def canonical_facts(facts: dict[str, Any]) -> str:
     return json.dumps(facts, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
+def system_prompt(prompt: Prompt, output_model: type[BaseModel]) -> str:
+    """Template + the exact output schema (JSON mode needs the word "json" and the expected format in the prompt)."""
+    schema = json.dumps(output_model.model_json_schema(), ensure_ascii=False, separators=(",", ":"))
+    return f"{prompt.system}\n\nReply with only a json object that conforms to this JSON Schema:\n{schema}"
+
+
 class AIClient:
-    def __init__(self, raw: Any) -> None:
-        self.raw = raw
+    def __init__(self, http: httpx.Client) -> None:
+        self.http = http
 
     def call(
         self,
@@ -67,41 +75,74 @@ class AIClient:
                 operator_text = operator_text[:MAX_OPERATOR_TEXT]
                 details["operator_text_truncated"] = True
             content += f"\n<operator_text>\n{operator_text}\n</operator_text>"
-        try:
-            response = self.raw.with_options(timeout=timeout, max_retries=max_retries).messages.parse(
-                model=settings.AI_MODEL,
-                max_tokens=max_tokens,
-                system=prompt.system,
-                messages=[{"role": "user", "content": content}],
-                output_format=output_model,
-            )
-        except anthropic.APITimeoutError:
-            return AIResult(reason="timeout", details=details)
-        except (anthropic.RateLimitError, anthropic.APIStatusError, anthropic.APIConnectionError) as exc:
+        body = {
+            "model": settings.AI_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt(prompt, output_model)},
+                {"role": "user", "content": content},
+            ],
+            "max_tokens": max_tokens,
+            "response_format": {"type": "json_object"},
+            "thinking": {"type": "disabled"},
+            "stream": False,
+        }
+        url = settings.DEEPSEEK_BASE_URL.rstrip("/") + "/chat/completions"
+        headers = {"Authorization": f"Bearer {settings.DEEPSEEK_API_KEY or ''}"}
+
+        response: httpx.Response | None = None
+        reason = "provider_error"
+        for attempt in range(max_retries + 1):
+            try:
+                response = self.http.post(url, json=body, headers=headers, timeout=timeout)
+            except httpx.TimeoutException:
+                response, reason = None, "timeout"
+                continue
+            except httpx.HTTPError as exc:
+                log.warning("ai_provider_error prompt=%s error=%s", prompt.version, type(exc).__name__)
+                response, reason = None, "provider_error"
+                continue
+            if response.status_code in RETRYABLE_STATUS and attempt < max_retries:
+                continue
+            break
+        if response is None:
+            return AIResult(reason=reason, details=details)
+        if response.status_code >= 400:
+            hint = {401: "authentication failed - check DEEPSEEK_API_KEY", 402: "account out of balance"}
             log.warning(
-                "ai_provider_error prompt=%s type=%s request_id=%s",
+                "ai_provider_error prompt=%s status=%s %s",
                 prompt.version,
-                type(exc).__name__,
-                getattr(exc, "request_id", None),
+                response.status_code,
+                hint.get(response.status_code, ""),
             )
             return AIResult(reason="provider_error", details=details)
-        except ValueError:  # malformed JSON / schema mismatch in the parsed output
+
+        try:
+            choice = response.json()["choices"][0]
+            finish = choice.get("finish_reason")
+            text = (choice.get("message") or {}).get("content") or ""
+        except (ValueError, KeyError, IndexError, TypeError):
             return AIResult(reason="invalid_output", details=details)
-        if response.stop_reason == "refusal":
+        if finish == "content_filter":
             return AIResult(reason="refused", details=details)
-        if response.stop_reason == "max_tokens" or response.parsed_output is None:
+        if finish == "insufficient_system_resource":
+            return AIResult(reason="provider_error", details=details)
+        if finish == "length" or not text.strip():  # truncated JSON, or DeepSeek's occasional empty content
             return AIResult(reason="invalid_output", details=details)
-        return AIResult(parsed=response.parsed_output, details=details)
+        try:
+            parsed = output_model.model_validate(json.loads(text))
+        except (ValueError, ValidationError):
+            return AIResult(reason="invalid_output", details=details)
+        return AIResult(parsed=parsed, details=details)
 
 
 def get_ai_client(state: Any) -> AIClient | None:
     """The AI client for this app (`app.state`), or None when AI is disabled or has no credentials."""
     if not settings.AI_ENABLED:
         return None
-    raw = getattr(state, "ai_client", None)
-    if raw is None:
-        if not settings.ANTHROPIC_API_KEY:
+    http = getattr(state, "ai_client", None)
+    if http is None:
+        if not settings.DEEPSEEK_API_KEY:
             return None
-        raw = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY, max_retries=0)
-        state.ai_client = raw
-    return AIClient(raw)
+        http = httpx.Client()
+        state.ai_client = http
+    return AIClient(http)

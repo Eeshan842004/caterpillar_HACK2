@@ -58,6 +58,13 @@ class RequestIdMiddleware:
         await self.app(scope, receive, send_wrapper)
 
 
+# Private-network origins (RFC 1918 + localhost), any port — e.g. the Expo web dev server on the laptop's LAN IP
+LAN_ORIGIN_REGEX = (
+    r"https?://(localhost|127\.0\.0\.1|10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}"
+    r"|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2})(:\d+)?"
+)
+
+
 class BodySizeLimitMiddleware:
     """§6.1/§9.3: request bodies ≤ 1 MB, ≤ 1.5 MB for /uploads; larger → 413 `payload_too_large`."""
 
@@ -155,6 +162,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
+        allow_origin_regex=LAN_ORIGIN_REGEX if settings.CORS_ALLOW_LAN else None,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

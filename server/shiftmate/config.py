@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,21 +11,23 @@ class Settings(BaseSettings):
     TEST_DATABASE_URL: str = "sqlite:///:memory:"
     # Required, from the environment / .env only (§9.4). Generate with:
     #   python -c "import secrets; print(secrets.token_hex(32))"
-    DEVICE_SECRET_MASTER_KEY: str
+    DEVICE_SECRET_MASTER_KEY: str = Field(repr=False)  # secrets never appear in reprs, logs or tracebacks
     DEMO_MODE: bool = False
     CONSOLE_COOKIE_SECURE: bool = False
     SESSION_TTL_HOURS: int = 12
     CORS_ORIGINS: str = "http://localhost:8081,http://localhost:5173"
+    CORS_ALLOW_LAN: bool = False  # demo: also allow any http(s) origin on a private LAN address
     CONTENT_DIR: str = "../packages/content"
     UPLOAD_DIR: str = "./var/uploads"
     STATIC_CONSOLE_DIR: str | None = None  # built console SPA → /console (skipped if missing)
     STATIC_OPERATOR_DIR: str | None = None  # operator web export → /app (skipped if missing)
     AI_ENABLED: bool = False
-    ANTHROPIC_API_KEY: str | None = None
-    AI_MODEL: str = "claude-haiku-4-5"
+    DEEPSEEK_API_KEY: str | None = Field(default=None, repr=False)
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    AI_MODEL: str = "deepseek-flash"
     AI_DEVICE_TIMEOUT_S: float = 1.5
     AI_CONSOLE_TIMEOUT_S: float = 20.0
-    LORA_GATEWAY_TOKEN: str = "replace-with-random-token"
+    LORA_GATEWAY_TOKEN: str = Field(default="replace-with-random-token", repr=False)
     SMS_CONTACTS: str = ""
     FORECAST_ENABLED: bool = False
     FORECAST_POLL_MINUTES: int = 60

@@ -60,6 +60,23 @@ def main():
     fc_parser = subparsers.add_parser("fetch-forecast", help="Fetch the Open-Meteo forecast now (S8)")
     fc_parser.add_argument("--site", help="Only this site ID")
 
+    # demo
+    demo_parser = subparsers.add_parser(
+        "demo", help="Prepare the database and run the LAN demo server (tablet)"
+    )
+    demo_parser.add_argument(
+        "--reset", action="store_true", help="Wipe demo data and re-seed for today first"
+    )
+    demo_parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: all interfaces)")
+    demo_parser.add_argument("--port", type=int, default=8000)
+    demo_parser.add_argument("--no-serve", action="store_true", help="Prepare and print the banner only")
+    demo_parser.add_argument(
+        "--fleet",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Force the fleet simulator on/off (default: FLEET_SIM_ENABLED)",
+    )
+
     # doctor
     subparsers.add_parser("doctor", help="Check database connectivity and integrity")
 
@@ -175,16 +192,27 @@ def main():
         if not results or any(r.startswith("error") for r in results.values()):
             sys.exit(1)
 
+    elif args.command == "demo":
+        if args.reset and not settings.DEMO_MODE:
+            print("Error: --reset needs DEMO_MODE=true.")
+            sys.exit(1)
+        from shiftmate.demo import run
+
+        run(reset=args.reset, host=args.host, port=args.port, serve=not args.no_serve, fleet=args.fleet)
+
     elif args.command == "doctor":
         db = SessionLocal()
         try:
             from sqlalchemy import text
+
+            from shiftmate.demo import banner, status
 
             db.execute(text("SELECT 1"))
             print("Database connection: OK")
             print("Content path:", settings.content_path)
             print("Upload path:", settings.upload_path)
             print("Demo mode:", settings.DEMO_MODE)
+            print(banner(8000, status(db)))
         except (SQLAlchemyError, OSError) as e:
             print("Doctor check failed:", e)
             sys.exit(1)

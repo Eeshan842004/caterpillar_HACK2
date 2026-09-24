@@ -14,6 +14,9 @@ _TMP_DIR = tempfile.mkdtemp(prefix="shiftmate-test-")
 os.environ["DATABASE_URL"] = "sqlite:///" + os.path.join(_TMP_DIR, "test.db").replace("\\", "/")
 os.environ["DEVICE_SECRET_MASTER_KEY"] = "a" * 64
 os.environ["DEMO_MODE"] = "true"  # the seeded pairing codes are demo (reusable) codes
+# Tests never follow a developer's .env feature switches (the live AI test turns AI on itself)
+for _flag in ("AI_ENABLED", "FORECAST_ENABLED", "FLEET_SIM_ENABLED", "ISOFOREST_ENABLED"):
+    os.environ[_flag] = "false"
 os.environ["UPLOAD_DIR"] = os.path.join(_TMP_DIR, "uploads")
 os.environ["LORA_GATEWAY_TOKEN"] = "test-gateway-token"
 os.environ["SMS_CONTACTS"] = "+91 98400 11111,+91 98400 22222"

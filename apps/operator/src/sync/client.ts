@@ -79,11 +79,17 @@ export function clientDeviceId(newId: () => string): string {
   return id;
 }
 
-/** "192.168.1.10:8000", "http://…/", "http://…/api/v1" → "http://192.168.1.10:8000". */
+// Private-network hosts: the site server speaks plain HTTP on the LAN (spec §13.4 "HTTP on LAN")
+const LAN_HOST = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+
+/** "192.168.1.10:8000", "http://…/", "http://…/api/v1" → "http://192.168.1.10:8000". An https:// address on a
+ * private network becomes http:// — the demo server has no TLS, and HTTPS to it fails ("Invalid HTTP request"). */
 export function normaliseBaseUrl(input: string): string {
   let url = input.trim();
   if (!url) throw new Error('Enter the server address, e.g. http://192.168.1.10:8000');
   if (!/^https?:\/\//i.test(url)) url = `http://${url}`;
+  const host = /^https:\/\/([^/:?#]+)/i.exec(url)?.[1];
+  if (host && LAN_HOST.test(host)) url = `http://${url.slice('https://'.length)}`;
   url = url.replace(/\/+$/, '').replace(/\/api\/v1$/i, '');
   return url;
 }

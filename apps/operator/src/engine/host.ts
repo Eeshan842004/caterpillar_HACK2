@@ -81,7 +81,9 @@ class EngineHost {
   async connectServer(urlInput: string, code: string, machineId: string): Promise<boolean> {
     useHost.setState({ connecting: `Pairing ${machineId} with the server…`, connectError: null });
     try {
-      const pairing = await pairWithServer(normaliseBaseUrl(urlInput), code.trim(), machineId, clientDeviceId(uuid));
+      const baseUrl = normaliseBaseUrl(urlInput);
+      useHost.setState({ connecting: `Pairing ${machineId} with ${baseUrl}…` });
+      const pairing = await pairWithServer(baseUrl, code.trim(), machineId, clientDeviceId(uuid));
       await this.startFromServer(pairing);
       return true;
     } catch (e) {

@@ -1,0 +1,179 @@
+{
+  "artifact_id": "estimator.haul_truck@1",
+  "kind": "estimator",
+  "machine_class": "haul_truck",
+  "version": 1,
+  "trained_at": "2026-09-22T23:59:59.000Z",
+  "data_origin": "synthetic:gen-1.0:20260923",
+  "target": "ln(actual_active_min / baseline_min)",
+  "alpha": 1.0,
+  "categorical": [
+    {
+      "name": "skill_level",
+      "group": "skill",
+      "levels": [
+        "beginner",
+        "intermediate",
+        "expert"
+      ],
+      "reference": "intermediate"
+    },
+    {
+      "name": "task_type",
+      "group": "task_type",
+      "levels": [
+        "haul_overburden",
+        "haul_ore"
+      ],
+      "reference": "haul_overburden"
+    },
+    {
+      "name": "material",
+      "group": "material",
+      "levels": [
+        "overburden",
+        "ore"
+      ],
+      "reference": "overburden"
+    },
+    {
+      "name": "weather",
+      "group": "weather",
+      "levels": [
+        "clear",
+        "rain",
+        "windy",
+        "dusty",
+        "foggy"
+      ],
+      "reference": "clear"
+    },
+    {
+      "name": "visibility",
+      "group": "visibility",
+      "levels": [
+        "good",
+        "moderate",
+        "poor"
+      ],
+      "reference": "good"
+    },
+    {
+      "name": "temperature_band",
+      "group": "temperature",
+      "levels": [
+        "cool",
+        "mild",
+        "hot",
+        "extreme"
+      ],
+      "reference": "mild"
+    },
+    {
+      "name": "time_of_day",
+      "group": "time_of_day",
+      "levels": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "reference": "morning"
+    },
+    {
+      "name": "site_congestion",
+      "group": "congestion",
+      "levels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reference": "low"
+    }
+  ],
+  "numeric": [
+    {
+      "name": "experience",
+      "group": "experience",
+      "source": "experience_months",
+      "transform": "log1p",
+      "clip": [
+        0,
+        240
+      ],
+      "mean": 3.281686,
+      "std": 1.111738
+    },
+    {
+      "name": "machine_age",
+      "group": "machine_age",
+      "source": "machine_age_years",
+      "transform": "identity",
+      "clip": [
+        0,
+        25
+      ],
+      "mean": 6.012129,
+      "std": 1.226884
+    }
+  ],
+  "coefficients": {
+    "skill_level=beginner": 0.416308,
+    "skill_level=expert": 0.034894,
+    "task_type=haul_ore": 0.022749,
+    "material=ore": 0.022749,
+    "weather=rain": 0.213239,
+    "weather=windy": 0.156416,
+    "weather=dusty": 0.078946,
+    "weather=foggy": 0.0,
+    "visibility=moderate": 0.037876,
+    "visibility=poor": 0.096602,
+    "temperature_band=cool": 0.0,
+    "temperature_band=hot": 0.01539,
+    "temperature_band=extreme": 0.098032,
+    "time_of_day=afternoon": -0.014283,
+    "time_of_day=evening": 0.030274,
+    "time_of_day=night": 0.086755,
+    "site_congestion=medium": 0.027866,
+    "site_congestion=high": 0.167741,
+    "experience": -0.045423,
+    "machine_age": 0.004709
+  },
+  "intercept": -0.292137,
+  "task_type_counts": {
+    "haul_overburden": 473,
+    "haul_ore": 269
+  },
+  "min_task_type_count": 30,
+  "min_calibration_n": 30,
+  "fallback_band": {
+    "lo": 0.8,
+    "hi": 1.35
+  },
+  "residual_quantiles": {
+    "pooled": {
+      "n": 188,
+      "q_lo": -0.153982,
+      "q_mid": -0.019607,
+      "q_hi": 0.164827
+    },
+    "by_task_type": {
+      "haul_overburden": {
+        "n": 116,
+        "q_lo": -0.139845,
+        "q_mid": -0.001018,
+        "q_hi": 0.196668
+      },
+      "haul_ore": {
+        "n": 72,
+        "q_lo": -0.208012,
+        "q_mid": -0.036431,
+        "q_hi": 0.100691
+      }
+    }
+  },
+  "metrics": {
+    "split_a_test_mape": 0.1104,
+    "split_b_test_mape": 0.1076
+  }
+}

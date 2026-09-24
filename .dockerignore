@@ -1,0 +1,13 @@
+**/node_modules
+apps/operator/android
+apps/operator/assets/vosk
+apps/operator/public/vosk
+server/.venv
+data/generated
+.git
+**/dist*
+# local secrets and databases (never baked into an image)
+.env
+**/.env
+server/var
+var

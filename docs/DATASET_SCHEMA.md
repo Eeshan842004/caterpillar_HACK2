@@ -249,7 +249,7 @@ Generated history includes belt episodes, overspeed and proximity episodes (tech
 |---|---|
 | `shift_event/start,end` | Shift boundaries (`shifts.csv`). |
 | `task_event/start,pause,resume,block,complete,cancel` | Task chronology and accounting (`tasks.csv`); expected waiting (§8.6.5). |
-| `inference/estimate` | Original estimate per started task (F4-R5), with `context` (weather, visibility, temperature band, time of day, congestion, darkness) equal to the task's pre-start columns; condition-prep exposure is counted from it (F10-R12). |
+| `inference/estimate` | Original estimate per started task (F4-R5), carrying the task's `task_type` (expected waiting, §8.6.5) and `context` (weather, visibility, temperature band, time of day, congestion, darkness) equal to the task's pre-start columns; condition-prep exposure is counted from it (F10-R12). |
 | `observation/signal_summary_5m`, `observation/condition_forecast` | Usage history and time-aware conditions. |
 | `idle_event/started,ended`; `inference/idle_classification`; `report/idle_reason`; `correction/idle_reason` | Explain-once propagation and corrected attribution. |
 | `report/progress_report` | Live progress on some tasks. |
@@ -280,7 +280,7 @@ Validation gates (`datagen/validate.py`, run by `pnpm ml:generate` and TC-62) be
 3. Times respect chronology: forecast issued by estimate time, report no earlier than its event, correction after original, alert clear after raise, incident post-snapshot after trigger, handover acknowledgment after item creation.
 4. Task accounting sums to elapsed time within ± 0.1 min; the active target is positive for training rows; no outcome, reason, alert or incident field enters pre-start feature encoding; `baseline_minutes` recomputes from the profile and site job efficiency.
 5. Sensor dropouts produce null metrics and `missing_signal_names`, never zero/false; required cool-down, reported wait and unexplained idle produce distinct labels; an acknowledged alert has a later `cleared` transition before it is counted as resolved.
-6. Every flat-file row matches its ledger entry (`summary_id`, `alert_event_id`, idle and shift IDs); each started task's original `inference/estimate.context` equals its `*_at_start` columns; incident chain hashes verify.
+6. Every flat-file row matches its ledger entry (`summary_id`, `alert_event_id`, idle and shift IDs); each started task's original `inference/estimate` has its `task_type` and a `context` equal to its `*_at_start` columns; incident chain hashes verify.
 7. Temporally held-out and unseen-operator evaluations use the declared fixed splits; `split_*` columns never appear in features.
 8. Organiser files remain untouched; their rows are mapped separately with no invented lockout or seat-occupancy state.
 

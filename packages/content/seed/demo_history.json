@@ -42,6 +42,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260908-EX07-1",
+      "task_type": "pipe_lifting",
       "basis": "fallback",
       "baseline_min": 63.0025,
       "p10_min": 50.4,
@@ -843,6 +844,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260908-EX07-2",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 115.2046,
       "p10_min": 92.2,
@@ -2227,6 +2229,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260908-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 302.4121,
       "p10_min": 241.9,
@@ -4710,6 +4713,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260908-HT03-2",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 172.8069,
       "p10_min": 138.2,
@@ -6258,6 +6262,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260909-EX07-1",
+      "task_type": "backfilling",
       "basis": "fallback",
       "baseline_min": 25.423,
       "p10_min": 20.3,
@@ -6391,6 +6396,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260909-HT03-1",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 244.8098,
       "p10_min": 195.8,
@@ -7566,6 +7572,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260909-EX07-2",
+      "task_type": "truck_loading",
       "basis": "fallback",
       "baseline_min": 14.0121,
       "p10_min": 11.2,
@@ -10153,6 +10160,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260909-HT03-2",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 259.2104,
       "p10_min": 207.4,
@@ -13734,6 +13742,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260910-EX07-1",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 57.6023,
       "p10_min": 46.1,
@@ -14538,6 +14547,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260910-EX07-2",
+      "task_type": "truck_loading",
       "basis": "fallback",
       "baseline_min": 35.1176,
       "p10_min": 28.1,
@@ -15178,6 +15188,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260910-HT03-1",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 316.8127,
       "p10_min": 253.5,
@@ -19566,6 +19577,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260910-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 216.0086,
       "p10_min": 172.8,
@@ -21774,6 +21786,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260911-EX07-1",
+      "task_type": "truck_loading",
       "basis": "fallback",
       "baseline_min": 19.2725,
       "p10_min": 15.4,
@@ -22325,6 +22338,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260911-EX07-2",
+      "task_type": "backfilling",
       "basis": "fallback",
       "baseline_min": 15.9118,
       "p10_min": 12.7,
@@ -22919,6 +22933,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260911-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 144.0058,
       "p10_min": 115.2,
@@ -24743,6 +24758,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260911-HT03-2",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 331.2132,
       "p10_min": 265.0,
@@ -27565,6 +27581,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260912-EX07-1",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 37.0015,
       "p10_min": 29.6,
@@ -27610,6 +27627,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260912-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 144.0058,
       "p10_min": 115.2,
@@ -28449,6 +28467,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260912-EX07-2",
+      "task_type": "truck_loading",
       "basis": "fallback",
       "baseline_min": 37.9649,
       "p10_min": 30.4,
@@ -29705,6 +29724,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260912-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 129.6052,
       "p10_min": 103.7,
@@ -31865,6 +31885,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260914-EX07-1",
+      "task_type": "grading",
       "basis": "fallback",
       "baseline_min": 100.2502,
       "p10_min": 80.2,
@@ -33019,6 +33040,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260914-EX07-2",
+      "task_type": "truck_loading",
       "basis": "fallback",
       "baseline_min": 24.6772,
       "p10_min": 19.7,
@@ -33485,6 +33507,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260914-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 158.4063,
       "p10_min": 126.7,
@@ -35251,6 +35274,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260914-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 316.8127,
       "p10_min": 253.5,
@@ -38322,6 +38346,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260915-EX07-1",
+      "task_type": "pipe_lifting",
       "basis": "fallback",
       "baseline_min": 54.0022,
       "p10_min": 43.2,
@@ -38946,6 +38971,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260915-EX07-2",
+      "task_type": "backfilling",
       "basis": "fallback",
       "baseline_min": 17.9834,
       "p10_min": 14.4,
@@ -39746,6 +39772,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260915-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 288.0115,
       "p10_min": 230.4,
@@ -41852,6 +41879,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260915-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 158.4063,
       "p10_min": 126.7,
@@ -44321,6 +44349,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260916-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 100.804,
       "p10_min": 80.6,
@@ -46747,6 +46776,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260916-HT03-2",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 230.4092,
       "p10_min": 184.3,
@@ -50154,6 +50184,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260916-EX07-1",
+      "task_type": "backfilling",
       "basis": "fallback",
       "baseline_min": 35.9668,
       "p10_min": 28.8,
@@ -50992,6 +51023,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260916-EX07-2",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 27.3114,
       "p10_min": 21.8,
@@ -51626,6 +51658,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260917-EX07-1",
+      "task_type": "pipe_lifting",
       "basis": "fallback",
       "baseline_min": 63.0025,
       "p10_min": 50.4,
@@ -52185,6 +52218,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260917-EX07-2",
+      "task_type": "truck_loading",
       "basis": "fallback",
       "baseline_min": 26.7503,
       "p10_min": 21.4,
@@ -53098,6 +53132,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260917-HT03-1",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 100.804,
       "p10_min": 80.6,
@@ -55072,6 +55107,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260917-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 129.6052,
       "p10_min": 103.7,
@@ -56683,6 +56719,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260918-EX07-1",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 28.5529,
       "p10_min": 22.8,
@@ -57360,6 +57397,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260918-EX07-2",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 44.7291,
       "p10_min": 35.8,
@@ -58179,6 +58217,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260918-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 100.804,
       "p10_min": 80.6,
@@ -59841,6 +59880,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260918-HT03-2",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 129.6052,
       "p10_min": 103.7,
@@ -61243,6 +61283,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260919-EX07-1",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 65.7957,
       "p10_min": 52.6,
@@ -61288,6 +61329,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260919-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 244.8098,
       "p10_min": 195.8,
@@ -62729,6 +62771,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260919-EX07-2",
+      "task_type": "grading",
       "basis": "fallback",
       "baseline_min": 82.8033,
       "p10_min": 66.2,
@@ -65080,6 +65123,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260919-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 244.8098,
       "p10_min": 195.8,
@@ -67759,6 +67803,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260921-EX07-1",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 51.2748,
       "p10_min": 41.0,
@@ -67836,6 +67881,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260921-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 230.4092,
       "p10_min": 184.3,
@@ -68934,6 +68980,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260921-EX07-2",
+      "task_type": "grading",
       "basis": "fallback",
       "baseline_min": 156.7699,
       "p10_min": 125.4,
@@ -71362,6 +71409,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260921-HT03-2",
+      "task_type": "haul_ore",
       "basis": "fallback",
       "baseline_min": 158.4063,
       "p10_min": 126.7,
@@ -73784,6 +73832,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260922-EX07-1",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 37.2429,
       "p10_min": 29.8,
@@ -74224,6 +74273,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260922-EX07-2",
+      "task_type": "trenching",
       "basis": "fallback",
       "baseline_min": 62.0714,
       "p10_min": 49.7,
@@ -74843,6 +74893,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260922-HT03-1",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 129.6052,
       "p10_min": 103.7,
@@ -76662,6 +76713,7 @@
     "source": "inferred",
     "payload": {
       "task_id": "T-20260922-HT03-2",
+      "task_type": "haul_overburden",
       "basis": "fallback",
       "baseline_min": 230.4092,
       "p10_min": 184.3,

@@ -1,0 +1,212 @@
+{
+  "artifact_id": "estimator.excavator@1",
+  "kind": "estimator",
+  "machine_class": "excavator",
+  "version": 1,
+  "trained_at": "2026-09-22T23:59:59.000Z",
+  "data_origin": "synthetic:gen-1.0:20260923",
+  "target": "ln(actual_active_min / baseline_min)",
+  "alpha": 3.0,
+  "categorical": [
+    {
+      "name": "skill_level",
+      "group": "skill",
+      "levels": [
+        "beginner",
+        "intermediate",
+        "expert"
+      ],
+      "reference": "intermediate"
+    },
+    {
+      "name": "task_type",
+      "group": "task_type",
+      "levels": [
+        "trenching",
+        "truck_loading",
+        "backfilling",
+        "grading",
+        "pipe_lifting"
+      ],
+      "reference": "trenching"
+    },
+    {
+      "name": "material",
+      "group": "material",
+      "levels": [
+        "clay",
+        "sand",
+        "gravel",
+        "topsoil",
+        "rock"
+      ],
+      "reference": "clay"
+    },
+    {
+      "name": "weather",
+      "group": "weather",
+      "levels": [
+        "clear",
+        "rain",
+        "windy",
+        "dusty",
+        "foggy"
+      ],
+      "reference": "clear"
+    },
+    {
+      "name": "visibility",
+      "group": "visibility",
+      "levels": [
+        "good",
+        "moderate",
+        "poor"
+      ],
+      "reference": "good"
+    },
+    {
+      "name": "temperature_band",
+      "group": "temperature",
+      "levels": [
+        "cool",
+        "mild",
+        "hot",
+        "extreme"
+      ],
+      "reference": "mild"
+    },
+    {
+      "name": "time_of_day",
+      "group": "time_of_day",
+      "levels": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "reference": "morning"
+    },
+    {
+      "name": "site_congestion",
+      "group": "congestion",
+      "levels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reference": "low"
+    }
+  ],
+  "numeric": [
+    {
+      "name": "experience",
+      "group": "experience",
+      "source": "experience_months",
+      "transform": "log1p",
+      "clip": [
+        0,
+        240
+      ],
+      "mean": 3.420138,
+      "std": 1.143909
+    },
+    {
+      "name": "machine_age",
+      "group": "machine_age",
+      "source": "machine_age_years",
+      "transform": "identity",
+      "clip": [
+        0,
+        25
+      ],
+      "mean": 4.496183,
+      "std": 1.018497
+    }
+  ],
+  "coefficients": {
+    "skill_level=beginner": 0.290835,
+    "skill_level=expert": 0.005439,
+    "task_type=truck_loading": 0.02513,
+    "task_type=backfilling": -0.010874,
+    "task_type=grading": -0.020395,
+    "task_type=pipe_lifting": 0.002383,
+    "material=sand": -0.007658,
+    "material=gravel": -0.031499,
+    "material=topsoil": 0.031889,
+    "material=rock": 0.009537,
+    "weather=rain": 0.107258,
+    "weather=windy": 0.111241,
+    "weather=dusty": 0.07973,
+    "weather=foggy": -0.021833,
+    "visibility=moderate": 0.116421,
+    "visibility=poor": 0.144438,
+    "temperature_band=cool": 0.0,
+    "temperature_band=hot": 0.068112,
+    "temperature_band=extreme": 0.156023,
+    "time_of_day=afternoon": -0.02416,
+    "time_of_day=evening": 0.079208,
+    "time_of_day=night": 0.107903,
+    "site_congestion=medium": 0.086367,
+    "site_congestion=high": 0.164677,
+    "experience": -0.071729,
+    "machine_age": 0.033284
+  },
+  "intercept": -0.211151,
+  "task_type_counts": {
+    "trenching": 301,
+    "truck_loading": 301,
+    "backfilling": 121,
+    "grading": 117,
+    "pipe_lifting": 77
+  },
+  "min_task_type_count": 30,
+  "min_calibration_n": 30,
+  "fallback_band": {
+    "lo": 0.8,
+    "hi": 1.35
+  },
+  "residual_quantiles": {
+    "pooled": {
+      "n": 233,
+      "q_lo": -0.227043,
+      "q_mid": -0.029498,
+      "q_hi": 0.240665
+    },
+    "by_task_type": {
+      "trenching": {
+        "n": 71,
+        "q_lo": -0.227071,
+        "q_mid": 0.018276,
+        "q_hi": 0.229412
+      },
+      "truck_loading": {
+        "n": 87,
+        "q_lo": -0.20052,
+        "q_mid": -0.029498,
+        "q_hi": 0.408821
+      },
+      "backfilling": {
+        "n": 31,
+        "q_lo": -0.306332,
+        "q_mid": -0.051267,
+        "q_hi": 0.284906
+      },
+      "grading": {
+        "n": 30,
+        "q_lo": -0.291231,
+        "q_mid": -0.057257,
+        "q_hi": 0.201167
+      },
+      "pipe_lifting": {
+        "n": 14,
+        "q_lo": -0.404178,
+        "q_mid": -0.120132,
+        "q_hi": 0.18512
+      }
+    }
+  },
+  "metrics": {
+    "split_a_test_mape": 0.1602,
+    "split_b_test_mape": 0.1617
+  }
+}

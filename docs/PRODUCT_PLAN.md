@@ -172,7 +172,7 @@ The data is already collected, but it is not turned into timely, fair, explained
 ### 6.2 Should (if Must is complete)
 | ID | Capability |
 |---|---|
-| S1 | Claude-powered language features (online): free-form incident extraction, handover wording, scenario drafting, free questions |
+| S1 | AI-powered language features (DeepSeek, online): free-form incident extraction, handover wording, scenario drafting, free questions |
 | S2 | Tamil voice (speech model and intent examples) |
 | S3 | Site tips: experienced operators record short tips attached to a task type or area |
 | S4 | On-device personalisation of estimates and baselines (see F18) |
@@ -514,7 +514,7 @@ Each feature lists purpose, user stories, requirements, behaviour rules, offline
 - F10-R6: History shows completed lessons and scenarios, answers and dates. It is private to the operator by default.
 - F10-R7: Completion never changes qualification or authorisation status.
 - F10-R8: Site delays, required idle and sensor faults never produce technique lessons.
-- F10-R9 (near-miss pipeline): reviewed near-miss → draft scenario (template on the server; Claude drafting when online, S1) → trainer edits and approves in the console → published to all operators of that machine class in the next content sync.
+- F10-R9 (near-miss pipeline): reviewed near-miss → draft scenario (template on the server; AI drafting when online, S1) → trainer edits and approves in the console → published to all operators of that machine class in the next content sync.
 - F10-R10: Launch content pack: at least 6 micro-lessons and 6 decision scenarios for the excavator profile, 3 lessons and 3 scenarios for the haul-truck profile, in English and Hindi.
 - F10-R11 (Should/Later): A secured-state incident replay may recommend a focused scenario for the same hazard and machine class; the replay and recommendation retain the source incident ID but published training is anonymised.
 - F10-R12 (condition prep): When rain, dust or darkness is active or forecast during the operator's remaining work today, and the operator has worked fewer than 3 tasks in that condition on this machine class, offer one short scenario or lesson for that condition before it arrives (e.g. "Rain after 14:00 — you haven't trenched in rain yet. 60-second scenario: rain starts during trenching."). It applies only in the operator's first 12 months, uses the machine profile's condition-to-content list, is offered at most once per shift, and counts only the operator's own history, which stays private.
@@ -599,7 +599,7 @@ Tamil examples (Should) are added after validation by a native speaker.
 - F12-R3: Outgoing operator can add, remove (with reason) or edit items and record a 20-second voice note.
 - F12-R4: Handover is stored on the device (same tablet serves the next operator even offline) and synced when online.
 - F12-R5: Incoming operator acknowledges; items stay open until resolved by an authorised role (supervisor, mechanic) or the task is completed.
-- F12-R6: Offline wording uses templates; online wording can be polished by Claude (S1) without changing facts.
+- F12-R6: Offline wording uses templates; online wording can be polished by the AI model (S1) without changing facts.
 
 **Acceptance:** a blocked task and an open defect survive a shift change; acknowledgement does not resolve them; private practice answers are absent from the handover.
 
@@ -723,7 +723,7 @@ Machine class and models; supported signals and freshness limits; machine-state 
 | Free questions | Question + computed facts from tools | Plain-language answer |
 
 **Guardrails**
-- Server-side only (Claude API, Haiku 4.5); the app never calls it directly.
+- Server-side only (DeepSeek API, `deepseek-flash`); the app never calls it directly.
 - Model receives only computed facts through tools, never raw telemetry.
 - Outputs parsed into strict schemas; invalid output → template.
 - Fact check: numbers, units, subject, time and negation must match tool results; mismatch → template.
@@ -927,7 +927,7 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Training relevance | Cause → tag rules + feedback | Device | Reason shown for every recommendation |
 | Speech-to-text | Vosk small models | Device | Offline; domain vocabulary |
 | Intent understanding | Consequential-command rules + fine-tuned multilingual DistilBERT, quantized ONNX | Device via ONNX Runtime | English/Hindi and code-switch evaluation; top-3/button fallback when unsure |
-| Language AI | Claude Haiku 4.5 with tool use (Should) | Server | Guardrails in F17 |
+| Language AI | DeepSeek `deepseek-flash` with JSON output (Should) | Server | Guardrails in F17 |
 | Personalisation | Weighted running statistics | Device | Explainable, resettable |
 
 **Model lifecycle:** task estimators are trained on the server and exported as versioned coefficients/JSON; multilingual DistilBERT is fine-tuned on the server, exported and quantized to ONNX with a versioned tokenizer/config, and run on-device through ONNX Runtime. Artifacts ship in the app or arrive through a model update; every estimate and intent inference stores its model version.
@@ -969,7 +969,7 @@ Versioned JSON per machine class and language: lessons (cards, images, audio ref
 | Supervisor/trainer console | React web, Tailwind CSS, Recharts |
 | Backend | Python, FastAPI, WebSockets, Pydantic, PostgreSQL |
 | ML | PyTorch + Hugging Face Transformers/Optimum for DistilBERT fine-tuning and ONNX export; ONNX Runtime for device intent inference; scikit-learn for Ridge, conformal intervals, robust z and IsolationForest; LightGBM + SHAP (comparison) |
-| Language AI | Claude API (Haiku 4.5) with tool use, server-side only |
+| Language AI | DeepSeek API (`deepseek-flash`) with JSON output, server-side only |
 | Emergency channel | LoRaWAN (IN865) via gateway → network server (e.g. ChirpStack) → backend (simulated in demo) |
 | Data generation | Python generator + YAML scenario families |
 | Delivery | Docker Compose, pytest, Jest/Vitest, GitHub Actions |
@@ -1043,7 +1043,7 @@ Backup: recorded video and seeded offline replay mode.
 | Scope too large | Must list only until checkpoint; freeze at hour 18 |
 | Alert fatigue | Alert-budget quality gate, grouping, debounce, repeated-alert suppression, deferral of non-critical prompts while operating, and operator "wrong alert" feedback |
 | Operators feel watched | Own data first; private learning; fair attribution; no speed ranking |
-| Claude unavailable | All flows complete with templates |
+| AI (DeepSeek) unavailable | All flows complete with templates |
 | LoRaWAN hardware unavailable | Simulated gateway with real packet format |
 | Judges question novelty vs Cat AI Assistant | Bounded claim; demonstrate explain-once and "not coaching" behaviours |
 

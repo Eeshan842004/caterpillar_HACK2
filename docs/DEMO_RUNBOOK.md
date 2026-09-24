@@ -51,8 +51,10 @@ If several addresses are listed, use the one on the Wi-Fi or hotspot the tablet 
 ## 4. Connect the tablet
 
 1. On the tablet's browser, open `http://<laptop-ip>:8000/api/v1/health`. It should show `"status":"ok"`. If it does not load, see §6.
-2. In the app's server setup (A0), enter `http://<laptop-ip>:8000` and pair with code **100007** (EX-07). Use **300003** for HT-03 in the haul-truck part.
-3. Pairing codes are reusable in demo mode, so a device can re-pair after a reset.
+2. Start the operator app from the repo root: `pnpm --filter @shiftmate/operator start --lan`. Scan the QR code with **Expo Go** on the tablet. Metro serves the app from port **8081**, so allow that port in the firewall too: `netsh advfirewall firewall add rule name="Expo Metro 8081" dir=in action=allow protocol=TCP localport=8081`.
+3. On the app's **Device setup** screen, leave the mode on **Site server** and type the server address from the banner (`http://<laptop-ip>:8000`). Then tap **EX-07**. The pairing code field can stay empty; the demo code 100007 is used. Use **HT-03** (300003) for the haul-truck part via the presenter's "Switch machine". To pre-fill the address, set `EXPO_PUBLIC_DEFAULT_SERVER_URL=http://<laptop-ip>:8000` in `apps/operator/.env` before starting Expo.
+4. The status bar shows **Online**, and "N waiting" drops to 0 within about 5 s of each action. **Status & sync** (A14) shows the server, the last sync, and any rejected records. The presenter panel (long-press the clock, or F2) has **Simulate no signal / Restore signal** for the offline beat, and **Sync now**.
+5. Pairing codes are reusable in demo mode. After `demo --reset` the server no longer knows the tablet: the status screen says "pair again". Use the presenter's **Switch machine** and pair again.
 
 ## 5. Checks (T − 30 min)
 

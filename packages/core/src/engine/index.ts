@@ -18,6 +18,7 @@ import {
   type SignalName, type SignalSample, type Site, type TaskAssignment, type TaskState, type Zone, idleCategory,
 } from '../types';
 import { type Clock, HOUR, MINUTE, formatHHMM, timeOfDayBand, toLocal, zoneAt } from '../util';
+import { assignmentFromWire, forecastHourFromWire } from '../sync';
 
 // ------------------------------------------------------------------------------------------------ public types
 
@@ -417,7 +418,7 @@ export class ShiftEngine {
         run.progressStart = { units: Number(this.store.value('progress_units') ?? 0), cycles: Number(this.store.value('load_cycles') ?? 0) };
         this.append({ kind: 'inference', subtype: 'estimate', source: 'inferred', observed_at: now, confidence: 'medium',
           rule_or_model_version: `estimate@1;profile=${this.profile.profile_id}@${this.profile.version}`,
-          payload: { task_id: run.task.task_id, basis: estimate.basis, baseline_min: estimate.baseline_min,
+          payload: { task_id: run.task.task_id, task_type: run.task.task_type, basis: estimate.basis, baseline_min: estimate.baseline_min,
             p10_min: estimate.p10_min, p50_min: estimate.p50_min, p90_min: estimate.p90_min,
             expected_wait_min: expectedWaitMin(this.profile, run.task.task_type, this.recentWaits(run.task.task_type)),
             factors: estimate.factors, artifact_id: estimate.artifact_id, personal_offset: null,
@@ -605,6 +606,62 @@ export class ShiftEngine {
     const next = nextPlannedTask(this.runs.map((r) => ({ task: r.task, state: r.state })), run.task);
     this.impact = impactPreview({ currentTaskId: run.task.task_id, finish50Before, finish50After: after?.finish50 ?? null,
       finish90After: after?.finish90 ?? null, next });
+  }
+
+  // ---------------------------------------------------------------------------------------------- server changes
+
+  /** Applies one pulled server change (§6.2 change types) that the engine consumes; returns true if anything changed.
+   * Other change types (e.g. follow-up and incident notices) are informational for this build and ignored. */
+  applyServerChange(change: { change_type: string; payload: Record<string, unknown> }): boolean {
+    const p = change.payload as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+    switch (change.change_type) {
+      case 'task_assignment.upsert': {
+        const task = assignmentFromWire(p);
+        if (task.machine_id !== this.init.machine.machine_id || task.status !== 'assigned') return false;
+        const run = this.runs.find((r) => r.task.task_id === task.task_id);
+        if (run) {
+          if (task.revision < run.task.revision) return false;
+          run.task = task;
+        } else {
+          this.runs.push({ task, state: 'PLANNED', intervals: [], blocker: null, startEstimate: null, progressStart: null,
+            pendingRequest: null });
+          this.runs.sort((a, b) => a.task.planned_date.localeCompare(b.task.planned_date) || a.task.sequence - b.task.sequence);
+        }
+        return true;
+      }
+      case 'task_assignment.removed': {
+        const i = this.runs.findIndex((r) => r.task.task_id === p.task_id);
+        const run = this.runs[i];
+        // An active task stays on the board; the server records the late events as a conflict (TC-47)
+        if (!run || run.state === 'ACTIVE' || run.state === 'COMPLETED') return false;
+        this.runs.splice(i, 1);
+        return true;
+      }
+      case 'handover_item.resolved': {
+        const item = this.init.handoverItems.find((h) => h.item_id === p.item_id);
+        if (!item || item.status !== 'open') return false;
+        item.status = 'resolved';
+        return true;
+      }
+      case 'model.published': {
+        // Used from the next task estimate, never mid-task (§8.17): estimates are only computed at task start
+        if (p.kind !== 'estimator' || p.machine_class !== this.init.machine.machine_class) return false;
+        this.init.artifact = p as EstimatorArtifact;
+        return true;
+      }
+      case 'forecast.upsert': {
+        if (p.site_id !== this.init.site.site_id || !Array.isArray(p.hours)) return false;
+        const merged = new Map(this.init.forecast.map((h) => [h.valid_from, h]));
+        for (const h of p.hours) {
+          const hour = forecastHourFromWire(h);
+          merged.set(hour.valid_from, hour);
+        }
+        this.init.forecast = [...merged.values()].sort((a, b) => a.valid_from - b.valid_from);
+        return true;
+      }
+      default:
+        return false;
+    }
   }
 
   // ---------------------------------------------------------------------------------------------- tick

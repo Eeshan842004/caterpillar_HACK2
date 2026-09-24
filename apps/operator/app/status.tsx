@@ -1,7 +1,8 @@
 // A14 Status (subset): connectivity, records waiting, signal health, alert history, alert budget (NFR-17), versions.
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { useHost } from '../src/engine/host';
+import { host, useHost } from '../src/engine/host';
+import { useSync } from '../src/sync/client';
 import { Row, Screen, Section, StatusPill, T } from '../src/ui/components';
 import { useFocusList } from '../src/ui/useFocusList';
 import { space } from '../src/ui/tokens';
@@ -9,6 +10,7 @@ import { space } from '../src/ui/tokens';
 export default function Status() {
   const router = useRouter();
   const snap = useHost((s) => s.snapshot);
+  const sync = useSync();
   useFocusList(1, () => router.replace('/tasks'), (k) => {
     if (k.action === 'BACK') router.replace('/tasks');
     else return false;
@@ -19,8 +21,18 @@ export default function Status() {
   return (
     <Screen title="Status & sync" hints="Back or OK returns to tasks">
       <Section title="Connectivity">
-        <View style={{ gap: space.sm }}><T>Connection: Local only</T><T>{snap.pending_sync} records waiting</T><T>{snap.ledger_count} ledger entries on this device</T></View>
-        <T muted>This build has no site-server connection. Keep the app open to retain this session.</T>
+        <View style={{ gap: space.sm }}>
+          <T>{sync.mode === 'local' ? 'Connection: Local only (no site server)'
+            : `Connection: ${sync.online ? 'Online' : 'Offline'} — ${sync.baseUrl ?? ''}`}</T>
+          <T>{snap.pending_sync} records waiting</T>
+          {sync.lastSyncAt ? <T muted>Last sync {new Date(sync.lastSyncAt).toLocaleTimeString()} · {sync.changesApplied} server updates applied</T> : null}
+          {sync.lastError ? <T muted>{sync.lastError}</T> : null}
+          {sync.rejected.length ? <T muted>Rejected by server: {sync.rejected.slice(0, 3).join('; ')}</T> : null}
+          <T>{snap.ledger_count} ledger entries on this device</T>
+        </View>
+        {sync.mode === 'server'
+          ? <Row focused={false} onPress={() => host.syncNow()}><T variant="heading">Sync now</T></Row>
+          : <T muted>Pair with the site server in setup to sync. Keep the app open to retain this session.</T>}
       </Section>
       <Section title="Signal health">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
@@ -39,7 +51,7 @@ export default function Status() {
           : <T muted>None</T>}
       </Section>
       <Section title="Versions">
-        <View style={{ gap: space.sm }}><T muted>Profile {snap.machine.profile_id}@{snap.machine.profile_version}</T><T muted>Estimator: baseline fallback</T><T muted>Voice: unavailable in this build</T><T muted>Alert audio: device text-to-speech</T></View>
+        <View style={{ gap: space.sm }}><T muted>Profile {snap.machine.profile_id}@{snap.machine.profile_version}</T><T muted>Estimator: {snap.tasks.find((t) => t.estimate.artifact_id)?.estimate.artifact_id ?? 'baseline fallback'}</T><T muted>Voice: unavailable in this build</T><T muted>Alert audio: device text-to-speech</T></View>
       </Section>
       <Row focused onPress={() => router.replace('/tasks')}><T variant="heading">Back to tasks</T></Row>
     </Screen>

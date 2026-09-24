@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useHost } from '../engine/host';
+import { useSync } from '../sync/client';
 import { Icon, TONE_ICON, type IconName } from './icons';
 import { day, night, radius, type Palette, space, type StatusTone, type } from './tokens';
 
@@ -114,12 +115,15 @@ export function ActionBar({ hints }: { hints: string }) {
 export function AppStatusBar() {
   const p = usePalette();
   const snap = useHost((s) => s.snapshot);
+  const sync = useSync();
   const openPresenter = () => useHost.setState((s) => ({ presenterOpen: !s.presenterOpen }));
+  const link = sync.mode === 'local' ? { icon: 'offline' as const, text: 'Local only' }
+    : sync.online ? { icon: 'check' as const, text: 'Online' } : { icon: 'offline' as const, text: 'Offline' };
   if (!snap) return null;
   const unavailable = snap.signal_health.filter((h) => !h.fresh).length;
   const stateTone: StatusTone = snap.machine.state === 'UNKNOWN' ? 'unavailable' : snap.machine.state === 'WORKING' || snap.machine.state === 'TRAVELLING' ? 'info' : 'ok';
   return <View style={[styles.machineRail, { backgroundColor: p.rail }]}>
-    <View style={styles.machineSlot}><Icon name="offline" color={p.onPrimary} size={20} /><Text style={[type.label, { color: p.onPrimary }]}>Offline</Text></View>
+    <View style={styles.machineSlot}><Icon name={link.icon} color={p.onPrimary} size={20} /><Text style={[type.label, { color: p.onPrimary }]}>{link.text}</Text></View>
     <Text style={[type.caption, { color: p.onPrimary }]}>{snap.pending_sync} waiting</Text>
     <View style={styles.machineSlot}><Icon name={unavailable ? 'unavailable' : 'sensor'} color={p.onPrimary} size={20} /><Text style={[type.caption, { color: p.onPrimary }]}>{unavailable ? `${unavailable} unavailable` : 'Sensors clear'}</Text></View>
     <View style={[styles.machineState, { backgroundColor: p.status[stateTone].bg }]}><Icon name={TONE_ICON[stateTone]} color={p.status[stateTone].fg} size={18} /><Text style={[type.caption, { color: p.status[stateTone].fg }]}>{snap.machine.state.toLowerCase()}</Text></View>

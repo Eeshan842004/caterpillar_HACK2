@@ -1,0 +1,240 @@
+{
+  "banner": "SIMULATED DATA",
+  "generator_version": "gen-1.0",
+  "seed": 20260923,
+  "data_origin": "synthetic:gen-1.0:20260923",
+  "git_commit": "dda0a35",
+  "generated_at": "2026-09-24T05:23:52Z",
+  "sections": {
+    "estimates": {
+      "main": {
+        "excavator": {
+          "split_A": {
+            "task_type_average": {
+              "n": 235,
+              "mae_min": 16.134,
+              "mape": 0.3167,
+              "bias_min": -3.429,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "baseline": {
+              "n": 235,
+              "mae_min": 13.033,
+              "mape": 0.2511,
+              "bias_min": -4.649,
+              "p10_p90_coverage": 0.5787,
+              "mean_relative_width": 0.55
+            },
+            "planner": {
+              "n": 235,
+              "mae_min": 13.889,
+              "mape": 0.2502,
+              "bias_min": -8.677,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "ridge_conformal": {
+              "n": 235,
+              "mae_min": 7.776,
+              "mape": 0.1602,
+              "bias_min": -1.398,
+              "p10_p90_coverage": 0.8043,
+              "mean_relative_width": 0.5735
+            }
+          },
+          "split_B": {
+            "task_type_average": {
+              "n": 278,
+              "mae_min": 21.854,
+              "mape": 0.2823,
+              "bias_min": -16.749,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "baseline": {
+              "n": 278,
+              "mae_min": 19.235,
+              "mape": 0.2605,
+              "bias_min": -14.976,
+              "p10_p90_coverage": 0.5144,
+              "mean_relative_width": 0.55
+            },
+            "planner": {
+              "n": 278,
+              "mae_min": 21.68,
+              "mape": 0.288,
+              "bias_min": -19.502,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "ridge_conformal": {
+              "n": 278,
+              "mae_min": 10.002,
+              "mape": 0.1617,
+              "bias_min": -2.34,
+              "p10_p90_coverage": 0.8058,
+              "mean_relative_width": 0.6022
+            }
+          }
+        },
+        "haul_truck": {
+          "split_A": {
+            "task_type_average": {
+              "n": 189,
+              "mae_min": 50.289,
+              "mape": 0.1992,
+              "bias_min": -20.147,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "baseline": {
+              "n": 189,
+              "mae_min": 50.659,
+              "mape": 0.1958,
+              "bias_min": -24.977,
+              "p10_p90_coverage": 0.6667,
+              "mean_relative_width": 0.55
+            },
+            "planner": {
+              "n": 189,
+              "mae_min": 56.511,
+              "mape": 0.2035,
+              "bias_min": -42.051,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "ridge_conformal": {
+              "n": 189,
+              "mae_min": 27.457,
+              "mape": 0.1104,
+              "bias_min": -6.167,
+              "p10_p90_coverage": 0.7672,
+              "mean_relative_width": 0.3328
+            }
+          },
+          "split_B": {
+            "task_type_average": {
+              "n": 280,
+              "mae_min": 47.903,
+              "mape": 0.2001,
+              "bias_min": -9.953,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "baseline": {
+              "n": 280,
+              "mae_min": 47.284,
+              "mape": 0.1925,
+              "bias_min": -16.391,
+              "p10_p90_coverage": 0.7214,
+              "mean_relative_width": 0.55
+            },
+            "planner": {
+              "n": 280,
+              "mae_min": 50.594,
+              "mape": 0.1929,
+              "bias_min": -33.378,
+              "p10_p90_coverage": null,
+              "mean_relative_width": null
+            },
+            "ridge_conformal": {
+              "n": 280,
+              "mae_min": 25.94,
+              "mape": 0.1076,
+              "bias_min": -5.041,
+              "p10_p90_coverage": 0.7571,
+              "mean_relative_width": 0.3412
+            }
+          }
+        }
+      },
+      "sensitivity": {
+        "sens_0.5": {
+          "excavator": {
+            "split_A": {
+              "n": 235,
+              "mae_min": 6.158,
+              "mape": 0.1416,
+              "bias_min": -0.934,
+              "p10_p90_coverage": 0.8383,
+              "mean_relative_width": 0.5163
+            },
+            "split_B": {
+              "n": 278,
+              "mae_min": 7.308,
+              "mape": 0.1429,
+              "bias_min": -2.181,
+              "p10_p90_coverage": 0.7806,
+              "mean_relative_width": 0.4573
+            }
+          },
+          "haul_truck": {
+            "split_A": {
+              "n": 188,
+              "mae_min": 17.115,
+              "mape": 0.102,
+              "bias_min": -0.571,
+              "p10_p90_coverage": 0.8351,
+              "mean_relative_width": 0.344
+            },
+            "split_B": {
+              "n": 272,
+              "mae_min": 16.503,
+              "mape": 0.1015,
+              "bias_min": -2.24,
+              "p10_p90_coverage": 0.7904,
+              "mean_relative_width": 0.3418
+            }
+          }
+        },
+        "sens_1.5": {
+          "excavator": {
+            "split_A": {
+              "n": 234,
+              "mae_min": 8.934,
+              "mape": 0.1405,
+              "bias_min": -2.546,
+              "p10_p90_coverage": 0.8803,
+              "mean_relative_width": 0.594
+            },
+            "split_B": {
+              "n": 276,
+              "mae_min": 14.196,
+              "mape": 0.1733,
+              "bias_min": -7.059,
+              "p10_p90_coverage": 0.8043,
+              "mean_relative_width": 0.6133
+            }
+          },
+          "haul_truck": {
+            "split_A": {
+              "n": 184,
+              "mae_min": 32.496,
+              "mape": 0.1114,
+              "bias_min": 2.349,
+              "p10_p90_coverage": 0.8043,
+              "mean_relative_width": 0.3597
+            },
+            "split_B": {
+              "n": 279,
+              "mae_min": 34.551,
+              "mape": 0.125,
+              "bias_min": 1.095,
+              "p10_p90_coverage": 0.6918,
+              "mean_relative_width": 0.3388
+            }
+          }
+        }
+      }
+    },
+    "safety": "not run: safety challenge scenarios run in the behaviour eval (tools/eval, T39), not built yet",
+    "alert_budget": "not run: needs the behaviour eval scenarios (tools/eval, T39)",
+    "usage_review": "not run: needs the paired usage scenarios (tools/eval, T39)",
+    "training": "not run: needs the recommendation scenarios (tools/eval, T39)",
+    "voice": "not run: intent model and held-out voice set (T37, data/voice_test) not available",
+    "propagation": "not run: needs the propagation scenarios (tools/eval, T39)",
+    "organiser": "not run: organiser data mapping (E-01, T38) not available",
+    "operator_effort": "not run: needs the scripted journeys (tools/eval, T39)"
+  }
+}

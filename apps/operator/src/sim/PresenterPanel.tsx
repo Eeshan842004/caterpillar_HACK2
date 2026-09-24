@@ -4,6 +4,7 @@ import type { SignalName } from '@shiftmate/core';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { host, useHost } from '../engine/host';
+import { useSync } from '../sync/client';
 import { useKeys } from '../input/keys';
 import { usePalette } from '../ui/components';
 import { space, type } from '../ui/tokens';
@@ -39,6 +40,7 @@ export function PresenterPanel() {
     return true;
   }, 300);
   const sim = host.sim;
+  const offline = useSync((s) => s.simulatedOffline);
   if (!open || !sim || !snap) return null;
   const v = sim.state.values;
   const S = snap.machine.profile_id.startsWith('haul') ? 'park_brake' : 'hydraulic_lockout';
@@ -91,6 +93,8 @@ export function PresenterPanel() {
           <Btn label="+1 min" onPress={() => host.fastForward(60)} />
         </Group>
         <Group title="Device">
+          <Btn label={offline ? 'Restore signal' : 'Simulate no signal'} onPress={() => host.setSimulatedOffline(!offline)} active={offline} />
+          <Btn label="Sync now" onPress={() => host.syncNow()} />
           <Btn label="Switch machine (demo only)" onPress={() => host.unpair()} />
         </Group>
       </ScrollView>

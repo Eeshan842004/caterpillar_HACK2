@@ -52,6 +52,9 @@ export function KeyInputProvider({ children }: { children: ReactNode }) {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const onKeyDown = (event: KeyboardEvent) => {
         if (event.repeat) return;
+        // Typing into a text field (A0 server address / pairing code) is not a machine key press
+        const target = event.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
         const key = event.code || event.key;
         const action = KEY_MAP[key] ?? KEY_MAP[event.key] ?? null;
         if (action) event.preventDefault();

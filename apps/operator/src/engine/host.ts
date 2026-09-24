@@ -1,8 +1,9 @@
-// EngineHost (technical spec §4.4, T18): builds the engine from the bundled seed, runs the 1 s tick loop on a
-// simulated clock (presenter speed 1×/10×/60×), and publishes snapshots to the Zustand store.
+// EngineHost (technical spec §4.4, T18): builds the engine from the site server's bootstrap (or, in local-only mode,
+// the bundled seed), runs the 1 s tick loop on a simulated clock (presenter speed 1×/10×/60×), syncs with the server
+// and publishes snapshots to the Zustand store.
 import {
-  type Command, type CommandResult, type DemoSeed, type EngineSnapshot, LiveSimulator, type MachineProfile,
-  MemoryLedgerStore, ShiftEngine, SimClock, deviceDataFromSeed,
+  type Command, type CommandResult, type DemoSeed, type DeviceData, type EngineSnapshot, type EstimatorArtifact, LiveSimulator,
+  type MachineProfile, MemoryLedgerStore, type ServerChange, ShiftEngine, SimClock, deviceDataFromBootstrap, deviceDataFromSeed,
 } from '@shiftmate/core';
 import excavator from '@shiftmate/content/profiles/excavator_20t.v1.json';
 import haulTruck from '@shiftmate/content/profiles/haul_truck_90t.v1.json';
@@ -10,6 +11,9 @@ import wheelLoader from '@shiftmate/content/profiles/wheel_loader_950.v1.json';
 import seedJson from '@shiftmate/content/seed/demo_seed.json';
 import historyJson from '@shiftmate/content/seed/demo_history.json';
 import { create } from 'zustand';
+import {
+  type Pairing, SyncService, clientDeviceId, fetchBootstrap, loadPairing, normaliseBaseUrl, pairWithServer, savePairing, useSync,
+} from '../sync/client';
 import { speak } from '../voice/speaker';
 
 const PROFILES: Record<string, MachineProfile> = {
@@ -26,6 +30,8 @@ export const PAIRABLE_MACHINES = seed.machines
     model_name: m.model_name,
     site_name: seed.sites.find((s: { site_id: string }) => s.site_id === m.site_id)?.name ?? m.site_id,
     profile_name: PROFILES[m.profile_id]?.display_name ?? m.profile_id,
+    demo_code: (seed as unknown as { pairing_codes?: { code: string; machine_id: string }[] }).pairing_codes
+      ?.find((c) => c.machine_id === m.machine_id)?.code ?? '',
   }));
 
 function uuid(): string {
@@ -43,6 +49,8 @@ function uuid(): string {
 
 export interface HostState {
   paired: string | null;
+  connecting: string | null;    // e.g. "Pairing EX-07 with the server…"
+  connectError: string | null;
   snapshot: EngineSnapshot | null;
   speed: number;
   presenterOpen: boolean;
@@ -50,7 +58,7 @@ export interface HostState {
 }
 
 export const useHost = create<HostState>(() => ({
-  paired: null, snapshot: null, speed: 1, presenterOpen: false, lastMessage: null,
+  paired: null, connecting: null, connectError: null, snapshot: null, speed: 1, presenterOpen: false, lastMessage: null,
 }));
 
 class EngineHost {
@@ -58,27 +66,101 @@ class EngineHost {
   sim: LiveSimulator | null = null;
   private clock: SimClock | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
+  private sync: SyncService | null = null;
+  private store: MemoryLedgerStore | null = null;
   readonly deviceId = uuid();
 
+  /** Local-only mode: roster, tasks and forecast from the bundled seed; nothing is sent anywhere. */
   pair(machineId: string): void {
-    const now = Date.now();
-    const data = deviceDataFromSeed(seed, historyJson as unknown[], machineId, now);
+    const data = deviceDataFromSeed(seed, historyJson as unknown[], machineId, Date.now());
+    this.start(data, null, this.deviceId);
+    useSync.setState({ mode: 'local', baseUrl: null, online: null, lastError: null });
+  }
+
+  /** Server mode (A0): pair with the site server, bootstrap from it, then push/pull every few seconds. */
+  async connectServer(urlInput: string, code: string, machineId: string): Promise<boolean> {
+    useHost.setState({ connecting: `Pairing ${machineId} with the server…`, connectError: null });
+    try {
+      const pairing = await pairWithServer(normaliseBaseUrl(urlInput), code.trim(), machineId, clientDeviceId(uuid));
+      await this.startFromServer(pairing);
+      return true;
+    } catch (e) {
+      useHost.setState({ connectError: (e as Error).message });
+      return false;
+    } finally {
+      useHost.setState({ connecting: null });
+    }
+  }
+
+  /** After an app reload: reconnect with the saved pairing (web keeps it; native keeps it for the session). */
+  async resume(): Promise<boolean> {
+    const saved = loadPairing();
+    if (!saved || this.engine) return false;
+    useHost.setState({ connecting: `Reconnecting ${saved.machineId} to ${saved.baseUrl}…`, connectError: null });
+    try {
+      await this.startFromServer(saved);
+      return true;
+    } catch (e) {
+      useHost.setState({ connectError: `${(e as Error).message} Pair again below.` });
+      savePairing(null);
+      return false;
+    } finally {
+      useHost.setState({ connecting: null });
+    }
+  }
+
+  private async startFromServer(pairing: Pairing): Promise<void> {
+    const boot = await fetchBootstrap(pairing);
+    // The server does not send the device's own history back: use the bundled demo history for this machine
+    const history = deviceDataFromSeed(seed, historyJson as unknown[], pairing.machineId, Date.now()).history;
+    const { artifact, ...data } = deviceDataFromBootstrap(boot, pairing.machineId, history);
+    pairing.cursor = boot.cursor;
+    savePairing(pairing);
+    this.start(data, artifact, pairing.deviceId);
+    if (!this.store) return;
+    this.sync = new SyncService(pairing, this.store, (changes) => this.applyChanges(changes), () => this.flush());
+    this.sync.start();
+  }
+
+  private start(data: DeviceData, artifact: EstimatorArtifact | null, deviceId: string): void {
     const profile = PROFILES[data.machine.profile_id];
     if (!profile) throw new Error(`No profile ${data.machine.profile_id}`);
-    this.clock = new SimClock(now);
-    this.engine = new ShiftEngine({ ...data, profile, artifact: null, device_id: this.deviceId, data_origin: 'live',
-      clock: this.clock, newId: uuid, store: new MemoryLedgerStore() });
+    this.clock = new SimClock(Date.now());
+    this.store = new MemoryLedgerStore();
+    this.engine = new ShiftEngine({ ...data, profile, artifact, device_id: deviceId, data_origin: 'live',
+      clock: this.clock, newId: uuid, store: this.store });
     const zone = data.zones.find((z) => z.zone_id === data.assignments[0]?.zone_id) ?? data.zones[0];
     this.sim = new LiveSimulator(profile, { lat: zone?.center_lat ?? data.site.lat, lon: zone?.center_lon ?? data.site.lon });
-    useHost.setState({ paired: machineId, snapshot: this.engine.snapshot() });
+    useHost.setState({ paired: data.machine.machine_id, snapshot: this.engine.snapshot() });
     this.restartTimer();
+  }
+
+  private applyChanges(changes: ServerChange[]): number {
+    if (!this.engine) return 0;
+    let applied = 0;
+    for (const c of changes) if (this.engine.applyServerChange(c)) applied += 1;
+    return applied;
+  }
+
+  /** Presenter "Simulate no signal": the app keeps working; records wait and sync once restored. */
+  setSimulatedOffline(off: boolean): void {
+    useSync.setState({ simulatedOffline: off });
+    if (!off) void this.sync?.syncNow();
+  }
+
+  syncNow(): void {
+    void this.sync?.syncNow();
   }
 
   unpair(): void {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
+    this.sync?.stop();
+    this.sync = null;
+    savePairing(null);
     this.engine = null;
     this.sim = null;
+    this.store = null;
     useHost.setState({ paired: null, snapshot: null });
   }
 

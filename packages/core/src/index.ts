@@ -16,3 +16,4 @@ export * from './safety/speed';
 export * from './sim';
 export * from './engine';
 export * from './seed';
+export * from './sync';

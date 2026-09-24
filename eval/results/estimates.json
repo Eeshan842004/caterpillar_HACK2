@@ -1,0 +1,1962 @@
+{
+  "banner": "SIMULATED DATA",
+  "methods": [
+    "task_type_average",
+    "baseline",
+    "planner",
+    "ridge_conformal"
+  ],
+  "not_run": {
+    "lightgbm_shap": "not run: S7 comparison (lightgbm/shap ml extras) is not part of B1",
+    "organiser": "not run: no organiser task rows mapped (E-01)"
+  },
+  "main": {
+    "data_origin": "synthetic:gen-1.0:20260923",
+    "classes": {
+      "excavator": {
+        "split_A": {
+          "alpha": 3.0,
+          "n_fit": 917,
+          "n_calibration": 233,
+          "by_task_type": {
+            "all": {
+              "task_type_average": {
+                "n": 235,
+                "mae_min": 16.134,
+                "mape": 0.3167,
+                "bias_min": -3.429,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 235,
+                "mae_min": 13.033,
+                "mape": 0.2511,
+                "bias_min": -4.649,
+                "p10_p90_coverage": 0.5787,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 235,
+                "mae_min": 13.889,
+                "mape": 0.2502,
+                "bias_min": -8.677,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 235,
+                "mae_min": 7.776,
+                "mape": 0.1602,
+                "bias_min": -1.398,
+                "p10_p90_coverage": 0.8043,
+                "mean_relative_width": 0.5735
+              }
+            },
+            "trenching": {
+              "task_type_average": {
+                "n": 77,
+                "mae_min": 19.056,
+                "mape": 0.3551,
+                "bias_min": -6.201,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 77,
+                "mae_min": 11.763,
+                "mape": 0.2308,
+                "bias_min": -3.367,
+                "p10_p90_coverage": 0.6364,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 77,
+                "mae_min": 12.631,
+                "mape": 0.2305,
+                "bias_min": -7.468,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 77,
+                "mae_min": 7.51,
+                "mape": 0.162,
+                "bias_min": 0.632,
+                "p10_p90_coverage": 0.7792,
+                "mean_relative_width": 0.4527
+              }
+            },
+            "truck_loading": {
+              "task_type_average": {
+                "n": 77,
+                "mae_min": 10.703,
+                "mape": 0.3019,
+                "bias_min": -2.179,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 77,
+                "mae_min": 9.878,
+                "mape": 0.2652,
+                "bias_min": -4.014,
+                "p10_p90_coverage": 0.5584,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 77,
+                "mae_min": 10.723,
+                "mape": 0.2754,
+                "bias_min": -6.583,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 77,
+                "mae_min": 6.456,
+                "mape": 0.1849,
+                "bias_min": -0.788,
+                "p10_p90_coverage": 0.7273,
+                "mean_relative_width": 0.707
+              }
+            },
+            "backfilling": {
+              "task_type_average": {
+                "n": 40,
+                "mae_min": 10.743,
+                "mape": 0.3202,
+                "bias_min": -3.391,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 40,
+                "mae_min": 9.825,
+                "mape": 0.2716,
+                "bias_min": -5.235,
+                "p10_p90_coverage": 0.45,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 40,
+                "mae_min": 10.027,
+                "mape": 0.2557,
+                "bias_min": -7.573,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 40,
+                "mae_min": 5.26,
+                "mape": 0.145,
+                "bias_min": -3.54,
+                "p10_p90_coverage": 0.925,
+                "mean_relative_width": 0.6247
+              }
+            },
+            "grading": {
+              "task_type_average": {
+                "n": 31,
+                "mae_min": 31.68,
+                "mape": 0.2836,
+                "bias_min": -1.872,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 31,
+                "mae_min": 29.671,
+                "mape": 0.2568,
+                "bias_min": -10.456,
+                "p10_p90_coverage": 0.5806,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 31,
+                "mae_min": 31.548,
+                "mape": 0.2588,
+                "bias_min": -19.852,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 31,
+                "mae_min": 15.7,
+                "mape": 0.1292,
+                "bias_min": -5.274,
+                "p10_p90_coverage": 0.871,
+                "mean_relative_width": 0.5033
+              }
+            },
+            "pipe_lifting": {
+              "task_type_average": {
+                "n": 10,
+                "mae_min": 8.82,
+                "mape": 0.2242,
+                "bias_min": 3.32,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 10,
+                "mae_min": 8.36,
+                "mape": 0.1995,
+                "bias_min": 0.942,
+                "p10_p90_coverage": 0.8,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 10,
+                "mae_min": 8.64,
+                "mape": 0.1597,
+                "bias_min": -3.88,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 10,
+                "mae_min": 5.49,
+                "mape": 0.1126,
+                "bias_min": -1.15,
+                "p10_p90_coverage": 0.9,
+                "mean_relative_width": 0.4897
+              }
+            }
+          }
+        },
+        "split_B": {
+          "alpha": 10.0,
+          "n_fit": 733,
+          "n_calibration": 186,
+          "by_task_type": {
+            "all": {
+              "task_type_average": {
+                "n": 278,
+                "mae_min": 21.854,
+                "mape": 0.2823,
+                "bias_min": -16.749,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 278,
+                "mae_min": 19.235,
+                "mape": 0.2605,
+                "bias_min": -14.976,
+                "p10_p90_coverage": 0.5144,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 278,
+                "mae_min": 21.68,
+                "mape": 0.288,
+                "bias_min": -19.502,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 278,
+                "mae_min": 10.002,
+                "mape": 0.1617,
+                "bias_min": -2.34,
+                "p10_p90_coverage": 0.8058,
+                "mean_relative_width": 0.6022
+              }
+            },
+            "trenching": {
+              "task_type_average": {
+                "n": 73,
+                "mae_min": 24.942,
+                "mape": 0.3145,
+                "bias_min": -21.19,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 73,
+                "mae_min": 18.322,
+                "mape": 0.2591,
+                "bias_min": -15.513,
+                "p10_p90_coverage": 0.5479,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 73,
+                "mae_min": 21.229,
+                "mape": 0.2979,
+                "bias_min": -19.823,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 73,
+                "mae_min": 8.614,
+                "mape": 0.1361,
+                "bias_min": -2.997,
+                "p10_p90_coverage": 0.8904,
+                "mean_relative_width": 0.5673
+              }
+            },
+            "truck_loading": {
+              "task_type_average": {
+                "n": 94,
+                "mae_min": 11.334,
+                "mape": 0.2363,
+                "bias_min": -8.278,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 94,
+                "mae_min": 11.774,
+                "mape": 0.2392,
+                "bias_min": -9.149,
+                "p10_p90_coverage": 0.5851,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 94,
+                "mae_min": 13.178,
+                "mape": 0.2643,
+                "bias_min": -11.827,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 94,
+                "mae_min": 6.547,
+                "mape": 0.1568,
+                "bias_min": -0.747,
+                "p10_p90_coverage": 0.7766,
+                "mean_relative_width": 0.7095
+              }
+            },
+            "backfilling": {
+              "task_type_average": {
+                "n": 38,
+                "mae_min": 15.082,
+                "mape": 0.2925,
+                "bias_min": -13.017,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 38,
+                "mae_min": 14.327,
+                "mape": 0.2799,
+                "bias_min": -12.829,
+                "p10_p90_coverage": 0.3421,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 38,
+                "mae_min": 16.068,
+                "mape": 0.3119,
+                "bias_min": -15.332,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 38,
+                "mae_min": 7.226,
+                "mape": 0.1665,
+                "bias_min": -2.9,
+                "p10_p90_coverage": 0.8421,
+                "mean_relative_width": 0.5342
+              }
+            },
+            "grading": {
+              "task_type_average": {
+                "n": 43,
+                "mae_min": 49.42,
+                "mape": 0.3165,
+                "bias_min": -36.408,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 43,
+                "mae_min": 43.505,
+                "mape": 0.2742,
+                "bias_min": -33.107,
+                "p10_p90_coverage": 0.4651,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 43,
+                "mae_min": 48.384,
+                "mape": 0.2963,
+                "bias_min": -43.784,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 43,
+                "mae_min": 21.851,
+                "mape": 0.1635,
+                "bias_min": -6.921,
+                "p10_p90_coverage": 0.814,
+                "mean_relative_width": 0.5341
+              }
+            },
+            "pipe_lifting": {
+              "task_type_average": {
+                "n": 30,
+                "mae_min": 16.37,
+                "mape": 0.286,
+                "bias_min": -9.037,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 30,
+                "mae_min": 16.263,
+                "mape": 0.2867,
+                "bias_min": -8.661,
+                "p10_p90_coverage": 0.5,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 30,
+                "mae_min": 18.253,
+                "mape": 0.296,
+                "bias_min": -13.247,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 30,
+                "mae_min": 10.74,
+                "mape": 0.2308,
+                "bias_min": 1.54,
+                "p10_p90_coverage": 0.6333,
+                "mean_relative_width": 0.5341
+              }
+            }
+          }
+        }
+      },
+      "haul_truck": {
+        "split_A": {
+          "alpha": 1.0,
+          "n_fit": 742,
+          "n_calibration": 188,
+          "by_task_type": {
+            "all": {
+              "task_type_average": {
+                "n": 189,
+                "mae_min": 50.289,
+                "mape": 0.1992,
+                "bias_min": -20.147,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 189,
+                "mae_min": 50.659,
+                "mape": 0.1958,
+                "bias_min": -24.977,
+                "p10_p90_coverage": 0.6667,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 189,
+                "mae_min": 56.511,
+                "mape": 0.2035,
+                "bias_min": -42.051,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 189,
+                "mae_min": 27.457,
+                "mape": 0.1104,
+                "bias_min": -6.167,
+                "p10_p90_coverage": 0.7672,
+                "mean_relative_width": 0.3328
+              }
+            },
+            "haul_overburden": {
+              "task_type_average": {
+                "n": 122,
+                "mae_min": 52.618,
+                "mape": 0.2126,
+                "bias_min": -18.368,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 122,
+                "mae_min": 53.007,
+                "mape": 0.2073,
+                "bias_min": -24.41,
+                "p10_p90_coverage": 0.6557,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 122,
+                "mae_min": 58.198,
+                "mape": 0.2117,
+                "bias_min": -41.848,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 122,
+                "mae_min": 29.253,
+                "mape": 0.1134,
+                "bias_min": -5.202,
+                "p10_p90_coverage": 0.7459,
+                "mean_relative_width": 0.3482
+              }
+            },
+            "haul_ore": {
+              "task_type_average": {
+                "n": 67,
+                "mae_min": 46.049,
+                "mape": 0.1749,
+                "bias_min": -23.386,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 67,
+                "mae_min": 46.384,
+                "mape": 0.1748,
+                "bias_min": -26.01,
+                "p10_p90_coverage": 0.6866,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 67,
+                "mae_min": 53.437,
+                "mape": 0.1885,
+                "bias_min": -42.422,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 67,
+                "mae_min": 24.185,
+                "mape": 0.1051,
+                "bias_min": -7.922,
+                "p10_p90_coverage": 0.806,
+                "mean_relative_width": 0.3047
+              }
+            }
+          }
+        },
+        "split_B": {
+          "alpha": 1.0,
+          "n_fit": 555,
+          "n_calibration": 141,
+          "by_task_type": {
+            "all": {
+              "task_type_average": {
+                "n": 280,
+                "mae_min": 47.903,
+                "mape": 0.2001,
+                "bias_min": -9.953,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 280,
+                "mae_min": 47.284,
+                "mape": 0.1925,
+                "bias_min": -16.391,
+                "p10_p90_coverage": 0.7214,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 280,
+                "mae_min": 50.594,
+                "mape": 0.1929,
+                "bias_min": -33.378,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 280,
+                "mae_min": 25.94,
+                "mape": 0.1076,
+                "bias_min": -5.041,
+                "p10_p90_coverage": 0.7571,
+                "mean_relative_width": 0.3412
+              }
+            },
+            "haul_overburden": {
+              "task_type_average": {
+                "n": 176,
+                "mae_min": 51.011,
+                "mape": 0.2137,
+                "bias_min": -12.187,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 176,
+                "mae_min": 50.534,
+                "mape": 0.2068,
+                "bias_min": -17.562,
+                "p10_p90_coverage": 0.6875,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 176,
+                "mae_min": 53.131,
+                "mape": 0.202,
+                "bias_min": -35.699,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 176,
+                "mae_min": 26.318,
+                "mape": 0.1063,
+                "bias_min": -2.227,
+                "p10_p90_coverage": 0.7784,
+                "mean_relative_width": 0.363
+              }
+            },
+            "haul_ore": {
+              "task_type_average": {
+                "n": 104,
+                "mae_min": 42.643,
+                "mape": 0.1771,
+                "bias_min": -6.172,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "baseline": {
+                "n": 104,
+                "mae_min": 41.785,
+                "mape": 0.1682,
+                "bias_min": -14.409,
+                "p10_p90_coverage": 0.7788,
+                "mean_relative_width": 0.55
+              },
+              "planner": {
+                "n": 104,
+                "mae_min": 46.3,
+                "mape": 0.1774,
+                "bias_min": -29.45,
+                "p10_p90_coverage": null,
+                "mean_relative_width": null
+              },
+              "ridge_conformal": {
+                "n": 104,
+                "mae_min": 25.302,
+                "mape": 0.11,
+                "bias_min": -9.804,
+                "p10_p90_coverage": 0.7212,
+                "mean_relative_width": 0.3043
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "sensitivity": {
+    "sens_0.5": {
+      "data_origin": "synthetic:gen-1.0:20260923",
+      "classes": {
+        "excavator": {
+          "split_A": {
+            "alpha": 10.0,
+            "n_fit": 921,
+            "n_calibration": 225,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 235,
+                  "mae_min": 9.895,
+                  "mape": 0.1965,
+                  "bias_min": -4.335,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 235,
+                  "mae_min": 7.722,
+                  "mape": 0.1773,
+                  "bias_min": 1.003,
+                  "p10_p90_coverage": 0.7362,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 235,
+                  "mae_min": 7.933,
+                  "mape": 0.1766,
+                  "bias_min": -2.551,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 235,
+                  "mae_min": 6.158,
+                  "mape": 0.1416,
+                  "bias_min": -0.934,
+                  "p10_p90_coverage": 0.8383,
+                  "mean_relative_width": 0.5163
+                }
+              },
+              "trenching": {
+                "task_type_average": {
+                  "n": 70,
+                  "mae_min": 12.821,
+                  "mape": 0.2205,
+                  "bias_min": -7.443,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 70,
+                  "mae_min": 7.377,
+                  "mape": 0.163,
+                  "bias_min": 1.415,
+                  "p10_p90_coverage": 0.7714,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 70,
+                  "mae_min": 7.213,
+                  "mape": 0.1638,
+                  "bias_min": -2.313,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 70,
+                  "mae_min": 5.776,
+                  "mape": 0.1238,
+                  "bias_min": -1.667,
+                  "p10_p90_coverage": 0.8857,
+                  "mean_relative_width": 0.4841
+                }
+              },
+              "truck_loading": {
+                "task_type_average": {
+                  "n": 77,
+                  "mae_min": 6.942,
+                  "mape": 0.2,
+                  "bias_min": -2.292,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 77,
+                  "mae_min": 6.743,
+                  "mape": 0.1981,
+                  "bias_min": -0.317,
+                  "p10_p90_coverage": 0.7143,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 77,
+                  "mae_min": 7.692,
+                  "mape": 0.2139,
+                  "bias_min": -2.635,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 77,
+                  "mae_min": 6.192,
+                  "mape": 0.179,
+                  "bias_min": -0.088,
+                  "p10_p90_coverage": 0.7013,
+                  "mean_relative_width": 0.5605
+                }
+              },
+              "backfilling": {
+                "task_type_average": {
+                  "n": 40,
+                  "mae_min": 6.21,
+                  "mape": 0.1908,
+                  "bias_min": -3.012,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 40,
+                  "mae_min": 5.462,
+                  "mape": 0.1921,
+                  "bias_min": 0.197,
+                  "p10_p90_coverage": 0.675,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 40,
+                  "mae_min": 5.745,
+                  "mape": 0.18,
+                  "bias_min": -2.28,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 40,
+                  "mae_min": 4.67,
+                  "mape": 0.1487,
+                  "bias_min": -1.3,
+                  "p10_p90_coverage": 0.85,
+                  "mean_relative_width": 0.5476
+                }
+              },
+              "grading": {
+                "task_type_average": {
+                  "n": 33,
+                  "mae_min": 15.894,
+                  "mape": 0.1594,
+                  "bias_min": -3.508,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 33,
+                  "mae_min": 13.623,
+                  "mape": 0.1492,
+                  "bias_min": 6.355,
+                  "p10_p90_coverage": 0.7576,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 33,
+                  "mae_min": 12.682,
+                  "mape": 0.1217,
+                  "bias_min": -1.858,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 33,
+                  "mae_min": 8.87,
+                  "mape": 0.0902,
+                  "bias_min": 0.488,
+                  "p10_p90_coverage": 1.0,
+                  "mean_relative_width": 0.4663
+                }
+              },
+              "pipe_lifting": {
+                "task_type_average": {
+                  "n": 15,
+                  "mae_min": 8.023,
+                  "mape": 0.1637,
+                  "bias_min": -5.672,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 15,
+                  "mae_min": 7.406,
+                  "mape": 0.1595,
+                  "bias_min": -3.765,
+                  "p10_p90_coverage": 0.8,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 15,
+                  "mae_min": 7.92,
+                  "mape": 0.1569,
+                  "bias_min": -5.48,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 15,
+                  "mae_min": 5.773,
+                  "mape": 0.1272,
+                  "bias_min": -4.013,
+                  "p10_p90_coverage": 0.9333,
+                  "mean_relative_width": 0.4669
+                }
+              }
+            }
+          },
+          "split_B": {
+            "alpha": 10.0,
+            "n_fit": 734,
+            "n_calibration": 181,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 278,
+                  "mae_min": 11.658,
+                  "mape": 0.2044,
+                  "bias_min": -8.011,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 278,
+                  "mae_min": 8.891,
+                  "mape": 0.1719,
+                  "bias_min": -2.962,
+                  "p10_p90_coverage": 0.7842,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 278,
+                  "mae_min": 10.269,
+                  "mape": 0.1892,
+                  "bias_min": -6.743,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 278,
+                  "mae_min": 7.308,
+                  "mape": 0.1429,
+                  "bias_min": -2.181,
+                  "p10_p90_coverage": 0.7806,
+                  "mean_relative_width": 0.4573
+                }
+              },
+              "trenching": {
+                "task_type_average": {
+                  "n": 88,
+                  "mae_min": 14.342,
+                  "mape": 0.2341,
+                  "bias_min": -10.242,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 88,
+                  "mae_min": 9.022,
+                  "mape": 0.1757,
+                  "bias_min": -2.072,
+                  "p10_p90_coverage": 0.8182,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 88,
+                  "mae_min": 9.876,
+                  "mape": 0.1909,
+                  "bias_min": -5.728,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 88,
+                  "mae_min": 6.551,
+                  "mape": 0.1269,
+                  "bias_min": -2.028,
+                  "p10_p90_coverage": 0.875,
+                  "mean_relative_width": 0.4879
+                }
+              },
+              "truck_loading": {
+                "task_type_average": {
+                  "n": 101,
+                  "mae_min": 7.302,
+                  "mape": 0.1905,
+                  "bias_min": -3.699,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 101,
+                  "mae_min": 6.346,
+                  "mape": 0.1722,
+                  "bias_min": -2.472,
+                  "p10_p90_coverage": 0.7525,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 101,
+                  "mae_min": 7.356,
+                  "mape": 0.1815,
+                  "bias_min": -5.497,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 101,
+                  "mae_min": 5.561,
+                  "mape": 0.1588,
+                  "bias_min": -0.126,
+                  "p10_p90_coverage": 0.7525,
+                  "mean_relative_width": 0.4764
+                }
+              },
+              "backfilling": {
+                "task_type_average": {
+                  "n": 33,
+                  "mae_min": 9.615,
+                  "mape": 0.2532,
+                  "bias_min": -8.755,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 33,
+                  "mae_min": 7.425,
+                  "mape": 0.2134,
+                  "bias_min": -4.748,
+                  "p10_p90_coverage": 0.6364,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 33,
+                  "mae_min": 8.655,
+                  "mape": 0.2511,
+                  "bias_min": -6.558,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 33,
+                  "mae_min": 6.13,
+                  "mape": 0.1773,
+                  "bias_min": -3.797,
+                  "p10_p90_coverage": 0.5758,
+                  "mean_relative_width": 0.4055
+                }
+              },
+              "grading": {
+                "task_type_average": {
+                  "n": 38,
+                  "mae_min": 20.699,
+                  "mape": 0.1685,
+                  "bias_min": -15.405,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 38,
+                  "mae_min": 17.53,
+                  "mape": 0.154,
+                  "bias_min": -5.453,
+                  "p10_p90_coverage": 0.8421,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 38,
+                  "mae_min": 20.997,
+                  "mape": 0.174,
+                  "bias_min": -13.95,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 38,
+                  "mae_min": 15.534,
+                  "mape": 0.1298,
+                  "bias_min": -7.603,
+                  "p10_p90_coverage": 0.7632,
+                  "mean_relative_width": 0.4051
+                }
+              },
+              "pipe_lifting": {
+                "task_type_average": {
+                  "n": 18,
+                  "mae_min": 7.64,
+                  "mape": 0.1236,
+                  "bias_min": -4.322,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 18,
+                  "mae_min": 6.983,
+                  "mape": 0.1132,
+                  "bias_min": -1.537,
+                  "p10_p90_coverage": 0.9444,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 18,
+                  "mae_min": 8.839,
+                  "mape": 0.1425,
+                  "bias_min": -3.817,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 18,
+                  "mae_min": 5.606,
+                  "mape": 0.0957,
+                  "bias_min": -0.05,
+                  "p10_p90_coverage": 0.8889,
+                  "mean_relative_width": 0.405
+                }
+              }
+            }
+          }
+        },
+        "haul_truck": {
+          "split_A": {
+            "alpha": 3.0,
+            "n_fit": 733,
+            "n_calibration": 187,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 188,
+                  "mae_min": 25.764,
+                  "mape": 0.1508,
+                  "bias_min": -1.533,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 188,
+                  "mae_min": 38.041,
+                  "mape": 0.2382,
+                  "bias_min": 28.447,
+                  "p10_p90_coverage": 0.5745,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 188,
+                  "mae_min": 31.778,
+                  "mape": 0.1933,
+                  "bias_min": 11.819,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 188,
+                  "mae_min": 17.115,
+                  "mape": 0.102,
+                  "bias_min": -0.571,
+                  "p10_p90_coverage": 0.8351,
+                  "mean_relative_width": 0.344
+                }
+              },
+              "haul_overburden": {
+                "task_type_average": {
+                  "n": 129,
+                  "mae_min": 24.998,
+                  "mape": 0.1536,
+                  "bias_min": -0.277,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 129,
+                  "mae_min": 37.406,
+                  "mape": 0.2438,
+                  "bias_min": 30.218,
+                  "p10_p90_coverage": 0.5504,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 129,
+                  "mae_min": 31.267,
+                  "mape": 0.1976,
+                  "bias_min": 15.234,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 129,
+                  "mae_min": 16.67,
+                  "mape": 0.1047,
+                  "bias_min": -1.35,
+                  "p10_p90_coverage": 0.8372,
+                  "mean_relative_width": 0.3688
+                }
+              },
+              "haul_ore": {
+                "task_type_average": {
+                  "n": 59,
+                  "mae_min": 27.439,
+                  "mape": 0.1446,
+                  "bias_min": -4.28,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 59,
+                  "mae_min": 39.429,
+                  "mape": 0.2259,
+                  "bias_min": 24.574,
+                  "p10_p90_coverage": 0.6271,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 59,
+                  "mae_min": 32.897,
+                  "mape": 0.184,
+                  "bias_min": 4.351,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 59,
+                  "mae_min": 18.09,
+                  "mape": 0.0959,
+                  "bias_min": 1.134,
+                  "p10_p90_coverage": 0.8305,
+                  "mean_relative_width": 0.2898
+                }
+              }
+            }
+          },
+          "split_B": {
+            "alpha": 3.0,
+            "n_fit": 553,
+            "n_calibration": 141,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 272,
+                  "mae_min": 24.389,
+                  "mape": 0.14,
+                  "bias_min": 0.347,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 272,
+                  "mae_min": 37.245,
+                  "mape": 0.2327,
+                  "bias_min": 29.716,
+                  "p10_p90_coverage": 0.5662,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 272,
+                  "mae_min": 29.211,
+                  "mape": 0.1778,
+                  "bias_min": 12.191,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 272,
+                  "mae_min": 16.503,
+                  "mape": 0.1015,
+                  "bias_min": -2.24,
+                  "p10_p90_coverage": 0.7904,
+                  "mean_relative_width": 0.3418
+                }
+              },
+              "haul_overburden": {
+                "task_type_average": {
+                  "n": 187,
+                  "mae_min": 22.92,
+                  "mape": 0.131,
+                  "bias_min": -0.738,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 187,
+                  "mae_min": 35.73,
+                  "mape": 0.2251,
+                  "bias_min": 29.473,
+                  "p10_p90_coverage": 0.5829,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 187,
+                  "mae_min": 28.437,
+                  "mape": 0.1738,
+                  "bias_min": 12.874,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 187,
+                  "mae_min": 16.103,
+                  "mape": 0.0984,
+                  "bias_min": -3.87,
+                  "p10_p90_coverage": 0.8289,
+                  "mean_relative_width": 0.3612
+                }
+              },
+              "haul_ore": {
+                "task_type_average": {
+                  "n": 85,
+                  "mae_min": 27.62,
+                  "mape": 0.1598,
+                  "bias_min": 2.734,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 85,
+                  "mae_min": 40.578,
+                  "mape": 0.2495,
+                  "bias_min": 30.25,
+                  "p10_p90_coverage": 0.5294,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 85,
+                  "mae_min": 30.914,
+                  "mape": 0.1868,
+                  "bias_min": 10.688,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 85,
+                  "mae_min": 17.382,
+                  "mape": 0.1085,
+                  "bias_min": 1.345,
+                  "p10_p90_coverage": 0.7059,
+                  "mean_relative_width": 0.2991
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sens_1.5": {
+      "data_origin": "synthetic:gen-1.0:20260923",
+      "classes": {
+        "excavator": {
+          "split_A": {
+            "alpha": 3.0,
+            "n_fit": 924,
+            "n_calibration": 231,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 234,
+                  "mae_min": 22.761,
+                  "mape": 0.3328,
+                  "bias_min": -9.681,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 234,
+                  "mae_min": 21.046,
+                  "mape": 0.2853,
+                  "bias_min": -13.334,
+                  "p10_p90_coverage": 0.5342,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 234,
+                  "mae_min": 22.292,
+                  "mape": 0.2945,
+                  "bias_min": -17.112,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 234,
+                  "mae_min": 8.934,
+                  "mape": 0.1405,
+                  "bias_min": -2.546,
+                  "p10_p90_coverage": 0.8803,
+                  "mean_relative_width": 0.594
+                }
+              },
+              "trenching": {
+                "task_type_average": {
+                  "n": 80,
+                  "mae_min": 27.84,
+                  "mape": 0.3958,
+                  "bias_min": -12.9,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 80,
+                  "mae_min": 21.985,
+                  "mape": 0.3056,
+                  "bias_min": -12.511,
+                  "p10_p90_coverage": 0.5125,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 80,
+                  "mae_min": 23.742,
+                  "mape": 0.3139,
+                  "bias_min": -16.67,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 80,
+                  "mae_min": 9.869,
+                  "mape": 0.1493,
+                  "bias_min": -0.414,
+                  "p10_p90_coverage": 0.8375,
+                  "mean_relative_width": 0.5819
+                }
+              },
+              "truck_loading": {
+                "task_type_average": {
+                  "n": 60,
+                  "mae_min": 11.832,
+                  "mape": 0.312,
+                  "bias_min": -2.151,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 60,
+                  "mae_min": 11.732,
+                  "mape": 0.267,
+                  "bias_min": -7.415,
+                  "p10_p90_coverage": 0.5833,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 60,
+                  "mae_min": 12.73,
+                  "mape": 0.285,
+                  "bias_min": -9.743,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 60,
+                  "mae_min": 5.453,
+                  "mape": 0.131,
+                  "bias_min": -1.547,
+                  "p10_p90_coverage": 0.9167,
+                  "mean_relative_width": 0.6375
+                }
+              },
+              "backfilling": {
+                "task_type_average": {
+                  "n": 36,
+                  "mae_min": 7.507,
+                  "mape": 0.2884,
+                  "bias_min": 0.081,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 36,
+                  "mae_min": 8.194,
+                  "mape": 0.2683,
+                  "bias_min": -4.879,
+                  "p10_p90_coverage": 0.5556,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 36,
+                  "mae_min": 9.061,
+                  "mape": 0.2843,
+                  "bias_min": -6.406,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 36,
+                  "mae_min": 5.047,
+                  "mape": 0.1696,
+                  "bias_min": -0.164,
+                  "p10_p90_coverage": 0.8889,
+                  "mean_relative_width": 0.7439
+                }
+              },
+              "grading": {
+                "task_type_average": {
+                  "n": 37,
+                  "mae_min": 48.719,
+                  "mape": 0.3057,
+                  "bias_min": -26.663,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 37,
+                  "mae_min": 48.966,
+                  "mape": 0.2867,
+                  "bias_min": -34.478,
+                  "p10_p90_coverage": 0.4865,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 37,
+                  "mae_min": 50.159,
+                  "mape": 0.2812,
+                  "bias_min": -42.143,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 37,
+                  "mae_min": 17.097,
+                  "mape": 0.1163,
+                  "bias_min": -10.508,
+                  "p10_p90_coverage": 0.8649,
+                  "mean_relative_width": 0.4337
+                }
+              },
+              "pipe_lifting": {
+                "task_type_average": {
+                  "n": 21,
+                  "mae_min": 15.057,
+                  "mape": 0.2759,
+                  "bias_min": -5.743,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 21,
+                  "mae_min": 16.923,
+                  "mape": 0.2872,
+                  "bias_min": -10.627,
+                  "p10_p90_coverage": 0.5238,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 21,
+                  "mae_min": 17.667,
+                  "mape": 0.2884,
+                  "bias_min": -14.105,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 21,
+                  "mae_min": 7.595,
+                  "mape": 0.127,
+                  "bias_min": -3.576,
+                  "p10_p90_coverage": 0.9524,
+                  "mean_relative_width": 0.5419
+                }
+              }
+            }
+          },
+          "split_B": {
+            "alpha": 3.0,
+            "n_fit": 742,
+            "n_calibration": 183,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 276,
+                  "mae_min": 36.565,
+                  "mape": 0.3805,
+                  "bias_min": -30.45,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 276,
+                  "mae_min": 35.123,
+                  "mape": 0.3585,
+                  "bias_min": -31.765,
+                  "p10_p90_coverage": 0.3696,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 276,
+                  "mae_min": 37.776,
+                  "mape": 0.3889,
+                  "bias_min": -35.44,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 276,
+                  "mae_min": 14.196,
+                  "mape": 0.1733,
+                  "bias_min": -7.059,
+                  "p10_p90_coverage": 0.8043,
+                  "mean_relative_width": 0.6133
+                }
+              },
+              "trenching": {
+                "task_type_average": {
+                  "n": 89,
+                  "mae_min": 39.767,
+                  "mape": 0.4247,
+                  "bias_min": -33.291,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 89,
+                  "mae_min": 32.59,
+                  "mape": 0.3555,
+                  "bias_min": -28.643,
+                  "p10_p90_coverage": 0.382,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 89,
+                  "mae_min": 34.842,
+                  "mape": 0.3791,
+                  "bias_min": -32.149,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 89,
+                  "mae_min": 12.861,
+                  "mape": 0.1743,
+                  "bias_min": -3.746,
+                  "p10_p90_coverage": 0.764,
+                  "mean_relative_width": 0.5297
+                }
+              },
+              "truck_loading": {
+                "task_type_average": {
+                  "n": 91,
+                  "mae_min": 21.707,
+                  "mape": 0.3646,
+                  "bias_min": -17.967,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 91,
+                  "mae_min": 22.901,
+                  "mape": 0.37,
+                  "bias_min": -20.929,
+                  "p10_p90_coverage": 0.3626,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 91,
+                  "mae_min": 24.688,
+                  "mape": 0.407,
+                  "bias_min": -23.259,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 91,
+                  "mae_min": 9.242,
+                  "mape": 0.1802,
+                  "bias_min": -3.93,
+                  "p10_p90_coverage": 0.8462,
+                  "mean_relative_width": 0.7334
+                }
+              },
+              "backfilling": {
+                "task_type_average": {
+                  "n": 33,
+                  "mae_min": 21.358,
+                  "mape": 0.3845,
+                  "bias_min": -16.892,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 33,
+                  "mae_min": 23.2,
+                  "mape": 0.3754,
+                  "bias_min": -21.348,
+                  "p10_p90_coverage": 0.303,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 33,
+                  "mae_min": 24.142,
+                  "mape": 0.3896,
+                  "bias_min": -23.124,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 33,
+                  "mae_min": 9.342,
+                  "mape": 0.1883,
+                  "bias_min": -3.561,
+                  "p10_p90_coverage": 0.8485,
+                  "mean_relative_width": 0.6521
+                }
+              },
+              "grading": {
+                "task_type_average": {
+                  "n": 43,
+                  "mae_min": 75.395,
+                  "mape": 0.3482,
+                  "bias_min": -65.12,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 43,
+                  "mae_min": 76.231,
+                  "mape": 0.3439,
+                  "bias_min": -71.157,
+                  "p10_p90_coverage": 0.3721,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 43,
+                  "mae_min": 82.565,
+                  "mape": 0.3831,
+                  "bias_min": -79.142,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 43,
+                  "mae_min": 31.609,
+                  "mape": 0.1513,
+                  "bias_min": -23.865,
+                  "p10_p90_coverage": 0.814,
+                  "mean_relative_width": 0.5377
+                }
+              },
+              "pipe_lifting": {
+                "task_type_average": {
+                  "n": 20,
+                  "mae_min": 31.518,
+                  "mape": 0.3192,
+                  "bias_min": -22.433,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 20,
+                  "mae_min": 33.294,
+                  "mape": 0.3227,
+                  "bias_min": -27.463,
+                  "p10_p90_coverage": 0.45,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 20,
+                  "mae_min": 36.585,
+                  "mape": 0.3616,
+                  "bias_min": -31.865,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 20,
+                  "mae_min": 13.255,
+                  "mape": 0.1603,
+                  "bias_min": -5.675,
+                  "p10_p90_coverage": 0.7,
+                  "mean_relative_width": 0.5376
+                }
+              }
+            }
+          }
+        },
+        "haul_truck": {
+          "split_A": {
+            "alpha": 1.0,
+            "n_fit": 738,
+            "n_calibration": 184,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 184,
+                  "mae_min": 95.825,
+                  "mape": 0.2927,
+                  "bias_min": -43.762,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 184,
+                  "mae_min": 106.488,
+                  "mape": 0.2758,
+                  "bias_min": -92.154,
+                  "p10_p90_coverage": 0.5326,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 184,
+                  "mae_min": 113.423,
+                  "mape": 0.2957,
+                  "bias_min": -106.194,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 184,
+                  "mae_min": 32.496,
+                  "mape": 0.1114,
+                  "bias_min": 2.349,
+                  "p10_p90_coverage": 0.8043,
+                  "mean_relative_width": 0.3597
+                }
+              },
+              "haul_overburden": {
+                "task_type_average": {
+                  "n": 117,
+                  "mae_min": 87.879,
+                  "mape": 0.2743,
+                  "bias_min": -46.613,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 117,
+                  "mae_min": 96.977,
+                  "mape": 0.2698,
+                  "bias_min": -80.275,
+                  "p10_p90_coverage": 0.5128,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 117,
+                  "mae_min": 103.034,
+                  "mape": 0.2855,
+                  "bias_min": -93.954,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 117,
+                  "mae_min": 29.659,
+                  "mape": 0.1113,
+                  "bias_min": 5.225,
+                  "p10_p90_coverage": 0.8205,
+                  "mean_relative_width": 0.3835
+                }
+              },
+              "haul_ore": {
+                "task_type_average": {
+                  "n": 67,
+                  "mae_min": 109.7,
+                  "mape": 0.3247,
+                  "bias_min": -38.784,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 67,
+                  "mae_min": 123.097,
+                  "mape": 0.2862,
+                  "bias_min": -112.899,
+                  "p10_p90_coverage": 0.5672,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 67,
+                  "mae_min": 131.566,
+                  "mape": 0.3136,
+                  "bias_min": -127.569,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 67,
+                  "mae_min": 37.451,
+                  "mape": 0.1115,
+                  "bias_min": -2.672,
+                  "p10_p90_coverage": 0.7761,
+                  "mean_relative_width": 0.3182
+                }
+              }
+            }
+          },
+          "split_B": {
+            "alpha": 1.0,
+            "n_fit": 550,
+            "n_calibration": 138,
+            "by_task_type": {
+              "all": {
+                "task_type_average": {
+                  "n": 279,
+                  "mae_min": 82.229,
+                  "mape": 0.2659,
+                  "bias_min": -22.786,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 279,
+                  "mae_min": 90.099,
+                  "mape": 0.2438,
+                  "bias_min": -76.713,
+                  "p10_p90_coverage": 0.6057,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 279,
+                  "mae_min": 100.075,
+                  "mape": 0.2737,
+                  "bias_min": -92.439,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 279,
+                  "mae_min": 34.551,
+                  "mape": 0.125,
+                  "bias_min": 1.095,
+                  "p10_p90_coverage": 0.6918,
+                  "mean_relative_width": 0.3388
+                }
+              },
+              "haul_overburden": {
+                "task_type_average": {
+                  "n": 177,
+                  "mae_min": 80.465,
+                  "mape": 0.2428,
+                  "bias_min": -36.239,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 177,
+                  "mae_min": 88.337,
+                  "mape": 0.2368,
+                  "bias_min": -72.633,
+                  "p10_p90_coverage": 0.6271,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 177,
+                  "mae_min": 98.046,
+                  "mape": 0.2633,
+                  "bias_min": -89.225,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 177,
+                  "mae_min": 35.442,
+                  "mape": 0.1255,
+                  "bias_min": -1.084,
+                  "p10_p90_coverage": 0.6836,
+                  "mean_relative_width": 0.3382
+                }
+              },
+              "haul_ore": {
+                "task_type_average": {
+                  "n": 102,
+                  "mae_min": 85.291,
+                  "mape": 0.3061,
+                  "bias_min": 0.56,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "baseline": {
+                  "n": 102,
+                  "mae_min": 93.158,
+                  "mape": 0.2559,
+                  "bias_min": -83.794,
+                  "p10_p90_coverage": 0.5686,
+                  "mean_relative_width": 0.55
+                },
+                "planner": {
+                  "n": 102,
+                  "mae_min": 103.597,
+                  "mape": 0.2917,
+                  "bias_min": -98.015,
+                  "p10_p90_coverage": null,
+                  "mean_relative_width": null
+                },
+                "ridge_conformal": {
+                  "n": 102,
+                  "mae_min": 33.005,
+                  "mape": 0.1242,
+                  "bias_min": 4.875,
+                  "p10_p90_coverage": 0.7059,
+                  "mean_relative_width": 0.3398
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

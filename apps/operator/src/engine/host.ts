@@ -54,11 +54,13 @@ export interface HostState {
   snapshot: EngineSnapshot | null;
   speed: number;
   presenterOpen: boolean;
+  menuOpen: boolean;
+  voiceOpen: boolean;
   lastMessage: string | null;
 }
 
 export const useHost = create<HostState>(() => ({
-  paired: null, connecting: null, connectError: null, snapshot: null, speed: 1, presenterOpen: false, lastMessage: null,
+  paired: null, connecting: null, connectError: null, snapshot: null, speed: 1, presenterOpen: false, menuOpen: false, voiceOpen: false, lastMessage: null,
 }));
 
 class EngineHost {

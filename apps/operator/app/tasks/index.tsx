@@ -116,6 +116,10 @@ export default function TaskBoard() {
         <T variant="heading">Recent reports — change</T>
         <T variant="caption" muted>Correct the last wait reason; the original stays in history (F9-R6)</T>
       </Row>
+      <Row focused={false} onPress={() => router.push('/training' as never)}>
+        <T variant="heading">Training</T>
+        <T variant="caption" muted>Open short offline safety lessons with voice guidance</T>
+      </Row>
     </Screen>
   );
 }

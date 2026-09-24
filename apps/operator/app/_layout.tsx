@@ -7,7 +7,7 @@ import { useHost } from '../src/engine/host';
 import { KeyInputProvider } from '../src/input/keys';
 import { PresenterPanel } from '../src/sim/PresenterPanel';
 import { AppStatusBar, usePalette } from '../src/ui/components';
-import { AlertOverlay, MenuOverlay, PromptSheet, SafeExitOverlay } from '../src/ui/overlays';
+import { AlertOverlay, MenuOverlay, PromptSheet, SafeExitOverlay, VoiceOverlay } from '../src/ui/overlays';
 
 const MODE_ROUTES = ['/focus', '/drive'];
 
@@ -56,6 +56,7 @@ function Shell() {
         <Slot />
         <PromptSheet />
         <MenuOverlay />
+        <VoiceOverlay />
       </View>
       <SafeExitOverlay />
       <PresenterPanel />

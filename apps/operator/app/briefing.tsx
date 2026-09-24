@@ -2,9 +2,9 @@
 // notes, up to 3 risk notes. Guided mode reads the handover aloud; "Continue" is disabled until all are acknowledged.
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { host, useHost } from '../src/engine/host';
-import { ContinuityRail, Row, Screen, Section, StateFlag, T, WorkSurface } from '../src/ui/components';
+import { ContinuityRail, Row, Screen, Section, StateFlag, T, WorkSurface, usePalette } from '../src/ui/components';
 import { useFocusList } from '../src/ui/useFocusList';
 import { speak } from '../src/voice/speaker';
 import { clock } from '../src/ui/format';
@@ -14,6 +14,7 @@ const ITEM_WORD = { blocked_task: 'Blocked task', defect: 'Defect', unfinished_t
   site_delay: 'Site delay', note: 'Note', tip: 'Tip' } as const;
 
 export default function Briefing() {
+  const p = usePalette();
   const router = useRouter();
   const snap = useHost((s) => s.snapshot);
   const read = useRef(false);
@@ -52,6 +53,11 @@ export default function Briefing() {
       <WorkSurface split>
       <ContinuityRail stops={[{ label: 'Previous shift', detail: `${items.length} open item${items.length === 1 ? '' : 's'}` }, { label: 'Acknowledged context', detail: allAck ? 'Ready for today' : 'Review required' }, { label: 'Today', detail: `${snap.briefing.task_count} tasks` }]} active={allAck ? 2 : 0} />
       <View style={{ flex: 1 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.md }}>
+        <Pressable onPress={readAloud} style={{ minHeight: 64, paddingHorizontal: space.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: p.primaryBg, borderRadius: 4 }}><T variant="label" style={{ color: p.onPrimary }}>Read briefing aloud</T></Pressable>
+        <Pressable onPress={() => host.dispatch({ type: 'ACK_HANDOVER', item_id: 'all' })} style={{ minHeight: 64, paddingHorizontal: space.xl, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.border, borderRadius: 4 }}><T variant="label">Acknowledge all</T></Pressable>
+        <Pressable onPress={() => host.dispatch({ type: 'CONDITION_REPORT', condition: 'rain', active: !snap.conditions.rain })} style={{ minHeight: 64, paddingHorizontal: space.xl, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.border, borderRadius: 4 }}><T variant="label">{snap.conditions.rain ? 'Clear rain report' : 'Report rain'}</T></Pressable>
+      </View>
       <Section title="Handover from last shift">
         {items.length === 0 ? <T muted>No open items from last shift.</T> : null}
         <View style={{ gap: space.sm }}>

@@ -2,9 +2,10 @@
 import { alertSpeech } from '@shiftmate/core';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { host, useHost } from '../engine/host';
 import { useKeys } from '../input/keys';
+import { speak, stopSpeaking } from '../voice/speaker';
 import { Row, StateFlag, T, usePalette } from './components';
 import { Icon } from './icons';
 import { levelTone, space, type } from './tokens';
@@ -31,10 +32,8 @@ export function AlertOverlay() {
       <View style={[styles.banner, { backgroundColor: c.bg }]} accessibilityLiveRegion="assertive">
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}><Icon name={top.level === 'CRITICAL' ? 'stop' : 'warning'} color={c.fg} size={34} /><Text style={[type.title, { color: c.fg }]}>{word}</Text></View>
         <Text style={[type.heading, { color: c.fg, flex: 1, marginLeft: space.lg }]}>{alertSpeech(top, machineClass)}</Text>
-        <Text style={[type.label, { color: c.fg }]}>
-          {top.status === 'ACKNOWLEDGED' ? 'Acknowledged — hazard still active' : 'ACK: Space / RB'}
-          {active.length > 1 ? `  +${active.length - 1} more` : ''}
-        </Text>
+        {top.status === 'ACKNOWLEDGED' ? <Text style={[type.label, { color: c.fg }]}>Acknowledged — hazard still active{active.length > 1 ? `  +${active.length - 1} more` : ''}</Text>
+          : <Pressable onPress={() => host.dispatch({ type: 'ALERT_ACK' })} style={[styles.alertAction, { borderColor: c.fg }]}><Text style={[type.label, { color: c.fg }]}>Acknowledge</Text></Pressable>}
       </View>
     );
   }
@@ -84,7 +83,7 @@ export function SafeExitOverlay() {
       ) : null}
       <View style={{ flex: 1 }} />
       <Text style={[type.heading, { color: p.status.warning.fg }]}>Advisory only — Throughline does not control the machine.</Text>
-      <Text style={[type.label, { color: p.status.warning.fg, marginTop: space.sm }]}>ACK (Space / RB) = Not exiting</Text>
+      <Pressable onPress={() => host.dispatch({ type: 'SAFE_EXIT_CANCEL' })} style={[styles.safeExitAction, { backgroundColor: p.bg }]}><Text style={[type.label, { color: p.text }]}>I am not exiting</Text></Pressable>
     </View>
   );
 }
@@ -136,7 +135,7 @@ const MENU: { label: string; route: string | null; reason?: string }[] = [
   { label: 'Tasks', route: '/tasks' },
   { label: 'Briefing', route: '/briefing' },
   { label: 'Status & sync', route: '/status' },
-  { label: 'Training', route: null, reason: 'Training hub arrives in a later build (T30)' },
+  { label: 'Training', route: '/training' },
   { label: 'Shift summary', route: null, reason: 'Shift summary arrives in a later build (T26)' },
   { label: 'Handover & end shift', route: null, reason: 'Handover arrives in a later build (T29)' },
   { label: 'Log incident', route: null, reason: 'Incident reporting arrives in a later build (T25)' },
@@ -145,7 +144,8 @@ const MENU: { label: string; route: string | null; reason?: string }[] = [
 export function MenuOverlay() {
   const p = usePalette();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const open = useHost((s) => s.menuOpen);
+  const setOpen = (value: boolean | ((current: boolean) => boolean)) => useHost.setState((s) => ({ menuOpen: typeof value === 'function' ? value(s.menuOpen) : value }));
   const [focus, setFocus] = useState(0);
   const state = useHost((s) => s.snapshot?.machine.state);
   const signedIn = useHost((s) => !!s.snapshot?.shift);
@@ -184,10 +184,39 @@ export function MenuOverlay() {
   );
 }
 
+export function VoiceOverlay() {
+  const p = usePalette();
+  const router = useRouter();
+  const open = useHost((s) => s.voiceOpen);
+  const snap = useHost((s) => s.snapshot);
+  const [status, setStatus] = useState('Voice output ready');
+  if (!open || !snap?.shift) return null;
+  const next = snap.tasks.find((task) => task.is_next);
+  const say = (text: string) => { setStatus(text); speak(text, 4); };
+  const safety = `Safety status. Seatbelt ${snap.belt}. Proximity ${snap.proximity.status === 'clear' ? 'clear' : snap.proximity.status === 'unavailable' ? 'unavailable' : `${snap.proximity.level.toLowerCase()}, ${snap.proximity.object_type.replace('_', ' ')}, ${snap.proximity.place.replace('_', ' ')}`}.`;
+  return <View style={[styles.voiceSheet, { backgroundColor: p.surface, borderColor: p.focus }]} accessibilityViewIsModal>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}><Icon name="info" color={p.focus} size={32} /><T variant="title" style={{ flex: 1 }}>Voice assistant</T><Pressable onPress={() => useHost.setState({ voiceOpen: false })} style={[styles.closeButton, { borderColor: p.border }]}><T variant="label">Close</T></Pressable></View>
+    <StateFlag tone="info" word="Expo Go voice mode" detail="Spoken output and touch commands" />
+    <T muted>Microphone recognition needs the native development build. Use these large touch commands in Expo Go.</T>
+    <View style={{ gap: space.sm }}>
+      <Row focused={false} onPress={() => say(next ? `Next task. ${next.task.task_type.replace('_', ' ')} at ${next.zone_name ?? next.task.location_text}.` : 'All tasks are complete.')}><T variant="heading">What’s next?</T></Row>
+      <Row focused={false} onPress={() => say(safety)}><T variant="heading">Read safety status</T></Row>
+      <Row focused={false} onPress={() => say(`You have ${snap.briefing.task_count} tasks today. ${snap.briefing.conditions_text}`)}><T variant="heading">Read shift briefing</T></Row>
+      <Row focused={false} onPress={() => { stopSpeaking(); useHost.setState({ voiceOpen: false }); router.push('/training' as never); }}><T variant="heading">Open training</T></Row>
+    </View>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}><T muted style={{ flex: 1 }}>{status}</T><Pressable onPress={() => { stopSpeaking(); setStatus('Voice stopped'); }} style={[styles.stopButton, { borderColor: p.border }]}><T variant="label">Stop voice</T></Pressable></View>
+  </View>;
+}
+
 const styles = StyleSheet.create({
   banner: { minHeight: 120, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.xl, zIndex: 40 },
   pills: { flexDirection: 'row', gap: space.sm, padding: space.sm, flexWrap: 'wrap' },
   sheet: { position: 'absolute', left: space.lg, right: space.lg, bottom: 80, borderWidth: 3, borderRadius: 8, padding: space.xl, zIndex: 45 },
   checkRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', padding: space.lg, borderBottomWidth: 1 },
   menu: { position: 'absolute', top: 80, left: space.xl, width: 460, borderWidth: 2, borderRadius: 8, padding: space.lg, gap: space.sm, zIndex: 44 },
+  voiceSheet: { position: 'absolute', top: space.lg, left: space.lg, right: space.lg, maxWidth: 680, alignSelf: 'center', borderWidth: 3, borderRadius: 8, padding: space.xl, gap: space.md, zIndex: 46 },
+  alertAction: { minHeight: 52, justifyContent: 'center', paddingHorizontal: space.lg, borderWidth: 2, borderRadius: 4 },
+  safeExitAction: { minHeight: 64, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: space.xl, borderRadius: 4, marginTop: space.md },
+  closeButton: { minHeight: 48, justifyContent: 'center', paddingHorizontal: space.md, borderWidth: 2, borderRadius: 4 },
+  stopButton: { minHeight: 52, justifyContent: 'center', paddingHorizontal: space.lg, borderWidth: 2, borderRadius: 4 },
 });

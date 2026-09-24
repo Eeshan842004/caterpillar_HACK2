@@ -117,6 +117,8 @@ export function AppStatusBar() {
   const snap = useHost((s) => s.snapshot);
   const sync = useSync();
   const openPresenter = () => useHost.setState((s) => ({ presenterOpen: !s.presenterOpen }));
+  const toggleVoice = () => useHost.setState((s) => ({ voiceOpen: !s.voiceOpen, menuOpen: false }));
+  const toggleMenu = () => useHost.setState((s) => ({ menuOpen: !s.menuOpen, voiceOpen: false }));
   const link = sync.mode === 'local' ? { icon: 'offline' as const, text: 'Local only' }
     : sync.online ? { icon: 'check' as const, text: 'Online' } : { icon: 'offline' as const, text: 'Offline' };
   if (!snap) return null;
@@ -129,6 +131,8 @@ export function AppStatusBar() {
     <View style={[styles.machineState, { backgroundColor: p.status[stateTone].bg }]}><Icon name={TONE_ICON[stateTone]} color={p.status[stateTone].fg} size={18} /><Text style={[type.caption, { color: p.status[stateTone].fg }]}>{snap.machine.state.toLowerCase()}</Text></View>
     <View style={{ flex: 1 }} />
     <Text style={[type.label, { color: p.onPrimary }]}>{snap.machine.machine_id}</Text>
+    {snap.shift ? <Pressable accessibilityRole="button" onPress={toggleVoice} style={styles.railButton}><Icon name="info" color={p.rail} size={18} /><Text style={[type.label, { color: p.rail }]}>Voice</Text></Pressable> : null}
+    {snap.shift ? <Pressable accessibilityRole="button" onPress={toggleMenu} style={styles.railButton}><Text style={[type.label, { color: p.rail }]}>Menu</Text></Pressable> : null}
     <Pressable onLongPress={openPresenter} delayLongPress={3000}><Text style={[type.heading, { color: p.onPrimary }]}>{snap.local_time}</Text></Pressable>
     <Text style={[type.caption, { color: p.onPrimary }]}>{snap.shift?.operator.display_name ?? 'No operator'}</Text>
   </View>;
@@ -160,4 +164,5 @@ const styles = StyleSheet.create({
   machineRail: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: space.lg, flexWrap: 'wrap' },
   machineSlot: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   machineState: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.flag },
+  railButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space.xs, backgroundColor: '#FFFFFF', paddingHorizontal: space.md, borderRadius: radius.control },
 });

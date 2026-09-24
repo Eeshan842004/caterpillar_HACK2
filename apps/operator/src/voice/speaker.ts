@@ -20,3 +20,8 @@ export function speak(text: string, priority: number): void {
     currentPriority = null; // TTS unavailable: text stays on screen (never blocks the UI)
   }
 }
+
+export function stopSpeaking(): void {
+  Speech.stop();
+  currentPriority = null;
+}

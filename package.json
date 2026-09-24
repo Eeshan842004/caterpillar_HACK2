@@ -1,0 +1,40 @@
+{
+  "name": "shiftmate",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "content:build": "tsx tools/scripts/build_content.ts",
+    "content:check": "tsx tools/scripts/check_content.ts --contrast --imports",
+    "profiles:validate": "tsx tools/scripts/validate_profiles.ts",
+    "voice:export-tokens": "tsx tools/scripts/export_intent_tokens.ts",
+    "py:sync": "cd server && uv sync",
+    "server:dev": "cd server && uv run uvicorn shiftmate.main:app --reload --host 0.0.0.0 --port 8000",
+    "server:test": "cd server && uv run pytest",
+    "server:lint": "cd server && uv run ruff check . && uv run ruff format --check .",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "cd server && uv run alembic upgrade head",
+    "db:seed": "cd server && uv run python -m shiftmate.cli seed",
+    "demo:reset": "cd server && uv run python -m shiftmate.cli reset-demo --yes",
+    "models:fetch": "cd server && uv run python ../tools/scripts/fetch_vosk_models.py",
+    "organiser:build": "cd server && uv run python ../tools/scripts/build_organiser.py",
+    "ml:generate": "cd server && uv run python -m shiftmate_ml.datagen.generate --config ../data/generator/config.yaml",
+    "ml:train": "pnpm voice:export-tokens && cd server && uv run python -m shiftmate_ml.train.estimator && uv run python -m shiftmate_ml.train.intent",
+    "eval": "tsx tools/eval/src/run.ts",
+    "console:dev": "pnpm --filter @shiftmate/console dev",
+    "operator:web": "pnpm --filter @shiftmate/operator web",
+    "operator:android": "pnpm --filter @shiftmate/operator android",
+    "build:web": "pnpm --filter @shiftmate/console build && pnpm --filter @shiftmate/operator export:web",
+    "e2e": "playwright test -c e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3"
+  }
+}

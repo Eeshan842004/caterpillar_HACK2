@@ -2055,7 +2055,12 @@ At start, keep E0 (the `inference/estimate` entry) and `finish50_0`. After each 
 Triggered by the propagation consumer `downstream_impact` (§8.9) after an accepted delay reason (`report/idle_reason` with category `site_delay`), a task block, or a correction of either.
 ```
 cur   = current task (ACTIVE, or the task just BLOCKED)
-delta = finish50_after − finish50_before                 # from §8.6.6 before/after the triggering entry; whole minutes
+delta = finish50_after − finish50_before                 # §8.6.6 finish times; whole minutes
+                                                         # finish50_before = P50 finish just BEFORE the delay began
+                                                         # (idle start for an idle reason, the block time for a block).
+                                                         # Using the value at the moment the reason is given would count
+                                                         # the unexplained idle as slow work and can make the ETA move
+                                                         # earlier after a wait is reported.
 next  = first task with exec_state PLANNED and sequence > cur.sequence, same machine and planned_date (immutable sequence)
 if cur has no p50 estimate (basis insufficient_data)                      → risk "unavailable"
 elif next == null or next.planned_start_at == null                        → risk "unavailable"

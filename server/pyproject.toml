@@ -1,0 +1,44 @@
+[project]
+name = "shiftmate-server"
+version = "1.0.0"
+description = "ShiftMate site server and ML pipeline"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy>=2.0.30",
+    "alembic>=1.13.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "argon2-cffi>=23.1.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0.2",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "ruff>=0.6.0",
+]
+ml = [
+    "scikit-learn>=1.5.0",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "live_ai: marks tests as requiring external AI APIs",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["shiftmate*", "shiftmate_ml*"]
+exclude = ["var*", "tests*"]

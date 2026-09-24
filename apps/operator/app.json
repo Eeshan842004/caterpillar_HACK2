@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "ShiftMate",
+    "slug": "shiftmate",
+    "scheme": "shiftmate",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "android": { "package": "com.shiftmate.operator" },
+    "web": { "bundler": "metro", "output": "single" },
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": false }
+  }
+}

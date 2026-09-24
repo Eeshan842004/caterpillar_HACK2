@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.m4a binary
+*.wav binary
+*.png binary
+*.zip binary
+*.tar.gz binary
+*.onnx binary

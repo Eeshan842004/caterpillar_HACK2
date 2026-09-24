@@ -1,0 +1,27 @@
+node_modules
+dist
+dist-*
+.expo
+apps/operator/android
+apps/operator/ios
+apps/operator/assets/vosk
+apps/operator/public/vosk
+server/.venv
+server/var
+data/generated
+.env
+*.env
+!.env.example
+apps/operator/.env
+playwright-report
+test-results
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+
+# local databases and build metadata (never commit: seeded PIN/password hashes)
+var/
+*.db
+*.egg-info/
+.pytest_cache/

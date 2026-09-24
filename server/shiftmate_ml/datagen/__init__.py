@@ -1,1 +1,1 @@
-"""ShiftMate synthetic dataset generator package."""
+"""Throughline synthetic dataset generator package."""

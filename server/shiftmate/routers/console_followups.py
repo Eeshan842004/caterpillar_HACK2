@@ -7,7 +7,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from shiftmate.db import get_db
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import (
     ConsoleUser,
     FollowUp,
@@ -56,9 +56,9 @@ def _summary(fu: FollowUp) -> FollowUpSummary:
 def _load(db: Session, user: ConsoleUser, follow_up_id: str, *, write: bool) -> FollowUp:
     fu = db.get(FollowUp, follow_up_id)
     if fu is None or fu.site_id not in (user.site_ids or []) or fu.category not in ROLE_CATEGORIES.get(user.role, []):
-        raise ShiftMateException(status_code=404, code="not_found", message="Follow-up not found.")
+        raise ThroughlineException(status_code=404, code="not_found", message="Follow-up not found.")
     if write and (user.role, fu.category) in READ_ONLY:
-        raise ShiftMateException(status_code=403, code="forbidden", message="Your role can read but not act on this item.")
+        raise ThroughlineException(status_code=403, code="forbidden", message="Your role can read but not act on this item.")
     return fu
 
 
@@ -131,7 +131,7 @@ def assign_followup(follow_up_id: str, req: AssignRequest, db: Session = Depends
                     user: ConsoleUser = Depends(get_current_user)):
     fu = _load(db, user, follow_up_id, write=True)
     if fu.status == "resolved":
-        raise ShiftMateException(status_code=409, code="invalid_state", message="Follow-up is already resolved.")
+        raise ThroughlineException(status_code=409, code="invalid_state", message="Follow-up is already resolved.")
     fu.assigned_to = req.user_id
     fu.status = "assigned" if req.user_id else "open"
     fu.updated_at = utc_now()
@@ -144,7 +144,7 @@ def resolve_followup(follow_up_id: str, req: ResolveRequest, db: Session = Depen
                      user: ConsoleUser = Depends(get_current_user)):
     fu = _load(db, user, follow_up_id, write=True)
     if fu.status == "resolved":
-        raise ShiftMateException(status_code=409, code="invalid_state", message="Follow-up is already resolved.")
+        raise ThroughlineException(status_code=409, code="invalid_state", message="Follow-up is already resolved.")
     now = utc_now()
     fu.status, fu.resolved_at, fu.resolved_by, fu.resolution_note, fu.updated_at = "resolved", now, user.user_id, req.note, now
 

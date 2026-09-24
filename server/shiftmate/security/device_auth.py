@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from shiftmate.config import settings
 from shiftmate.db import get_db
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import Device
 from shiftmate.time_util import utc_now
 
@@ -23,7 +23,7 @@ async def verify_device_auth(request: Request, db: Session = Depends(get_db)) ->
     signature = request.headers.get("X-Signature")
 
     if not device_id or not timestamp_str or not signature:
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="unauthenticated",
             message="Missing device authentication headers (X-Device-Id, X-Timestamp, X-Signature).",
@@ -32,7 +32,7 @@ async def verify_device_auth(request: Request, db: Session = Depends(get_db)) ->
     try:
         req_ts = int(timestamp_str)
     except ValueError:
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="unauthenticated",
             message="Invalid X-Timestamp header format.",
@@ -40,7 +40,7 @@ async def verify_device_auth(request: Request, db: Session = Depends(get_db)) ->
 
     now_ms = int(time.time() * 1000)
     if abs(now_ms - req_ts) > 300000:
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="timestamp_skew",
             message="Request timestamp is outside the allowed skew window (+/- 300 s).",
@@ -48,14 +48,14 @@ async def verify_device_auth(request: Request, db: Session = Depends(get_db)) ->
 
     device = db.query(Device).filter(Device.device_id == device_id).first()
     if not device:
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="device_unknown",
             message="Device is not recognized on this server.",
         )
 
     if device.revoked_at is not None:
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="device_revoked",
             message="Device pairing has been revoked.",
@@ -74,7 +74,7 @@ async def verify_device_auth(request: Request, db: Session = Depends(get_db)) ->
     expected_sig = hmac.new(secret_bytes, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
 
     if not hmac.compare_digest(signature.lower(), expected_sig.lower()):
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="signature_invalid",
             message="Device HMAC signature is invalid.",

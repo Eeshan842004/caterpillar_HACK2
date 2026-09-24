@@ -1,1 +1,1 @@
-"""Security package for ShiftMate server."""
+"""Security package for Throughline server."""

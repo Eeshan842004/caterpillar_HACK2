@@ -1,6 +1,6 @@
-# ShiftMate
+# Throughline
 
-**ShiftMate** is an offline-first, operator-first in-cab companion for Cat machine operators (excavators and haul trucks), paired with a local site server and a web console for supervisors, trainers, safety coordinators and mechanics.
+**Throughline** is an offline-first, operator-first in-cab companion for Cat machine operators (excavators and haul trucks), paired with a local site server and a web console for supervisors, trainers, safety coordinators and mechanics.
 
 ## Documentation
 - [Product Plan](docs/PRODUCT_PLAN.md): product requirements, user journeys and feature specifications (source of truth for behaviour).

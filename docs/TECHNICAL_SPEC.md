@@ -1,8 +1,8 @@
-# ShiftMate — Technical Implementation Specification v1.0
+# Throughline — Technical Implementation Specification v1.0
 
 | Field | Value |
 |---|---|
-| Derived from | `ShiftMate — Product Plan` v1.0 (23 Sep 2026) — the product source of truth |
+| Derived from | `Throughline — Product Plan` v1.0 (23 Sep 2026) — the product source of truth |
 | Spec date | 23 September 2026 |
 | Repository | https://github.com/Eeshan842004/caterpillar_HACK2.git. At the time of writing it contains only planning documents: `docs/` (`PRODUCT_PLAN.md`, `TECHNICAL_SPEC.md`, `DATASET_SCHEMA.md`, `FUTURE_IDEAS.md`), a root copy of the product plan and an ML-architecture council report/transcript. There is no `README.md` (T01 creates it), no application code and no existing code conventions to respect |
 | Audience | A coding model (with a human team) that implements this spec exactly |
@@ -136,7 +136,7 @@ No **blocking** questions: every gap either has a reasonable hackathon default (
 | F4-R4 | Stopped with unknown restart → "about N min after work resumes", never a clock time or negative number | BLOCKED task shows conditional text | — | `liveUpdate.ts` | M4 |
 | F4-R5 | Original estimate (`inference:estimate` at start) and actual outcome kept per task | Both in ledger, synced | — | ledger | M4 |
 | F4-R6 | "Why did my estimate change?" explains the stored change log (§8.6.8) | Answer names the cause, e.g. "+12 min: truck wait reported" | No changes → "No change since start" | voice `WHY_ESTIMATE`, A4 key `4` | M4 |
-| F4-R7 | Planner estimate shown next to ShiftMate's | "Planner 30 min" | Absent → hidden | A3, A4 | M4 |
+| F4-R7 | Planner estimate shown next to Throughline's | "Planner 30 min" | Absent → hidden | A3, A4 | M4 |
 | F4-R8 | Runs fully on device from the bundled model artifact | Works offline | Artifact missing/invalid → basis `fallback` for every task + diagnostics error | `core/estimate` | M4 |
 | F4-R9 | Accepted delay/block reason → immediately recompute current ETA and the next planned assignment's start-window risk against `[planned_start_at, planned_start_at + planned_start_window_min)` (§8.6.9); show both messages | "Current task ETA updated by +18 minutes" and "Task 2 may miss its planned start window" | See F4-R11 | A3/A4/A5 · `tasks/impactPreview.ts` | M4 |
 | F4-R10 | Impact card offers "Request reassignment" (`report/reassignment_request`) and "Notify supervisor" (`report/supervisor_notification`); both create a request/follow-up only. The preview and these actions never reorder tasks or change the assignee | Pending badge + C2 item; board order and assignee unchanged until a supervisor decision | Offline → outbox; a second identical request for the same task while one is pending is deduped | A3/A4, C2 · `dayPlan.ts`, task projector | M3/M4 |
@@ -734,7 +734,7 @@ Offline tooling (developer laptop): server/shiftmate_ml (datagen, training, eval
 
 | Path | Responsibility | Req IDs |
 |---|---|---|
-| `apps/operator/app.config.ts` | Expo config: name "ShiftMate", slug `shiftmate`, scheme `shiftmate`, orientation `default`, Android package `com.shiftmate.operator`, `newArchEnabled` (default in SDK 57), plugins: `expo-router` (with COOP/COEP headers), `expo-sqlite`, `["expo-audio",{microphonePermission}]`, `["expo-build-properties",{android:{minSdkVersion:29}}]`, `["react-native-vosk",{models:["assets/vosk/model-en-in","assets/vosk/model-hi"]}]`, `expo-key-event` (if it ships a plugin; otherwise none), `experiments.baseUrl` = `/app` when `EXPO_PUBLIC_WEB_BASE=/app`; `extra` = env (§10.3) | NFR-08 |
+| `apps/operator/app.config.ts` | Expo config: name "Throughline", slug `shiftmate`, scheme `shiftmate`, orientation `default`, Android package `com.shiftmate.operator`, `newArchEnabled` (default in SDK 57), plugins: `expo-router` (with COOP/COEP headers), `expo-sqlite`, `["expo-audio",{microphonePermission}]`, `["expo-build-properties",{android:{minSdkVersion:29}}]`, `["react-native-vosk",{models:["assets/vosk/model-en-in","assets/vosk/model-hi"]}]`, `expo-key-event` (if it ships a plugin; otherwise none), `experiments.baseUrl` = `/app` when `EXPO_PUBLIC_WEB_BASE=/app`; `extra` = env (§10.3) | NFR-08 |
 | `apps/operator/metro.config.js` | `getDefaultConfig`; push `wasm` into `resolver.assetExts`; `server.enhanceMiddleware` adding COEP `credentialless` + COOP `same-origin` (verify against Expo docs in T16) | V-07 |
 | `app/_layout.tsx` | Providers (Theme, EngineHost init, KeyInputProvider, FocusManager), `AppStatusBar`, `AlertOverlay`, `PromptSheet`, `PresenterPanel`, `ModeGuard`, `SosOverlay` | F5 |
 | `app/index.tsx` | Redirect: not paired → `/setup`; no shift → `/sign-in`; else `/tasks` (or mode route) | D-01 |
@@ -1064,7 +1064,7 @@ CREATE TABLE forecasts (
   weather text NOT NULL, visibility text NOT NULL, visibility_m double precision NULL CHECK (visibility_m >= 0),
   temp_c double precision NOT NULL, heat_index_c double precision NULL,
   wind_kmh double precision NOT NULL, precipitation_mm double precision NOT NULL,
-  issued_at timestamptz NOT NULL,             -- when this forecast became available to ShiftMate (Open-Meteo: fetch time)
+  issued_at timestamptz NOT NULL,             -- when this forecast became available to Throughline (Open-Meteo: fetch time)
   source text NOT NULL CHECK (source IN ('open_meteo','seed')), PRIMARY KEY (site_id, valid_from));
   -- one row per site and valid hour: a newer issuance replaces the older one (the dataset keeps one issuance per hour too)
 
@@ -1683,12 +1683,12 @@ Common to every screen: `AppStatusBar` on top (Online/Offline icon + word; "N wa
 | **A5 Focus Mode** `/focus` | WORKING (UNKNOWN keeps it if it was showing) | One `Tile`, three groups: (1) task label + `ProgressBar` "8 / 40 m" + progress source tag; (2) finish time `display` "14:18" + range "14:10–14:25"; (3) safety: belt pill, proximity pill (e.g. "Person · rear left · 6 m"), idle timer if any | Only ACK, PTT, SOS, hold-ACK (2 s) = Mark event; others show "Menus locked while operating" (throttled 10 s) | No active task → "No active task. Stop to choose one."; UNKNOWN → banner "Machine state unknown — some signals missing" |
 | **A6 Drive Mode** `/drive` | TRAVELLING | `display` speed "42" km/h vs "Limit 35" (critical colour + "OVER" word when over), next stop (zone of active/next task), proximity pill | Same as A5 | No limit → "Limit —" |
 | **A7 Alert overlay** (global) | Any | CRITICAL/WARNING: top banner 120 dp full width (level colour, icon, level word "STOP"/"WARNING", text, "ACK: Space / RB", after ack "Acknowledged — hazard still active"). CAUTION/INFO: compact pill row under the status bar while active; INFO toasts disappear after 6 s | ACK acknowledges the highest unacknowledged alert; ACK with nothing unacknowledged = repeat last alert (REPEAT_ALERT); in OFF/SECURED/READY, key 4 on a focused alert = "Wrong or annoying?" prompt | Multiple alerts: highest level shown + "+n more" |
-| **A7E Safe Exit Guard** (global advisory) | READY/WORKING/TRAVELLING/UNKNOWN when exit intent present and not secured | Full screen: "Secure the machine before exiting" + checklist: lower or neutralise the implement; engage hydraulic lockout or parking brake; confirm motion has stopped; exit only after the machine is secured. Each input shows confirmed / not yet / unavailable. Banner: "Advisory only — ShiftMate does not control the machine." Spoken once (clip `exit_unsecured`) | ACK = "Not exiting" (`SAFE_EXIT_CANCEL`) | Clears on SECURED/OFF, on fresh seat-occupied + door-closed, or "Not exiting"; belt-off alone never opens it; stale inputs are named unavailable and never displayed as secured |
+| **A7E Safe Exit Guard** (global advisory) | READY/WORKING/TRAVELLING/UNKNOWN when exit intent present and not secured | Full screen: "Secure the machine before exiting" + checklist: lower or neutralise the implement; engage hydraulic lockout or parking brake; confirm motion has stopped; exit only after the machine is secured. Each input shows confirmed / not yet / unavailable. Banner: "Advisory only — Throughline does not control the machine." Spoken once (clip `exit_unsecured`) | ACK = "Not exiting" (`SAFE_EXIT_CANCEL`) | Clears on SECURED/OFF, on fresh seat-occupied + door-closed, or "Not exiting"; belt-off alone never opens it; stale inputs are named unavailable and never displayed as secured |
 | **A8 Prompt sheet** (global) | Per prompt type (§8.16.4) | Bottom sheet: title, up to 4 numbered options, focused option, "Hold V to speak", countdown bar for timed prompts | 1–4 choose; OK chooses focused; Back dismisses (if dismissible) | Timed prompt expiry follows §7.4 |
 | **A9 Incident** `/incident/[incidentId]` (`new` creates one) | SECURED, OFF; READY only for explicit report-now | Existing snapshot/report fields; reviewed incidents show "Replay timeline" when S9 is built | Existing report actions; Replay → A17 | Machine starts operating → draft/replay closes and ModeGuard takes over |
 | **A10 Training hub** `/training` | SECURED, OFF (READY → EmptyState "Park and engage lockout to use training") | Left/Right switch tabs: Recommended (title, kind, duration, reason, "Not relevant"; includes condition prep and refreshers due, the latter as "Quick question · 30 s"), Library (filters: task type, topic; search string typed with hardware keys or spoken "search rain"), History ("Only you can see this"), Help (requests + trainer answers) | OK start/resume; 2 later (defer); 4 not relevant (suppression) | No recommendations → "Nothing suggested right now"; search no match → EmptyState |
 | **A11 Player** `/training/[contentId]` | SECURED, OFF | Lesson: illustration + card text; Left/Right cards; 1 replay narration; then 2 questions (1–3 answer). Scenario: situation + illustration; choices 1–3; explanation; retry; after 2 wrong, 4 = "Ask a trainer". On completion: "Remind me with a quick question in a few days? 1 Yes · 2 No". **Refresher mode** (`?mode=refresher`): one question only (lesson question or scenario situation + choices), then the explanation; ≈ 20–30 s | Back = defer (saves position) | State leaves SECURED/OFF → auto-defer, route back to ModeGuard target |
-| **A12 Shift summary** `/summary` | OFF (product §10) | Table per task: planner, ShiftMate P50, actual active, waiting; totals active / waiting / break; alerts by type; end-of-shift copy of the "My review" findings (the same sheet as A3); private belt compliance % ("Only you see this") | Up/Down; OK on a finding → detail sheet; correct a reason (prompt) | Before any task → "Nothing to summarise yet" |
+| **A12 Shift summary** `/summary` | OFF (product §10) | Table per task: planner, Throughline P50, actual active, waiting; totals active / waiting / break; alerts by type; end-of-shift copy of the "My review" findings (the same sheet as A3); private belt compliance % ("Only you see this") | Up/Down; OK on a finding → detail sheet; correct a reason (prompt) | Before any task → "Nothing to summarise yet" |
 | **A13 Handover** `/handover` | OFF (product §10) | Draft items (type icon, text, audience chips, source); rows: "Add note (hold V or press 1 for quick notes)", "Voice note (OK record 20 s, 1 play)", "Polish wording" (online + S1), "Save handover and end shift" | OK edit focused item (re-dictate → read-back → confirm); 3 remove (reason prompt); 4 save (explicit confirm) → shift end → A1 | Mic permission denied → voice rows disabled "Microphone not allowed"; save failure → ErrorState with retry (data kept) |
 | **A14 Status & sync** `/status` | OFF, SECURED, READY | Connectivity, last push/pull, outbox counts by status, needs-review list (reason), rejected list (reason), signal health table (signal, age, status), alert history (last 50), diagnostics (app/profile/model/content versions, last & p90 alert latency, voice latency, missing clips, i18n misses, recent errors), device (short id, pairing mode, server URL) | 1 Sync now; 2 register with server (local mode → A0 pairing step) | — |
 | **A15 SOS overlay** (global) | Any | While holding: countdown ring "Hold 3 s for SOS". After: full-screen critical overlay "SOS sending… Also call on radio" with status sending / delivered / not confirmed | 1 = cancel SOS (within 60 s, sends cancel packet); Back hides the overlay (SOS continues) | — |
@@ -3111,7 +3111,7 @@ A requirement is done only when it is implemented, integrated (reachable from th
 ## 14. Coding-model execution prompt (copy verbatim)
 
 ```
-You are implementing ShiftMate in the repository at the current working directory.
+You are implementing Throughline in the repository at the current working directory.
 
 1. Read, in full, before writing code: docs/TECHNICAL_SPEC.md (the source of truth for architecture, contracts,
    paths, algorithms and task order), docs/PRODUCT_PLAN.md (the source of truth for product behaviour) and
@@ -3174,4 +3174,3 @@ Checks performed against the whole document, with fixes applied:
 - E-07 test audio and independent challenge scenarios → audio-level voice metrics and author-independence.
 - E-08 internet for the Vosk model download.
 - E-04 Anthropic key (optional; templates otherwise).
-

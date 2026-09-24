@@ -51,23 +51,28 @@ export default function SignIn() {
     );
   }
   return (
-    <Screen title={`${snap.machine.machine_id} · ${snap.machine.display_name} · ${snap.site.name}`}
+    <Screen title="Operator sign in"
       hints={pinMode ? 'Digits type PIN · OK sign in · Back delete' : 'Up/Down choose · OK enter PIN · 3 key fob (simulated)'}>
-      <View style={{ flexDirection: 'row', gap: space.xl }}>
+      <View style={{ borderLeftWidth: 8, borderColor: p.attention, paddingLeft: space.lg }}>
+        <T variant="title">{snap.machine.machine_id}</T>
+        <T>{snap.machine.display_name}</T>
+        <T muted>{snap.site.name}</T>
+      </View>
+      <View style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap' }}>
         <View style={{ flex: 3, gap: space.sm }}>
           {operators.map((o, i) => (
             <Row key={o.operator_id} focused={!pinMode && i === focus} onPress={() => { setFocus(i); setPinMode(true); }}>
               <T variant="heading">{o.display_name}</T>
-              <T muted>{o.operator_id} · {o.skill_level} · {o.language}</T>
+              <View style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap' }}><T muted>{o.operator_id}</T><T muted>{o.skill_level}</T><T muted>{o.language}</T></View>
             </Row>
           ))}
         </View>
-        <View style={{ flex: 2, backgroundColor: p.surface, borderRadius: 12, padding: space.xl, gap: space.md, alignSelf: 'flex-start' }}>
+        <View style={{ flex: 2, minWidth: 300, backgroundColor: p.surface, borderTopWidth: 4, borderColor: p.focus, padding: space.xl, gap: space.md, alignSelf: 'flex-start' }}>
           <T variant="heading">{op ? `PIN for ${op.display_name}` : 'PIN'}</T>
           <T style={[type.display, { letterSpacing: 12 }]}>{pinMode ? '●'.repeat(pin.length).padEnd(4, '○') : '○○○○'}</T>
           {lockedUntil ? <StatusPill tone="critical" word="Locked" detail={`${Math.ceil((lockedUntil - snap.now) / 1000)} s`} />
             : error ? <StatusPill tone="critical" word={error} /> : null}
-          <T muted>4–6 digits · keyboard digits or controller number pad</T>
+          <T muted>Enter 4–6 digits with the keyboard or controller number pad.</T>
         </View>
       </View>
     </Screen>

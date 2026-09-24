@@ -1,1 +1,1 @@
-"""Pydantic schemas package for ShiftMate server."""
+"""Pydantic schemas package for Throughline server."""

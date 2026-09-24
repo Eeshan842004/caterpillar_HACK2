@@ -12,7 +12,7 @@ from shiftmate.seed import seed_database
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="shiftmate-cli", description="ShiftMate CLI administration tool")
+    parser = argparse.ArgumentParser(prog="shiftmate-cli", description="Throughline CLI administration tool")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
     # seed

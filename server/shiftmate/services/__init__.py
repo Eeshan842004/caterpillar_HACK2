@@ -1,1 +1,1 @@
-"""Services package for ShiftMate server."""
+"""Services package for Throughline server."""

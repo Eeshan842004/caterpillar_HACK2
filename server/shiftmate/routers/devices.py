@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from shiftmate.config import settings
 from shiftmate.db import get_db
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import (
     AuditLog,
     ChangeLog,
@@ -48,14 +48,14 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 def _usable_code(db: Session, code: str, machine_id: str) -> PairingCode:
     row = db.get(PairingCode, code)
     if row is None or row.expires_at < utc_now() or row.machine_id != machine_id:
-        raise ShiftMateException(status_code=404, code="pairing_code_invalid",
+        raise ThroughlineException(status_code=404, code="pairing_code_invalid",
                                  message=f"Code not valid for {machine_id}.")
     if row.reusable and not settings.DEMO_MODE:
         # Reusable codes exist only for demos (§5.4.2): outside DEMO_MODE they are not accepted
-        raise ShiftMateException(status_code=404, code="pairing_code_invalid",
+        raise ThroughlineException(status_code=404, code="pairing_code_invalid",
                                  message="Reusable pairing codes are only valid in demo mode.")
     if not row.reusable and row.used_at is not None:
-        raise ShiftMateException(status_code=409, code="pairing_code_used", message="This pairing code has already been used.")
+        raise ThroughlineException(status_code=409, code="pairing_code_used", message="This pairing code has already been used.")
     return row
 
 
@@ -72,7 +72,7 @@ def pair_device(req: DevicePairRequest, request: Request, db: Session = Depends(
     pairing_per_ip.hit(request.client.host if request.client else "unknown")
     code_row = _usable_code(db, req.pairing_code, req.machine_id)
     if db.get(Machine, req.machine_id) is None:
-        raise ShiftMateException(status_code=404, code="not_found", message=f"Machine {req.machine_id} was not found.")
+        raise ThroughlineException(status_code=404, code="not_found", message=f"Machine {req.machine_id} was not found.")
 
     device_id = req.client_device_id or str(uuid.uuid4())
     device = db.get(Device, device_id)

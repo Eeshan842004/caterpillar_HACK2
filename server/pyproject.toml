@@ -1,7 +1,7 @@
 [project]
 name = "shiftmate-server"
 version = "1.0.0"
-description = "ShiftMate site server and ML pipeline"
+description = "Throughline site server and ML pipeline"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastapi>=0.115.0",

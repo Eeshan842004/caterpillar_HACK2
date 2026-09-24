@@ -1,4 +1,4 @@
-# ShiftMate Synthetic Dataset Generator Assumptions
+# Throughline Synthetic Dataset Generator Assumptions
 
 **Generator Version:** `gen-1.0`  
 **Schema Version:** `1.2.0`  
@@ -90,4 +90,3 @@ Resulting check (seed run): mean actual/baseline ≈ 1.08 for both classes; exca
 Sensitivity benchmarks test model stability under scaled operational frictions:
 - `sens_0.5`: All environmental and operator effect terms scaled to 50%.
 - `sens_1.5`: All environmental and operator effect terms amplified to 150%.
-

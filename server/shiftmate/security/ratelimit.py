@@ -6,7 +6,7 @@ import math
 import threading
 import time
 
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 
 
 class RateLimiter:
@@ -24,7 +24,7 @@ class RateLimiter:
             if tokens < 1.0:
                 retry = math.ceil((1.0 - tokens) / self.rate)
                 self._buckets[key] = (tokens, now)
-                raise ShiftMateException(status_code=429, code="rate_limited",
+                raise ThroughlineException(status_code=429, code="rate_limited",
                                          message=f"Too many requests. Retry in {retry} s.",
                                          headers={"Retry-After": str(retry)})
             self._buckets[key] = (tokens - 1.0, now)

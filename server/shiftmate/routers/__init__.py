@@ -1,1 +1,1 @@
-"""API routers package for ShiftMate server."""
+"""API routers package for Throughline server."""

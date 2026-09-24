@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import Machine, MachineProfile, Site
 
 
@@ -27,10 +27,10 @@ class MachineContext:
 def machine_context(db: Session, machine_id: str) -> MachineContext:
     machine = db.get(Machine, machine_id)
     if machine is None:
-        raise ShiftMateException(status_code=404, code="not_found", message=f"Machine {machine_id} is not registered.")
+        raise ThroughlineException(status_code=404, code="not_found", message=f"Machine {machine_id} is not registered.")
     profile = db.get(MachineProfile, (machine.profile_id, machine.profile_version))
     if profile is None:
-        raise ShiftMateException(status_code=500, code="internal_error",
+        raise ThroughlineException(status_code=500, code="internal_error",
                                  message=f"Profile {machine.profile_id}@{machine.profile_version} is not seeded.")
     site = db.get(Site, machine.site_id)
     return MachineContext(

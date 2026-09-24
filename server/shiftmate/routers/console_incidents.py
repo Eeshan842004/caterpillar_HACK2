@@ -7,7 +7,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from shiftmate.db import get_db
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import ConsoleUser, Incident, LedgerEntry, Operator, Zone
 from shiftmate.schemas.common import IncidentType, ObjectType, Place, Severity
 from shiftmate.schemas.console import (
@@ -59,7 +59,7 @@ def _detail(db: Session, inc: Incident, user: ConsoleUser) -> IncidentDetail:
 def _load(db: Session, user: ConsoleUser, incident_id: str) -> Incident:
     inc = db.get(Incident, incident_id)
     if inc is None or inc.site_id not in (user.site_ids or []):    # site guard (audit: cross-site leak)
-        raise ShiftMateException(status_code=404, code="not_found", message="Incident not found.")
+        raise ThroughlineException(status_code=404, code="not_found", message="Incident not found.")
     return inc
 
 
@@ -102,11 +102,11 @@ def review_incident(incident_id: str, req: IncidentReviewRequest, db: Session = 
     for name, value in (req.field_corrections or {}).items():
         if name == "contact":
             if value not in ("yes", "no", "unknown"):
-                raise ShiftMateException(status_code=422, code="validation_error", message="contact must be yes/no/unknown")
+                raise ThroughlineException(status_code=422, code="validation_error", message="contact must be yes/no/unknown")
         elif name in REVIEWABLE:
             REVIEWABLE[name](value)            # raises ValueError on an invalid enum value
         else:
-            raise ShiftMateException(status_code=422, code="validation_error", message=f"{name} cannot be corrected")
+            raise ThroughlineException(status_code=422, code="validation_error", message=f"{name} cannot be corrected")
         corrections[name] = value
 
     entry = server_entry(db, user, kind="incident", subtype="reviewed", machine_id=inc.machine_id, audience="safety",

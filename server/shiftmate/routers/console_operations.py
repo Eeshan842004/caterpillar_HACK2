@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from shiftmate.db import get_db
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import (
     ConsoleUser,
     FollowUp,
@@ -45,15 +45,15 @@ def decide_reassignment(request_id: str, req: ReassignDecisionRequest, db: Sessi
     rr = db.get(ReassignmentRequest, request_id)
     task = db.get(TaskAssignment, rr.task_id) if rr else None
     if rr is None or task is None or task.site_id not in (user.site_ids or []):
-        raise ShiftMateException(status_code=404, code="not_found", message="Request not found.")
+        raise ThroughlineException(status_code=404, code="not_found", message="Request not found.")
     if rr.status != "pending":
-        raise ShiftMateException(status_code=409, code="invalid_state", message="Request is already decided.")
+        raise ThroughlineException(status_code=409, code="invalid_state", message="Request is already decided.")
     old_machine = task.machine_id
     if req.decision == "accept":
         if req.new_machine_id:
             target = db.get(Machine, req.new_machine_id)
             if target is None or target.site_id != task.site_id:
-                raise ShiftMateException(status_code=422, code="validation_error", message="Unknown machine for this site.")
+                raise ThroughlineException(status_code=422, code="validation_error", message="Unknown machine for this site.")
             task.machine_id, task.source = req.new_machine_id, "reassignment"
             record_change(db, "task_assignment.removed", "machine", old_machine,
                           {"task_id": task.task_id, "reason": "reassigned", "new_machine_id": req.new_machine_id})
@@ -112,9 +112,9 @@ def resolve_handover_item(item_id: str, req: HandoverItemResolveRequest, db: Ses
     handover = db.get(Handover, item.handover_id) if item else None
     machine = db.get(Machine, handover.machine_id) if handover else None
     if item is None or machine is None or machine.site_id not in (user.site_ids or []):
-        raise ShiftMateException(status_code=404, code="not_found", message="Handover item not found.")
+        raise ThroughlineException(status_code=404, code="not_found", message="Handover item not found.")
     if item.status != "open":
-        raise ShiftMateException(status_code=409, code="invalid_state", message="Item is not open.")
+        raise ThroughlineException(status_code=409, code="invalid_state", message="Item is not open.")
     item.status, item.resolved_by, item.resolved_at, item.resolution_note = "resolved", user.user_id, utc_now(), req.note
     record_change(db, "handover_item.resolved", "machine", handover.machine_id,
                   {"item_id": item.item_id, "resolved_by_role": user.role, "resolved_at": iso_ms(item.resolved_at),
@@ -130,9 +130,9 @@ def answer_help(request_id: str, req: HelpAnswerRequest, db: Session = Depends(g
     hr = db.get(HelpRequest, request_id)
     machine = db.get(Machine, hr.machine_id) if hr else None
     if hr is None or machine is None or machine.site_id not in (user.site_ids or []):
-        raise ShiftMateException(status_code=404, code="not_found", message="Help request not found.")
+        raise ThroughlineException(status_code=404, code="not_found", message="Help request not found.")
     if hr.status == "answered":
-        raise ShiftMateException(status_code=409, code="invalid_state", message="Already answered.")
+        raise ThroughlineException(status_code=409, code="invalid_state", message="Already answered.")
     hr.status, hr.answered_by, hr.answer_text, hr.answered_at = "answered", user.user_id, req.answer_text, utc_now()
     record_change(db, "help_request.answered", "machine", hr.machine_id,
                   {"request_id": hr.request_id, "operator_id": hr.operator_id, "content_id": hr.content_id,

@@ -126,7 +126,7 @@ def validate_generated_bundle(bundle_dir: Path = GENERATED_DIR) -> Tuple[bool, s
             errors.append(f"Gate {gate} FAILED: {msg}")
             log_lines.append(f"  [FAIL] Gate {gate}: {msg}")
 
-    log_lines.append(f"--- Validating ShiftMate Bundle at {bundle_dir} ---")
+    log_lines.append(f"--- Validating Throughline Bundle at {bundle_dir} ---")
 
     # Load Manifest
     manifest_path = bundle_dir / "manifest.json"

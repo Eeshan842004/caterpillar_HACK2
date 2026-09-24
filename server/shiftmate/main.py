@@ -50,7 +50,7 @@ def create_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
 
     app = FastAPI(
-        title="ShiftMate API",
+        title="Throughline API",
         version="1.0.0",
         docs_url="/docs",
         openapi_url="/openapi.json",

@@ -18,7 +18,7 @@ export function rangeText(v: TaskView): string {
 }
 
 export function basisText(b: string): string {
-  return b === 'comparable_history' ? 'Comparable history' : b === 'fallback' ? 'Fallback · baseline only' : 'Insufficient data';
+  return b === 'comparable_history' ? 'Comparable history' : b === 'fallback' ? 'Fallback baseline only' : 'Insufficient data';
 }
 
 export const STATE_TONE = {

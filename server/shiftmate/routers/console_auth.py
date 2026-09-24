@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from shiftmate.config import settings
 from shiftmate.db import get_db
-from shiftmate.errors import ShiftMateException
+from shiftmate.errors import ThroughlineException
 from shiftmate.models import ConsoleSession, ConsoleUser
 from shiftmate.schemas.console import ConsoleLoginRequest, ConsoleUserResponse
 from shiftmate.security.console_auth import get_current_user
@@ -24,14 +24,14 @@ def login_console(req: ConsoleLoginRequest, request: Request, response: Response
     login_per_user.hit(f"{ip}:{req.username}")
     user = db.query(ConsoleUser).filter(ConsoleUser.username == req.username).first()
     if not user or not verify_password(user.password_hash, req.password):
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=401,
             code="invalid_credentials",
             message="Invalid username or password.",
         )
 
     if user.disabled_at is not None:
-        raise ShiftMateException(
+        raise ThroughlineException(
             status_code=403,
             code="forbidden",
             message="User account is disabled.",

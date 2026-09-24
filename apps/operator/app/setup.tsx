@@ -10,11 +10,13 @@ export default function Setup() {
   });
   return (
     <Screen title="Device setup — pair this tablet" hints="Up/Down choose machine · OK pair (Local only)">
-      <T muted>Local only: the seeded roster, tasks and content are used with no server. Server pairing arrives with sync (T22).</T>
+      <T muted>This build uses the roster, tasks and content stored on this tablet. Choose the machine this tablet belongs to.</T>
       {PAIRABLE_MACHINES.map((m, i) => (
         <Row key={m.machine_id} focused={i === focus} onPress={() => host.pair(m.machine_id)}>
-          <T variant="heading">{m.machine_id} · {m.profile_name}</T>
-          <T muted>{m.model_name} · {m.site_name}</T>
+          <T variant="heading">{m.machine_id}</T>
+          <T>{m.profile_name}</T>
+          <T muted>{m.model_name}</T>
+          <T muted>{m.site_name}</T>
         </Row>
       ))}
     </Screen>

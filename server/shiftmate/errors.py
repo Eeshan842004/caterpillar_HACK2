@@ -10,7 +10,7 @@ def generate_request_id() -> str:
     return "r_" + secrets.token_hex(4)
 
 
-class ShiftMateException(Exception):
+class ThroughlineException(Exception):
     def __init__(
         self,
         status_code: int,
@@ -28,8 +28,8 @@ class ShiftMateException(Exception):
 
 
 def register_error_handlers(app):
-    @app.exception_handler(ShiftMateException)
-    async def shiftmate_exception_handler(request: Request, exc: ShiftMateException):
+    @app.exception_handler(ThroughlineException)
+    async def shiftmate_exception_handler(request: Request, exc: ThroughlineException):
         req_id = getattr(request.state, "request_id", generate_request_id())
         body = {
             "error": {

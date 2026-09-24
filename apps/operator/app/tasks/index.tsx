@@ -76,10 +76,10 @@ export default function TaskBoard() {
     <Screen title="Today's tasks"
       hints={changing ? 'Change last report: 1–4 choose reason · Back cancel'
         : 'OK details · 1 start/resume · 2 pause · 3 block · 4 complete · M menu'}>
-      <T muted>
-        Next: {tasks.find((t) => t.is_next)?.task.task_type.replace('_', ' ') ?? 'all tasks done'}
-        {snap.day_finish ? ` · Day finish ~${clock(snap.day_finish.p50_at, offset)} (late case ${clock(snap.day_finish.p90_at, offset)})` : ''}
-      </T>
+      <View style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap' }}>
+        <T muted>Next: {tasks.find((t) => t.is_next)?.task.task_type.replace('_', ' ') ?? 'all tasks done'}</T>
+        {snap.day_finish ? <T muted>Day finish {clock(snap.day_finish.p50_at, offset)}; late case {clock(snap.day_finish.p90_at, offset)}</T> : null}
+      </View>
       {impact ? (
         <Row focused={focus === rowIndex++} onPress={() => host.dispatch({ type: 'DISMISS_IMPACT' })}>
           <T variant="heading">Current task ETA updated by {impact.current_delta_min >= 0 ? '+' : ''}{impact.current_delta_min} minutes</T>
@@ -93,23 +93,22 @@ export default function TaskBoard() {
         const i = rowIndex++;
         const e = v.estimate;
         return (
-          <Row key={v.task.task_id} focused={focus === i} onPress={() => router.push(`/tasks/${v.task.task_id}` as never)}>
+          <Row key={v.task.task_id} focused={focus === i} attention={v.is_next} onPress={() => router.push(`/tasks/${v.task.task_id}` as never)}>
             <View style={{ flexDirection: 'row', gap: space.md, alignItems: 'center', flexWrap: 'wrap' }}>
-              <T variant="heading">{v.task.sequence}. {taskLabel(v.task.task_type)} {v.task.quantity} {v.task.unit} {v.task.material}</T>
+              <T variant="heading" style={{ minWidth: 300 }}>{v.task.sequence}. {taskLabel(v.task.task_type)}</T>
+              <T variant="heading">{v.task.quantity} {v.task.unit} {v.task.material}</T>
               <StatusPill tone={STATE_TONE[v.state]} word={v.state} detail={v.blocker ? LABELS.BLOCK_LABEL[v.blocker] : undefined} />
               {v.is_next ? <StatusPill tone="info" word="Next" /> : null}
               {v.pending_request ? <StatusPill tone="caution" word="Pending supervisor" detail={v.pending_request.replace('_', ' ')} /> : null}
             </View>
-            <T muted>
-              {v.zone_name ?? v.task.location_text} · priority {v.task.priority} · done = {v.task.completion_criterion}
-            </T>
-            <T>
-              {v.live ? `${v.live.progressPct}% · finish ${v.live.mode === 'conditional' ? `about ${mins(v.live.rem50)} min after work resumes` : `${clock(v.live.finish10, offset)}–${clock(v.live.finish90, offset)}`}`
-                : `${rangeText(v)} · ~${v.expected_wait_min} min waiting`}
-              {' · '}Planner {v.task.planner_minutes ?? '—'} min · {basisText(e.basis)}
-              {v.task.planned_start_at ? ` · planned ${clock(v.task.planned_start_at, offset)}` : ''}
-              {' · '}{v.task.source} rev {v.task.revision}
-            </T>
+            <View style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap', marginTop: space.xs }}>
+              <T muted>{v.zone_name ?? v.task.location_text}</T><T muted>Priority {v.task.priority}</T><T muted>Done when: {v.task.completion_criterion}</T>
+            </View>
+            <View style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap', marginTop: space.xs }}>
+              <T>{v.live ? `${v.live.progressPct}% complete; finish ${v.live.mode === 'conditional' ? `about ${mins(v.live.rem50)} min after work resumes` : `${clock(v.live.finish10, offset)}–${clock(v.live.finish90, offset)}`}` : `${rangeText(v)}; about ${v.expected_wait_min} min waiting`}</T>
+              <T>Planner {v.task.planner_minutes ?? '—'} min</T><T>{basisText(e.basis)}</T>
+              {v.task.planned_start_at ? <T>Planned {clock(v.task.planned_start_at, offset)}</T> : null}<T muted>{v.task.source}, revision {v.task.revision}</T>
+            </View>
           </Row>
         );
       })}

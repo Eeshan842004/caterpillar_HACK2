@@ -61,7 +61,7 @@ def generate_assumptions_doc(config: GenConfig, output_path: Path = ASSUMPTIONS_
     planner = cfg.get("planner", {})
 
     lines = [
-        "# ShiftMate Synthetic Dataset Generator Assumptions",
+        "# Throughline Synthetic Dataset Generator Assumptions",
         "",
         f"**Generator Version:** `{config.generator_version}`  ",
         f"**Schema Version:** `{config.schema_version}`  ",
@@ -618,7 +618,7 @@ def run_generator(config_path: Optional[Path] = None, effect_scale: float = 1.0,
 
 
 def main():
-    parser = argparse.ArgumentParser(description="ShiftMate Synthetic Dataset Generator")
+    parser = argparse.ArgumentParser(description="Throughline Synthetic Dataset Generator")
     parser.add_argument("--config", type=Path, default=CONFIG_PATH, help="Path to config.yaml")
     parser.add_argument("--effect-scale", type=float, default=1.0, help="Effect scale factor (default 1.0, e.g. 0.5 or 1.5)")
     parser.add_argument("--all-sensitivities", action="store_true", help="Generate baseline and all sensitivity runs (0.5, 1.5)")

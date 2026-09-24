@@ -1,27 +1,24 @@
-// Visual tokens (technical spec §7.1). Kept free of React Native imports so the contrast check can import it.
+// Throughline's "quiet field instrument" visual system. This module stays free of
+// React Native imports so build-time contrast checks can consume it.
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
+export const radius = { flag: 2, control: 4, overlay: 8 } as const;
+export const fonts = { ui: 'Noto Sans', instrument: 'Barlow Semi Condensed' } as const;
 
 export const type = {
-  display: { fontSize: 64, lineHeight: 72, fontWeight: '700' as const },
-  valueL: { fontSize: 48, lineHeight: 56, fontWeight: '700' as const },
-  title: { fontSize: 32, lineHeight: 40, fontWeight: '600' as const },
-  heading: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const },
-  body: { fontSize: 20, lineHeight: 28, fontWeight: '400' as const },
-  label: { fontSize: 18, lineHeight: 24, fontWeight: '500' as const },
-  caption: { fontSize: 16, lineHeight: 22, fontWeight: '400' as const },
+  instrumentXL: { fontFamily: fonts.instrument, fontSize: 96, lineHeight: 96, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as 'tabular-nums'[] },
+  display: { fontFamily: fonts.instrument, fontSize: 64, lineHeight: 68, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as 'tabular-nums'[] },
+  valueL: { fontFamily: fonts.instrument, fontSize: 48, lineHeight: 52, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as 'tabular-nums'[] },
+  title: { fontFamily: fonts.instrument, fontSize: 32, lineHeight: 38, fontWeight: '600' as const },
+  heading: { fontFamily: fonts.ui, fontSize: 24, lineHeight: 30, fontWeight: '600' as const },
+  body: { fontFamily: fonts.ui, fontSize: 20, lineHeight: 28, fontWeight: '400' as const },
+  label: { fontFamily: fonts.ui, fontSize: 18, lineHeight: 24, fontWeight: '600' as const },
+  caption: { fontFamily: fonts.ui, fontSize: 16, lineHeight: 22, fontWeight: '400' as const },
 };
 
 export interface Palette {
-  bg: string;
-  surface: string;
-  surfaceAlt: string;
-  text: string;
-  textMuted: string;
-  border: string;
-  focus: string;
-  primaryBg: string;
-  onPrimary: string;
+  bg: string; surface: string; surfaceAlt: string; rail: string; text: string; textMuted: string; border: string;
+  focus: string; attention: string; primaryBg: string; onPrimary: string;
   status: Record<StatusTone, { bg: string; fg: string }>;
   provenance: Record<'observed' | 'reported' | 'inferred' | 'reviewed', string>;
 }
@@ -29,23 +26,23 @@ export interface Palette {
 export type StatusTone = 'ok' | 'info' | 'caution' | 'warning' | 'critical' | 'unavailable';
 
 export const day: Palette = {
-  bg: '#FFFFFF', surface: '#F1F3F5', surfaceAlt: '#E3E7EB', text: '#0B0B0B', textMuted: '#3A3F44', border: '#6B7280',
-  focus: '#0047FF', primaryBg: '#0B0B0B', onPrimary: '#FFFFFF',
+  bg: '#F4F6F5', surface: '#FFFFFF', surfaceAlt: '#E8ECEA', rail: '#232B30', text: '#080A0B', textMuted: '#4D585E', border: '#9CA6AA',
+  focus: '#005EA8', attention: '#FFC400', primaryBg: '#232B30', onPrimary: '#FFFFFF',
   status: {
-    ok: { bg: '#0A7D32', fg: '#FFFFFF' }, info: { bg: '#0B5CAD', fg: '#FFFFFF' }, caution: { bg: '#FFC400', fg: '#000000' },
-    warning: { bg: '#E65100', fg: '#FFFFFF' }, critical: { bg: '#B00020', fg: '#FFFFFF' }, unavailable: { bg: '#5F6368', fg: '#FFFFFF' },
+    ok: { bg: '#16723A', fg: '#FFFFFF' }, info: { bg: '#1D5E91', fg: '#FFFFFF' }, caution: { bg: '#FFC400', fg: '#080A0B' },
+    warning: { bg: '#C84D00', fg: '#FFFFFF' }, critical: { bg: '#A50F26', fg: '#FFFFFF' }, unavailable: { bg: '#59636A', fg: '#FFFFFF' },
   },
-  provenance: { observed: '#1E3A8A', reported: '#065F46', inferred: '#6B21A8', reviewed: '#92400E' },
+  provenance: { observed: '#1D5E91', reported: '#16723A', inferred: '#6941A5', reviewed: '#825500' },
 };
 
 export const night: Palette = {
-  bg: '#000000', surface: '#111418', surfaceAlt: '#1C2127', text: '#E8E8E8', textMuted: '#A7ADB4', border: '#3C434B',
-  focus: '#5B8CFF', primaryBg: '#E8E8E8', onPrimary: '#000000',
+  bg: '#080A0B', surface: '#151B1E', surfaceAlt: '#232B30', rail: '#232B30', text: '#FFFFFF', textMuted: '#B8C0C3', border: '#59636A',
+  focus: '#62B5F5', attention: '#FFC400', primaryBg: '#232B30', onPrimary: '#FFFFFF',
   status: {
-    ok: { bg: '#3DDC84', fg: '#000000' }, info: { bg: '#7FB2FF', fg: '#000000' }, caution: { bg: '#FFD54F', fg: '#000000' },
-    warning: { bg: '#FF8A50', fg: '#000000' }, critical: { bg: '#FF5370', fg: '#000000' }, unavailable: { bg: '#9AA0A6', fg: '#000000' },
+    ok: { bg: '#16723A', fg: '#FFFFFF' }, info: { bg: '#1D5E91', fg: '#FFFFFF' }, caution: { bg: '#FFC400', fg: '#080A0B' },
+    warning: { bg: '#C84D00', fg: '#FFFFFF' }, critical: { bg: '#A50F26', fg: '#FFFFFF' }, unavailable: { bg: '#59636A', fg: '#FFFFFF' },
   },
-  provenance: { observed: '#1E3A8A', reported: '#065F46', inferred: '#6B21A8', reviewed: '#92400E' },
+  provenance: { observed: '#1D5E91', reported: '#16723A', inferred: '#6941A5', reviewed: '#825500' },
 };
 
 export const levelTone: Record<string, StatusTone> = {

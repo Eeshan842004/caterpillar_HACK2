@@ -1,1 +1,1 @@
-"""ShiftMate ML package."""
+"""Throughline ML package."""

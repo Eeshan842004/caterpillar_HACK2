@@ -1,7 +1,7 @@
 // Global overlays: A7 alert overlay, A7E Safe Exit Guard, A8 prompt sheet, menu (technical spec §7.2).
 import { alertSpeech } from '@shiftmate/core';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { host, useHost } from '../engine/host';
 import { useKeys } from '../input/keys';
@@ -208,6 +208,64 @@ export function VoiceOverlay() {
   </View>;
 }
 
+type SosPhase = 'ready' | 'holding' | 'sending' | 'delivered' | 'cancelled';
+
+export function SosOverlay() {
+  const p = usePalette();
+  const open = useHost((s) => s.sosOpen);
+  const snap = useHost((s) => s.snapshot);
+  const [phase, setPhase] = useState<SosPhase>('ready');
+  const [progress, setProgress] = useState(0);
+  const startedAt = useRef(0);
+  const interval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearTimer = () => { if (interval.current) clearInterval(interval.current); interval.current = null; };
+  useEffect(() => {
+    if (open) { setPhase('ready'); setProgress(0); }
+    return clearTimer;
+  }, [open]);
+  if (!open || !snap?.shift) return null;
+  const close = () => { clearTimer(); useHost.setState({ sosOpen: false }); };
+  const beginHold = () => {
+    if (phase !== 'ready') return;
+    startedAt.current = Date.now();
+    setPhase('holding');
+    interval.current = setInterval(() => {
+      const value = Math.min(1, (Date.now() - startedAt.current) / 3000);
+      setProgress(value);
+      if (value >= 1) {
+        clearTimer();
+        setPhase('sending');
+        speak('SOS sending. Also call on radio.', 0);
+        setTimeout(() => setPhase('delivered'), 700);
+      }
+    }, 50);
+  };
+  const endHold = () => {
+    if (phase !== 'holding') return;
+    clearTimer();
+    setProgress(0);
+    setPhase('ready');
+  };
+  const sent = phase === 'sending' || phase === 'delivered' || phase === 'cancelled';
+  return <View style={[StyleSheet.absoluteFill, styles.sosOverlay, { backgroundColor: p.status.critical.bg }]} accessibilityViewIsModal>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.lg }}><Icon name="stop" color={p.status.critical.fg} size={64} /><Text style={[type.display, { color: p.status.critical.fg, flex: 1 }]}>SOS</Text>{phase === 'ready' ? <Pressable onPress={close} style={[styles.sosClose, { borderColor: p.status.critical.fg }]}><Text style={[type.label, { color: p.status.critical.fg }]}>Close</Text></Pressable> : null}</View>
+    {!sent ? <>
+      <Text style={[type.title, { color: p.status.critical.fg }]}>Hold for 3 seconds to send</Text>
+      <Text style={[type.body, { color: p.status.critical.fg }]}>Use only for an emergency. This Expo demo records a simulated delivery; it does not contact emergency services.</Text>
+      <Pressable onPressIn={beginHold} onPressOut={endHold} style={[styles.sosHold, { backgroundColor: p.status.critical.fg }]}>
+        <Text style={[type.title, { color: p.status.critical.bg }]}>{phase === 'holding' ? `Keep holding ${Math.ceil((1 - progress) * 3)} s` : 'Press and hold SOS'}</Text>
+        <View style={[styles.sosTrack, { backgroundColor: p.status.critical.bg }]}><View style={{ height: '100%', width: `${progress * 100}%`, backgroundColor: p.attention }} /></View>
+      </Pressable>
+    </> : <View style={{ gap: space.lg }}>
+      <StateFlag tone={phase === 'cancelled' ? 'unavailable' : phase === 'delivered' ? 'ok' : 'info'} word={phase === 'cancelled' ? 'SOS cancelled' : phase === 'delivered' ? 'Delivered (simulated)' : 'Sending…'} />
+      <Text style={[type.title, { color: p.status.critical.fg }]}>Also call on radio</Text>
+      <Text style={[type.body, { color: p.status.critical.fg }]}>Machine {snap.machine.machine_id}. The demo keeps this state visible so the operator can confirm what happened.</Text>
+      {phase !== 'cancelled' ? <Pressable onPress={() => { setPhase('cancelled'); speak('SOS cancelled in the demo.', 0); }} style={[styles.sosSecondary, { borderColor: p.status.critical.fg }]}><Text style={[type.label, { color: p.status.critical.fg }]}>Cancel SOS</Text></Pressable> : null}
+      <Pressable onPress={close} style={[styles.sosSecondary, { borderColor: p.status.critical.fg }]}><Text style={[type.label, { color: p.status.critical.fg }]}>Hide SOS screen</Text></Pressable>
+    </View>}
+  </View>;
+}
+
 const styles = StyleSheet.create({
   banner: { minHeight: 120, flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.xl, zIndex: 40 },
   pills: { flexDirection: 'row', gap: space.sm, padding: space.sm, flexWrap: 'wrap' },
@@ -219,4 +277,9 @@ const styles = StyleSheet.create({
   safeExitAction: { minHeight: 64, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: space.xl, borderRadius: 4, marginTop: space.md },
   closeButton: { minHeight: 48, justifyContent: 'center', paddingHorizontal: space.md, borderWidth: 2, borderRadius: 4 },
   stopButton: { minHeight: 52, justifyContent: 'center', paddingHorizontal: space.lg, borderWidth: 2, borderRadius: 4 },
+  sosOverlay: { zIndex: 70, padding: space.xxl, gap: space.xl },
+  sosClose: { minHeight: 52, justifyContent: 'center', paddingHorizontal: space.lg, borderWidth: 2, borderRadius: 4 },
+  sosHold: { minHeight: 160, alignItems: 'center', justifyContent: 'center', padding: space.xl, borderRadius: 8, gap: space.lg },
+  sosTrack: { width: '100%', height: 16, overflow: 'hidden' },
+  sosSecondary: { minHeight: 64, alignSelf: 'flex-start', justifyContent: 'center', paddingHorizontal: space.xl, borderWidth: 2, borderRadius: 4 },
 });

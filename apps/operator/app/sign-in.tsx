@@ -1,7 +1,7 @@
 // A1 Sign-in (F1-R1): pick the operator with Up/Down, type a 4–6 digit PIN with digit keys, OK submits.
 // Key 3 = "Key fob (simulated)": signs in the highlighted operator without a PIN.
 import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { host, useHost } from '../src/engine/host';
 import { useKeys } from '../src/input/keys';
 import { Row, Screen, StatusPill, T, usePalette } from '../src/ui/components';
@@ -18,6 +18,17 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const op = operators[focus];
   const lockedUntil = op ? snap?.pin_lockout_until[op.operator_id] : undefined;
+  const addDigit = (digit: number) => {
+    setPinMode(true);
+    setPin((value) => value.length < 6 ? value + String(digit) : value);
+    setError(null);
+  };
+  const submitPin = () => {
+    if (!op) return;
+    const result = host.dispatch({ type: 'SIGN_IN', operator_id: op.operator_id, pin });
+    if (!result.ok) setError(result.message ?? 'PIN not recognised');
+    setPin('');
+  };
 
   useKeys((k) => {
     if (pinMode) {
@@ -28,9 +39,7 @@ export default function SignIn() {
         if (pin.length) setPin((x) => x.slice(0, -1));
         else setPinMode(false);
       } else if (k.action === 'OK' && op) {
-        const r = host.dispatch({ type: 'SIGN_IN', operator_id: op.operator_id, pin });
-        if (!r.ok) setError(r.message ?? 'PIN not recognised');
-        setPin('');
+        submitPin();
       } else return false;
       return true;
     }
@@ -72,7 +81,18 @@ export default function SignIn() {
           <T style={[type.display, { letterSpacing: 12 }]}>{pinMode ? '●'.repeat(pin.length).padEnd(4, '○') : '○○○○'}</T>
           {lockedUntil ? <StatusPill tone="critical" word="Locked" detail={`${Math.ceil((lockedUntil - snap.now) / 1000)} s`} />
             : error ? <StatusPill tone="critical" word={error} /> : null}
-          <T muted>Enter 4–6 digits with the keyboard or controller number pad.</T>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((digit) => (
+              <Pressable key={digit} onPress={() => addDigit(digit)} style={{ width: 64, height: 56, alignItems: 'center', justifyContent: 'center', backgroundColor: p.surfaceAlt, borderWidth: 1, borderColor: p.border, borderRadius: 4 }}>
+                <T variant="heading">{digit}</T>
+              </Pressable>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <Pressable onPress={() => setPin((value) => value.slice(0, -1))} style={{ minHeight: 56, flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.border, borderRadius: 4 }}><T variant="label">Delete</T></Pressable>
+            <Pressable disabled={pin.length < 4 || !!lockedUntil} onPress={submitPin} style={{ minHeight: 56, flex: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: p.primaryBg, borderRadius: 4, opacity: pin.length < 4 || lockedUntil ? 0.45 : 1 }}><T variant="label" style={{ color: p.onPrimary }}>Sign in</T></Pressable>
+          </View>
+          <T muted>Enter 4–6 digits. Demo PIN: 1234.</T>
         </View>
       </View>
     </Screen>

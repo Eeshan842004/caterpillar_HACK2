@@ -1,14 +1,15 @@
 // A4 Task detail (F4-R1, R6, R7): active range, expected waiting, finish range, basis, model contributions
 // (labelled as such, not causes), planner comparison, progress and time accounting.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { host, useHost } from '../../src/engine/host';
-import { Row, Screen, Section, StatusPill, T } from '../../src/ui/components';
+import { Row, Screen, Section, StatusPill, T, usePalette } from '../../src/ui/components';
 import { STATE_TONE, basisText, clock, mins, taskLabel } from '../../src/ui/format';
 import { useFocusList } from '../../src/ui/useFocusList';
 import { space } from '../../src/ui/tokens';
 
 export default function TaskDetail() {
+  const p = usePalette();
   const router = useRouter();
   const { taskId } = useLocalSearchParams<{ taskId: string }>();
   const snap = useHost((s) => s.snapshot);
@@ -61,6 +62,14 @@ export default function TaskDetail() {
           {v.accounting ? <View style={{ flexDirection: 'row', gap: space.xl, flexWrap: 'wrap' }}><T muted>Active {v.accounting.active_min} min</T><T muted>Waiting {v.accounting.waiting_min} min</T><T muted>Break {v.accounting.break_min} min</T><T muted>Paused {v.accounting.paused_min} min</T></View> : null}
         </Section>
       ) : null}
+      <Section title="Task actions">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+          <Pressable onPress={() => host.dispatch({ type: v.state === 'PAUSED' || v.state === 'BLOCKED' ? 'TASK_RESUME' : 'TASK_START', task_id: v.task.task_id })} style={{ minHeight: 64, minWidth: 170, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: p.primaryBg, borderRadius: 4 }}><T variant="label" style={{ color: p.onPrimary }}>{v.state === 'PAUSED' || v.state === 'BLOCKED' ? 'Resume task' : 'Start task'}</T></Pressable>
+          <Pressable onPress={() => host.dispatch({ type: 'TASK_PAUSE', task_id: v.task.task_id })} style={{ minHeight: 64, minWidth: 130, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.border, borderRadius: 4 }}><T variant="label">Pause</T></Pressable>
+          <Pressable onPress={() => host.dispatch({ type: 'OPEN_PROMPT', prompt: 'block_reason', task_id: v.task.task_id })} style={{ minHeight: 64, minWidth: 130, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.border, borderRadius: 4 }}><T variant="label">Block</T></Pressable>
+          <Pressable onPress={() => host.dispatch({ type: 'OPEN_PROMPT', prompt: 'complete_output', task_id: v.task.task_id })} style={{ minHeight: 64, minWidth: 130, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: p.border, borderRadius: 4 }}><T variant="label">Complete</T></Pressable>
+        </View>
+      </Section>
       <Row focused onPress={() => router.replace('/tasks')}>
         <T variant="heading">Back to tasks</T>
       </Row>
